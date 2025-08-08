@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en" >
+<head>
+  <meta charset="UTF-8">
+  <title>宅配網頁</title>
+  <link rel="stylesheet" href="./style.css">
+
+</head>
+<body>
+<!-- partial:index.partial.html -->
+<div class="booking-form-w3layouts">
+    <form id="orderForm">
+        <!-- 訂購單標題 -->
+        <h1 id="main-title" class="sub-heading-agileits">話拳寒天Q棒 - 線上宅配訂購單</h1>
+        <img src="https://i.imgur.com/teoEMl2.jpeg" alt="訂購單圖片" class="order-title-image">
+        <!-- 收件人資訊 -->
+        <div class="main-flex-w3ls-sectns">
+            <div class="form-w3-agile-text1">
+                <label for="customerName">收件人姓名：</label>
+                <input type="text" id="customerName" required>
+            </div>
+            <div class="form-w3-agile-text2">
+                <label for="phoneNumber">收件人電話：</label>
+                <input type="tel" id="phoneNumber" required>
+            </div>
+        </div>
+        <!-- 配送地址 & 到貨日期 -->
+        <div class="main-flex-w3ls-sectns">
+            <div class="form-w3-agile-text1">
+                <label for="orderUnit">配送地址：</label>
+                <input type="text" id="orderUnit" required>
+            </div>
+            <div class="form-w3-agile-text2">
+                <label for="eventDate">到貨日期：</label>
+                <input type="date" id="eventDate" required>
+            </div>
+        </div>
+        <!-- 勾選是否要填寫統編抬頭 -->
+        <div class="main-flex-w3ls-sectns">
+            <label style="font-weight: bold;">
+                <input type="checkbox" id="showInvoiceInfo" style="margin-right: 8px;">
+                我要填寫統編抬頭
+            </label>
+        </div>
+        <!-- 發票資訊 -->
+        <div class="main-flex-w3ls-sectns" id="invoiceSection" style="display: none;">
+            <div class="form-w3-agile-text1">
+                <label for="invoiceTitle">收據抬頭：</label>
+                <input type="text" id="invoiceTitle" placeholder="若無填寫則與收件人姓名一致">
+            </div>
+            <div class="form-w3-agile-text2">
+                <label for="invoiceNumber">統一編號：</label>
+                <input type="text" id="invoiceNumber" placeholder="若無請跳過">
+            </div>
+        </div>
+        <!-- 希望配達時段 -->
+        <div class="main-flex-w3ls-sectns">
+            <div class="form-w3-agile-text1" style="flex: 1 1 48%;">
+                <label for="deliveryTime">希望配達時段(實際配達時間須以黑貓宅急便公司安排為主)：</label>
+                <select id="deliveryTime" required>
+                    <option value="" disabled selected>請選擇時段</option>
+                    <option value="不指定">不指定</option>
+                    <option value="13時前">13時前</option>
+                    <option value="14時-18時">14時-18時</option>
+                </select>
+            </div>
+            <div style="flex: 1 1 48%;"></div> <!-- 空白右半邊 -->
+        </div>
+        <!-- 分裝方式 -->
+        <h3 class="sub-heading-agileits">分裝方式(若選擇無意見，則會以同口味放一盒喔)</h3>
+        <div class="main-flex-w3ls-sectns">
+            <div class="form-w3-agile-text1" style="flex: 1 1 48%;">
+                <select id="packingMethod" required>
+                    <option value="" disabled selected>請選擇分裝方式</option>
+                    <option value="無意見">無意見</option>
+                    <option value="同口味放一盒">同口味放一盒</option>
+                    <option value="平均分裝">平均分裝</option>
+                    <option value="其他">其他</option>
+                </select>
+            </div>
+            <div style="flex: 1 1 48%;"></div> <!-- 空白右半邊 -->
+        </div>
+        <!-- 訂購內容 -->
+        <h3 class="sub-heading-agileits">訂購內容</h3>
+        <p>一盒為10枝裝，總數量須為10的倍數喔</p>
+        <div class="flavor-container">
+            <div class="flavor-item">
+                <label>多多</label>
+                <input type="text" id="qtyDuoDuo" pattern="[0-9]*" inputmode="numeric" tabindex="1">
+            </div>
+            <div class="flavor-item">
+                <label>葡萄</label>
+                <input type="text" id="qtyGrape" pattern="[0-9]*" inputmode="numeric" tabindex="2">
+            </div>
+            <div class="flavor-item">
+                <label>荔枝</label>
+                <input type="text" id="qtyLychee" pattern="[0-9]*" inputmode="numeric" tabindex="3">
+            </div>
+            <div class="flavor-item">
+                <label>百香</label>
+                <input type="text" id="qtyPassionFruit" pattern="[0-9]*" inputmode="numeric" tabindex="4">
+            </div>
+            <div class="flavor-item">
+                <label>草莓</label>
+                <input type="text" id="qtyStrawberry" pattern="[0-9]*" inputmode="numeric" tabindex="5">
+            </div>
+        </div>
+        <!-- 計算結果 -->
+        <div id="totalCountText" class="total-summary">
+            <div class="total-row">
+                總枝數: <strong>0</strong> 枝。
+            </div>
+            <div class="total-sub">⤷ Q棒價格為 <strong>0</strong> 元。</div>
+            <div class="total-sub">⤷ 運費價格為 <strong>0</strong> 元。</div>
+            <div class="total-row">
+                總金額: <strong>0</strong> 元。
+            </div>
+        </div>
+        <!-- 送出按鈕 -->
+        <input type="submit" value="送出">
+    </form>
+</div>
+<!-- 在 <head> 或 <body> 中添加 flatpickr CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<!-- 修改 eventDate 輸入框 -->
+<input type="text" id="eventDate" required>
+<!-- 現有 flatpickr 和 script.js -->
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="script.js"></script>
+<!-- partial -->
+  <script  src="./script.js"></script>
+
+</body>
+</html>
