@@ -103,7 +103,9 @@ document.addEventListener("DOMContentLoaded", function () {
         });
         let isValid = totalCount % 10 === 0 && totalCount > 0;
         let displayText = `<div class="total-summary">`;
-        displayText += `<div class="total-row">總枝數: <strong>${totalCount}</strong> 枝。</div>`;
+        const boxes = totalCount / 10;
+        const boxesText = Number.isInteger(boxes) ? boxes : boxes.toFixed(1);
+        displayText += `<div class="total-row">總枝數: <strong>${totalCount}</strong> 枝，共 <strong>${boxesText}</strong> 盒。</div>`;
         if (totalCount > 0) {
             let qStickPrice = totalCount * 14;
             let shippingFee = 0;
@@ -228,7 +230,8 @@ document.addEventListener("DOMContentLoaded", function () {
         if (invoiceNumber) confirmationMessage += `💳 統一編號：${invoiceNumber}\n\n`;
         confirmationMessage += `✮✯✮✯✮✯✮\n\n`;
         confirmationMessage += `🛒 訂購內容：\n${orderDetails}\n\n`;
-        confirmationMessage += `🔢 總枝數：${totalCount} 枝\n\n`;
+        const boxesConfirm = Number.isInteger(totalCount / 10) ? (totalCount / 10) : (totalCount / 10).toFixed(1);
+        confirmationMessage += `🔢 總枝數：${totalCount} 枝，共 ${boxesConfirm} 盒\n\n`;
         confirmationMessage += `⤷ Q棒價格為 ${qStickPrice} 元\n`;
         confirmationMessage += `⤷ 運費價格為 ${shippingFee} 元\n\n`;
         confirmationMessage += `總金額：${totalPrice} 元。\n`;
