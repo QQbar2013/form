@@ -402,13 +402,13 @@ document.addEventListener("DOMContentLoaded", function () {
         const adjustedPrice = totalPrice - bonusCount * 12;
         // Validate total count (must be at least 168)
         if (totalCount < 168) {
-            alert(`總枝數 ${totalCount} 枝未達最低要求 168 枝，請再挑選 ${168 - totalCount} 枝。`);
+            alert(`總枝數 ${totalCount} 枝未達最低要求 168 枝喔😊。`);
             return;
         }
         // Validate buy-10-get-1-free
         if ((calculatedCount + bonusCount) !== totalCount) {
             const diff = (calculatedCount + bonusCount) - totalCount;
-            alert(`若要購買 ${calculatedCount} 枝，贈送 ${bonusCount} 枝。請再挑選 ${diff} 枝。`);
+            alert(`已選購 ${totalCount} 枝，可能使您無法完整獲得買十送一優惠，再麻煩您調整一下數量😊`);
             return;
         }
         // Create confirmation message
