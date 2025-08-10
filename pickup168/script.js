@@ -408,7 +408,7 @@ document.addEventListener("DOMContentLoaded", function () {
         // Validate buy-10-get-1-free
         if ((calculatedCount + bonusCount) !== totalCount) {
             const diff = (calculatedCount + bonusCount) - totalCount;
-            alert(`已選購 ${totalCount} 枝，可能使您無法完整獲得買十送一優惠，再麻煩您調整一下數量😊`);
+            alert(` ${totalCount} 枝無法拆解成『訂購 + 贈送』的買十送一組合，請減少或增加6枝😊`);
             return;
         }
         // Create confirmation message
@@ -538,7 +538,7 @@ document.addEventListener("DOMContentLoaded", function () {
             let suggestedBonus = Math.floor(suggestedBuy / 10);
             let difference = (suggestedBuy + suggestedBonus) - totalCount;
             displayText += `<div class="total-row error-text">
-                已選購 ${totalCount} 枝，可能使您無法完整獲得買十送一優惠，再麻煩您調整一下數量😊
+                ${totalCount} 枝無法拆解成『訂購 + 贈送』的買十送一組合，請減少或增加6枝😊
             </div>`;
             document.getElementById("totalCountText").innerHTML = displayText;
             return;
