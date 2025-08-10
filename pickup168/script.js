@@ -538,7 +538,7 @@ document.addEventListener("DOMContentLoaded", function () {
             let suggestedBonus = Math.floor(suggestedBuy / 10);
             let difference = (suggestedBuy + suggestedBonus) - totalCount;
             displayText += `<div class="total-row error-text">
-                若要購買 ${suggestedBuy} 枝，贈送 ${suggestedBonus} 枝。請再挑選 ${difference} 枝。
+                已選購 ${totalCount} 枝，可能使您無法完整獲得買十送一優惠，再麻煩您調整一下數量😊
             </div>`;
             document.getElementById("totalCountText").innerHTML = displayText;
             return;
