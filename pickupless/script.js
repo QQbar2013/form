@@ -456,8 +456,8 @@ document.getElementById("orderForm").addEventListener("submit", function (event)
         return;
     }
 
-    if (totalCount > 167) {
-        alert(`總枝數 ${totalCount} 枝超過上限 167 枝，請減少 ${totalCount - 167} 枝。`);
+    if (totalCount > 164) {
+        alert(`總枝數 ${totalCount} 枝超過上限 164 枝，請減少 ${totalCount - 164} 枝。`);
         return;
     }
 
