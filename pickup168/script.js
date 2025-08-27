@@ -244,50 +244,20 @@ document.addEventListener("DOMContentLoaded", function () {
     // Restrict invoice number to digits only
     document.getElementById("invoiceNumber").addEventListener("input", function () {
         this.value = this.value.replace(/\D/g, "");
+
     });
-    // Validate flavor inputs for multiples of 6
+    // 允許任意非負整數（移除 6 倍數限制）
     document.querySelectorAll(".flavor-item input[type='text']").forEach(input => {
         input.addEventListener("input", function () {
             this.value = this.value.replace(/\D/g, "");
-            const value = this.value.trim();
-            const parent = this.parentElement;
-            // Remove all existing reminders from all flavor items to prevent duplicates
-            document.querySelectorAll(".flavor-item .reminder-text").forEach(reminder => {
-                reminder.remove();
-            });
-            console.log(`Input ${this.id}: value = ${value}`); // Debug log
-            if (value !== "" && value !== "0" && parseInt(value) % 6 !== 0) {
-                console.log(`Invalid input for ${this.id}: ${value} is not a multiple of 6`);
-                this.style.border = "2px solid red";
-                const reminder = document.createElement("span");
-                reminder.className = "reminder-text";
-                reminder.textContent = "請填寫6的倍數喔☺️";
-                parent.appendChild(reminder);
-            } else {
-                console.log(`Valid input for ${this.id}: ${value}`);
-                this.style.border = "";
-            }
+            document.querySelectorAll(".flavor-item .reminder-text").forEach(r => r.remove());
+            this.style.border = "";
             calculateTotal();
         });
-        // Add blur event to catch additional changes (e.g., paste or mobile input)
         input.addEventListener("blur", function () {
-            const value = this.value.trim();
-            const parent = this.parentElement;
-            document.querySelectorAll(".flavor-item .reminder-text").forEach(reminder => {
-                reminder.remove();
-            });
-            console.log(`Blur ${this.id}: value = ${value}`); // Debug log
-            if (value !== "" && value !== "0" && parseInt(value) % 6 !== 0) {
-                console.log(`Invalid blur input for ${this.id}: ${value} is not a multiple of 6`);
-                this.style.border = "2px solid red";
-                const reminder = document.createElement("span");
-                reminder.className = "reminder-text";
-                reminder.textContent = "請填寫6的倍數喔☺️";
-                parent.appendChild(reminder);
-            } else {
-                console.log(`Valid blur input for ${this.id}: ${value}`);
-                this.style.border = "";
-            }
+            this.value = this.value.replace(/\D/g, "");
+            document.querySelectorAll(".flavor-item .reminder-text").forEach(r => r.remove());
+            this.style.border = "";
             calculateTotal();
         });
     });
@@ -350,23 +320,7 @@ document.addEventListener("DOMContentLoaded", function () {
             return;
         }
         pickupLocationElement.dataset.clicked = "true";
-        // Validate flavor inputs for multiples of 6
-        const flavorInputs = document.querySelectorAll(".flavor-item input[type='text']");
-        let invalidFlavors = [];
-        flavorInputs.forEach(input => {
-            const value = input.value.trim();
-            const flavorName = input.parentElement.querySelector("label").textContent;
-            if (value !== "" && value !== "0" && parseInt(value) % 6 !== 0) {
-                invalidFlavors.push(flavorName);
-                input.style.border = "2px solid red";
-            } else {
-                input.style.border = "";
-            }
         });
-        if (invalidFlavors.length > 0) {
-            alert("以下口味數量需為6的倍數喔☺️：\n\n" + invalidFlavors.join("\n") );
-            return;
-        }
         // Get form values
         const customerName = document.getElementById("customerName").value.trim();
         const phoneNumber = document.getElementById("phoneNumber").value.trim();
@@ -400,15 +354,15 @@ document.addEventListener("DOMContentLoaded", function () {
         const calculatedCount = Math.ceil(totalCount / 1.1);
         const bonusCount = Math.floor(calculatedCount / 10);
         const adjustedPrice = totalPrice - bonusCount * 12;
-        // Validate total count (must be at least 168)
-        if (totalCount < 168) {
-            alert(`總枝數 ${totalCount} 枝未達最低要求 168 枝喔😊。`);
+        // Validate total count (must be at least 165)
+        if (totalCount < 165) {
+            alert(`總枝數 ${totalCount} 枝未達最低要求 165 枝喔😊。`);
             return;
         }
         // Validate buy-10-get-1-free
         if ((calculatedCount + bonusCount) !== totalCount) {
             const diff = (calculatedCount + bonusCount) - totalCount;
-            alert(` ${totalCount} 枝無法拆解成『訂購 + 贈送』的買十送一組合，請減少或增加6枝😊`);
+            alert(` ${totalCount} 枝無法拆解成『訂購 + 贈送』的買十送一組合，請調整或增加枝數喔😊`);
             return;
         }
         // Create confirmation message
@@ -538,7 +492,7 @@ document.addEventListener("DOMContentLoaded", function () {
             let suggestedBonus = Math.floor(suggestedBuy / 10);
             let difference = (suggestedBuy + suggestedBonus) - totalCount;
             displayText += `<div class="total-row error-text">
-                ${totalCount} 枝無法拆解成『訂購 + 贈送』的買十送一組合，請減少或增加6枝😊
+                ${totalCount} 枝無法拆解成『訂購 + 贈送』的買十送一組合，請請調整或增加枝數喔😊
             </div>`;
             document.getElementById("totalCountText").innerHTML = displayText;
             return;
