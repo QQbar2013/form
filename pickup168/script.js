@@ -244,7 +244,6 @@ document.addEventListener("DOMContentLoaded", function () {
     // Restrict invoice number to digits only
     document.getElementById("invoiceNumber").addEventListener("input", function () {
         this.value = this.value.replace(/\D/g, "");
-
     });
     // 允許任意非負整數（移除 6 倍數限制）
     document.querySelectorAll(".flavor-item input[type='text']").forEach(input => {
@@ -261,6 +260,7 @@ document.addEventListener("DOMContentLoaded", function () {
             calculateTotal();
         });
     });
+
     function getOrderDetails() {
         const flavorData = [
             { name: "12元口味 - 多多", id: "qtyDuoDuo" },
@@ -320,7 +320,7 @@ document.addEventListener("DOMContentLoaded", function () {
             return;
         }
         pickupLocationElement.dataset.clicked = "true";
-        });
+
         // Get form values
         const customerName = document.getElementById("customerName").value.trim();
         const phoneNumber = document.getElementById("phoneNumber").value.trim();
@@ -492,7 +492,7 @@ document.addEventListener("DOMContentLoaded", function () {
             let suggestedBonus = Math.floor(suggestedBuy / 10);
             let difference = (suggestedBuy + suggestedBonus) - totalCount;
             displayText += `<div class="total-row error-text">
-                ${totalCount} 枝無法拆解成『訂購 + 贈送』的買十送一組合，請請調整或增加枝數喔😊
+                ${totalCount} 枝無法拆解成『訂購 + 贈送』的買十送一組合，請調整或增加枝數喔😊
             </div>`;
             document.getElementById("totalCountText").innerHTML = displayText;
             return;
