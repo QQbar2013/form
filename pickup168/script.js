@@ -366,7 +366,7 @@ document.addEventListener("DOMContentLoaded", function () {
             return;
         }
         // Create confirmation message
-        let confirmationMessage = `請確認您的訂單資訊：\n\n\n`;
+        let confirmationMessage = `請確認您的訂單資訊，若正確無誤請點選右下方"送出"：\n\n\n`;
         confirmationMessage += `📌 訂購人姓名：${customerName}\n\n`;
         confirmationMessage += `📞 聯絡電話：${phoneNumber}\n\n`;
         confirmationMessage += `🏫 訂購單位：${orderUnit}\n\n`;
