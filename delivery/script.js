@@ -219,7 +219,7 @@ document.addEventListener("DOMContentLoaded", function () {
             return;
         }
         // 確認訊息
-        let confirmationMessage = `請確認您的訂單資訊：\n\n\n`;
+        let confirmationMessage = `請確認您的訂單資訊，若正確無誤請點選右下方"送出"：\n\n\n`;
         confirmationMessage += `📌 收件人姓名：${customerName}\n\n`;
         confirmationMessage += `📞 收件人電話：${phoneNumber}\n\n`;
         confirmationMessage += `🏠 配送地址：${orderUnit}\n\n`;
