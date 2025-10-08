@@ -98,14 +98,14 @@ const locationConfig = {
     blacklist: {
       dates: [],
       ranges: [
-        { start: "2025-03-31", end: "2025-05-02" },
-        { start: "2025-05-04", end: "2025-05-24" },
-        { start: "2025-05-26", end: "2026-05-24" }
+        { start: "2025-10-08", end: "2025-10-29" },
+        { start: "2025-10-31", end: "2025-11-05" },
+        { start: "2025-11-07", end: "2099-05-24" }
       ]
     }
   },
   sanchongMorning: {
-    whitelist: ["2025-05-10"]
+    whitelist: ["2025-10-31"]
   }
 };
 
