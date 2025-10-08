@@ -99,7 +99,6 @@ const locationConfig = {
       dates: [],
       ranges: [
         { start: "2025-10-08", end: "2025-10-29" },
-        { start: "2025-10-31", end: "2025-11-05" },
         { start: "2025-11-07", end: "2099-05-24" }
       ]
     }
