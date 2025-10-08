@@ -74,8 +74,9 @@ document.addEventListener("DOMContentLoaded", function () {
             blacklist: {
                 dates: [],
                 ranges: [
-                    { start: "2025-10-08", end: "2025-10-29" },
-                    { start: "2025-11-07", end: "2099-05-24" }
+                    { start: "2025-10-08", end: "2025-10-30" },
+                    { start: "2025-11-01", end: "2025-11-06" },
+                    { start: "2025-11-08", end: "2099-05-24" }
                 ]
             }
         },
