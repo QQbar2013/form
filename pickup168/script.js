@@ -81,7 +81,10 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         },
         sanchongMorning: {
-            whitelist: ["2025-10-31"]
+            whitelist: [
+                "2025-10-31",
+                "2025-11-08"
+            ]
         }
     };
     // Restrict event date and pickup date input range
