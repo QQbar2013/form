@@ -105,7 +105,10 @@ const locationConfig = {
     }
   },
   sanchongMorning: {
-    whitelist: ["2025-10-31"]
+    whitelist: [
+          "2025-10-31",
+          "2025-11-08"
+    ]
   }
 };
 
