@@ -557,20 +557,24 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 function updatePromoMessage() {
-  const paid = window.calculatedCount || 0;  // ← 用你真正的 calculatedCount
-  const r = paid % 10;
+  const bar = document.getElementById("promoMsg");
+  if (!bar) return;
 
-  document.getElementById("promoMsg").textContent =
-    paid === 0 ? "買十送一中 🍡 可混搭口味喔～" :
-    r === 0  ? "🎉 太棒了，這是完美的買十送一組合 🍡💛" :
+  const paid = Number(window.calculatedCount) || 0;     // ← 直接用 calculatedCount
+  if (paid === 0) {
+    // 隱藏
+    bar.classList.remove("show");
+    bar.style.display = "none";   // 若沒用上面的 CSS，也能確實隱藏
+    return;
+  }
+
+  // 顯示
+  bar.style.display = "";         // 還原顯示（避免上一輪被設為 none）
+  bar.classList.add("show");      // 若有使用淡入 CSS，這行會讓它淡入
+
+  const r = paid % 10;
+  bar.textContent =
+    r === 0  ? "🎉 太棒了，這是完美的買十送一組合🍡💛" :
     r === 9  ? "再 1 枝就送 1 枝 ✨" :
                `再 ${10 - r} 枝就送 1 枝 🎁`;
 }
-
-window.addEventListener("scroll", () => {
-  if (window.scrollY > 40) {
-    document.body.classList.add("scrolled");
-  } else {
-    document.body.classList.remove("scrolled");
-  }
-});
