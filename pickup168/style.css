@@ -521,36 +521,51 @@ input[type="submit"]:hover {
     }
 }
 
-/* 買十送一提示條（滑動後吸頂不擋畫面） */
+/* === 提示條主體（桌機）=== */
 #promoMsg {
+  display: none;        /* ← 新增：避免初載佔位／閃爍 */
   position: sticky;
   top: 0;
-  z-index: 999;
-  background: #ffffff; /* 白色背景 */
-  color: #ff6600;      /* 你網站主色橘 */
-  font-weight: bold;
+  z-index: 10000;       /* ← 微調：壓過 date/time picker 等浮層 */
+  background: #fff;
+  color: #ff6600;
+  font-weight: 700;
   text-align: center;
   padding: 10px 0;
   font-size: 18px;
-  border-bottom: 1px solid rgba(0,0,0,0.1); /* 淺淡分隔線（很重要，讓它不會看起來像漂浮） */
-  transition: padding .25s ease, font-size .25s ease;
+  border-bottom: 1px solid rgba(0,0,0,0.1);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  opacity: 0;                /* ← 初始隱藏 */
+  pointer-events: none;      /* ← 初始不可點擊 */
+  transition: opacity .25s ease, padding .25s ease, font-size .25s ease;
+  width: 100%;          /* ← 補上，確保滿版 */
 }
 
-/* 滑動後縮小（不擋視窗） */
+/* 滾動縮小 */
 body.scrolled #promoMsg {
   padding: 6px 0;
   font-size: 15px;
 }
 
-
-#promoMsg {
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity .2s ease;
-}
-
+/* 顯示時 */
 #promoMsg.show {
+  display: block;       /* ← 新增 */
   opacity: 1;
   pointer-events: auto;
+}
+
+/* === 手機：改為固定在螢幕最上面 === */
+@media (max-width: 768px) {
+  #promoMsg {
+    position: fixed;
+    left: 0;
+    right: 0;
+    top: 0;
+  }
+
+  /* 當顯示提示條時，避免遮到畫面 */
+  body.promo-fixed-padding {
+    padding-top: var(--promoH, 48px); /* JS 會寫入實際高度 */
+  }
 }
 
