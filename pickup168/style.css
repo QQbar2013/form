@@ -526,22 +526,22 @@ input[type="submit"]:hover {
   position: sticky;
   top: 0;
   z-index: 999;
-  background: rgba(255, 186, 73, 0.3); /* 百香果橙 */
-  color: #7a3b00;
+  background: #ffffff; /* 白色背景 */
+  color: #ff6600;      /* 你網站主色橘 */
   font-weight: bold;
   text-align: center;
   padding: 10px 0;
   font-size: 18px;
-  backdrop-filter: blur(6px);
-  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  border-bottom: 1px solid rgba(0,0,0,0.1); /* 淺淡分隔線（很重要，讓它不會看起來像漂浮） */
   transition: padding .25s ease, font-size .25s ease;
 }
 
-/* 往下滑時自動變瘦，不擋視窗 */
+/* 滑動後縮小（不擋視窗） */
 body.scrolled #promoMsg {
   padding: 6px 0;
   font-size: 15px;
 }
+
 
 #promoMsg {
   opacity: 0;
