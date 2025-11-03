@@ -458,6 +458,9 @@ document.addEventListener("DOMContentLoaded", function () {
             document.querySelectorAll("input[name='pickupLocation']").forEach(radio => {
                 radio.dataset.clicked = "false";
             });
+            window.calculatedCount = 0;   // ← 新增
+            window.promoValid = true;     // ← 新增（恢復預設狀態）
+            updatePromoMessage();         // ← 新增（會把提示條隱藏）
             calculateTotal();
             alert(`非常感謝您的填寫，再麻煩您通知負責人員您已完成填單，以確認您的訂單與付訂，尚未付訂前皆未完成訂購程序喔^^
 若已超過服務時間(10:00-22:00)，則翌日處理，謝謝您^^
