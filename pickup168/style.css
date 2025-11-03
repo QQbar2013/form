@@ -526,7 +526,7 @@ input[type="submit"]:hover {
   position: sticky;
   top: 0;
   z-index: 999;
-  background: rgba(255, 186, 73, 0.95); /* 百香果橙 */
+  background: rgba(255, 186, 73, 0.3); /* 百香果橙 */
   color: #7a3b00;
   font-weight: bold;
   text-align: center;
@@ -542,3 +542,15 @@ body.scrolled #promoMsg {
   padding: 6px 0;
   font-size: 15px;
 }
+
+#promoMsg {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .2s ease;
+}
+
+#promoMsg.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+
