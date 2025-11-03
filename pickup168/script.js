@@ -488,6 +488,11 @@ document.addEventListener("DOMContentLoaded", function () {
         let totalCount = twelveYuanTotal + fifteenYuanTotal;
         let calculatedCount = Math.ceil(totalCount / 1.1);
         let bonusCount = Math.floor(calculatedCount / 10);
+        
+        // ✳️ 新增：先存起來，讓下面驗證不通過時也能更新提示條
+        window.calculatedCount = calculatedCount;
+
+        
         let isValid = (calculatedCount + bonusCount) === totalCount;
         let hasInput = totalCount > 0;
         let totalPrice = twelveYuanTotal * 12 + fifteenYuanTotal * 15 - bonusCount * 12;
@@ -504,8 +509,18 @@ document.addEventListener("DOMContentLoaded", function () {
                 ${totalCount} 枝無法拆解成『訂購 + 贈送』的買十送一組合，請調整或增加枝數喔😊
             </div>`;
             document.getElementById("totalCountText").innerHTML = displayText;
+
+            // ✳️ 新增：標記不合法，並立即刷新提示條（顯示「請幫我填寫贈送 1 枝的口味喔」）
+            window.promoValid = false;
+            updatePromoMessage();
+
+            
             return;
         }
+        
+        // ✳️ 新增：合法
+        window.promoValid = true;
+        
         if (hasInput) {
             displayText += `<div class="total-sub" style="color: red; font-weight: bold; margin: 0;">
                 ⤷ 訂購 ${calculatedCount} 枝 + 贈送 ${bonusCount} 枝。
@@ -522,7 +537,6 @@ document.addEventListener("DOMContentLoaded", function () {
         displayText += `</div>`;
         document.getElementById("totalCountText").innerHTML = displayText;
 
-        window.calculatedCount = calculatedCount; // ← 新增
         updatePromoMessage(); // ← 新增
     }
     // Disabled flavors handling
@@ -560,21 +574,30 @@ function updatePromoMessage() {
   const bar = document.getElementById("promoMsg");
   if (!bar) return;
 
-  const paid = Number(window.calculatedCount) || 0;     // ← 直接用 calculatedCount
+  const paid  = Number(window.calculatedCount) || 0;
+  const valid = window.promoValid !== false; // 預設視為 true
+
+  // 沒輸入 → 隱藏
   if (paid === 0) {
-    // 隱藏
     bar.classList.remove("show");
-    bar.style.display = "none";   // 若沒用上面的 CSS，也能確實隱藏
+    bar.style.display = "none";
     return;
   }
 
   // 顯示
-  bar.style.display = "";         // 還原顯示（避免上一輪被設為 none）
-  bar.classList.add("show");      // 若有使用淡入 CSS，這行會讓它淡入
+  bar.style.display = "";
+  bar.classList.add("show");
 
+  // 不合法 → 顯示「請幫我填寫贈送口味」
+  if (!valid) {
+    bar.textContent = "請幫我填寫「贈送 1 枝」的口味喔 😊";
+    return;
+  }
+
+  // 合法 → 顯示推廣文案（用 calculatedCount 尾數）
   const r = paid % 10;
   bar.textContent =
-    r === 0  ? "🎉 太棒了，這是完美的買十送一組合🍡💛" :
-    r === 9  ? "再 1 枝就送 1 枝 ✨" :
-               `再 ${10 - r} 枝就送 1 枝 🎁`;
+    r === 0 ? "🎉 太棒了，這是完美的買十送一組合🍡💛" :
+    r === 9 ? "再 1 枝就送 1 枝 ✨" :
+              `再 ${10 - r} 枝就送 1 枝 🎁`;
 }
