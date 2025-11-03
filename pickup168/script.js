@@ -577,10 +577,12 @@ function updatePromoMessage() {
   const paid  = Number(window.calculatedCount) || 0;
   const valid = window.promoValid !== false; // 預設視為 true
 
-  // 沒輸入 → 隱藏
+  // 沒輸入 → 隱藏 + 移除手機上邊距
   if (paid === 0) {
     bar.classList.remove("show");
     bar.style.display = "none";
+    document.body.classList.remove("promo-fixed-padding");
+    document.body.style.removeProperty('--promoH');
     return;
   }
 
@@ -591,13 +593,26 @@ function updatePromoMessage() {
   // 不合法 → 顯示「請幫我填寫贈送口味」
   if (!valid) {
     bar.textContent = "請幫我填寫「贈送 1 枝」的口味喔 😊";
-    return;
+  } else {
+    // 合法 → 顯示推廣文案
+    const r = paid % 10;
+    bar.textContent =
+      r === 0 ? "🎉 太棒了，這是完美的買十送一組合🍡💛" :
+      r === 9 ? "再 1 枝就送 1 枝 ✨" :
+                `再 ${10 - r} 枝就送 1 枝 🎁`;
   }
 
-  // 合法 → 顯示推廣文案（用 calculatedCount 尾數）
-  const r = paid % 10;
-  bar.textContent =
-    r === 0 ? "🎉 太棒了，這是完美的買十送一組合🍡💛" :
-    r === 9 ? "再 1 枝就送 1 枝 ✨" :
-              `再 ${10 - r} 枝就送 1 枝 🎁`;
+  // 🔧 手機：計算提示條高度，替 body 增加上邊距避免蓋住內容
+  //（桌機無影響；僅在 max-width:768px 的 CSS 才會生效）
+  requestAnimationFrame(() => {
+    const h = bar.offsetHeight || 48;
+    document.body.style.setProperty('--promoH', h + 'px');
+    document.body.classList.add('promo-fixed-padding');
+  });
 }
+window.addEventListener('resize', () => {
+  const bar = document.getElementById("promoMsg");
+  if (!bar || bar.style.display === 'none') return;
+  const h = bar.offsetHeight || 48;
+  document.body.style.setProperty('--promoH', h + 'px');
+});
