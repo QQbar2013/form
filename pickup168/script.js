@@ -521,6 +521,9 @@ document.addEventListener("DOMContentLoaded", function () {
         }
         displayText += `</div>`;
         document.getElementById("totalCountText").innerHTML = displayText;
+
+        window.calculatedCount = calculatedCount; // ← 新增
+        updatePromoMessage(); // ← 新增
     }
     // Disabled flavors handling
     const disabledFlavors = ["qtyMango"];
@@ -551,4 +554,23 @@ document.addEventListener("DOMContentLoaded", function () {
             document.getElementById("invoiceNumber").value = "";
         }
     });
+});
+
+function updatePromoMessage() {
+  const paid = window.calculatedCount || 0;  // ← 用你真正的 calculatedCount
+  const r = paid % 10;
+
+  document.getElementById("promoMsg").textContent =
+    paid === 0 ? "買十送一中 🍡 可混搭口味喔～" :
+    r === 0  ? "🎉 太棒了，這是完美的買十送一組合 🍡💛" :
+    r === 9  ? "再 1 枝就送 1 枝 ✨" :
+               `再 ${10 - r} 枝就送 1 枝 🎁`;
+}
+
+window.addEventListener("scroll", () => {
+  if (window.scrollY > 40) {
+    document.body.classList.add("scrolled");
+  } else {
+    document.body.classList.remove("scrolled");
+  }
 });
