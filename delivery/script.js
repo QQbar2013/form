@@ -214,11 +214,14 @@ document.addEventListener("DOMContentLoaded", function () {
         closeButton.textContent = "確認";
         closeButton.style = "background: #ff6600; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-top: 15px;";
         
-        // 關閉函數
+        // 關閉函數 (已修改為強制重載)
         const closeHandler = () => {
             document.body.removeChild(thankYouBox);
             document.body.removeChild(thankYouOverlay);
-            console.log("Thank you modal closed.");
+            
+            // 🚨 關鍵修改：強制頁面重載
+            window.location.reload(); 
+            console.log("Thank you modal closed. Page is reloading...");
         };
 
         closeButton.onclick = closeHandler;
@@ -331,7 +334,7 @@ document.addEventListener("DOMContentLoaded", function () {
         submitButton.textContent = "送出";
         submitButton.style = "background: #ff6600; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;";
         
-        // **最終優化後的送出邏輯：使用 requestAnimationFrame**
+        // 送出邏輯：使用 requestAnimationFrame 確保視覺更新
         submitButton.onclick = () => {
             // 禁用按鈕，防止二次點擊
             submitButton.disabled = true;
@@ -371,14 +374,13 @@ document.addEventListener("DOMContentLoaded", function () {
                 console.error("Form submission error:", error);
             });
             
-            // 3. 重置表單 (同步操作)
+            // 3. 重置表單 (同步操作) - 雖然最終會重載，但習慣上先執行重置。
             orderForm.reset();
             calculateTotal();
             
-            // 4. 【關鍵】使用 requestAnimationFrame 確保瀏覽器完成重繪後再顯示感謝模態框
-            // requestAnimationFrame 會在瀏覽器下一次重繪畫面之前執行。
+            // 4. 使用 requestAnimationFrame 確保瀏覽器完成重繪後再顯示感謝模態框
             window.requestAnimationFrame(() => {
-                showThankYouModal(); // 使用自定義的模態框取代 alert()
+                showThankYouModal(); 
                 console.log("Form submitted and reset. Showing custom thank you modal after frame repaint.");
             });
         };
