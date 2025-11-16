@@ -1,9 +1,11 @@
 document.addEventListener("DOMContentLoaded", function () {
     console.log("DOM fully loaded, initializing form...");
+    
     // 確認表單元素存在
     const orderForm = document.getElementById("orderForm");
     const totalCountText = document.getElementById("totalCountText");
     const eventDateInput = document.getElementById("eventDate");
+    
     if (!orderForm || !totalCountText || !eventDateInput) {
         console.error("Required elements not found:", {
             orderForm: !!orderForm,
@@ -12,6 +14,7 @@ document.addEventListener("DOMContentLoaded", function () {
         });
         return;
     }
+    
     // 清空表單
     orderForm.reset();
     totalCountText.innerHTML = `
@@ -19,12 +22,14 @@ document.addEventListener("DOMContentLoaded", function () {
             <div class="total-row">總枝數: <strong>0</strong> 枝。</div>
         </div>
     `;
+    
     // 初始化 flatpickr：到貨日期
     const eventDatePicker = flatpickr("#eventDate", {
         dateFormat: "Y-m-d",
         minDate: "today", // 限制為今天或以後
         maxDate: new Date().fp_incr(180)
     });
+    
     // Restrict event date input range
     eventDateInput.addEventListener("change", function () {
         setTimeout(() => {
@@ -42,6 +47,7 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         }, 1500);
     });
+    
     // 限制聯絡電話只能輸入數字
     const phoneNumberInput = document.getElementById("phoneNumber");
     if (phoneNumberInput) {
@@ -52,6 +58,7 @@ document.addEventListener("DOMContentLoaded", function () {
     } else {
         console.error("Phone number input not found!");
     }
+    
     // 限制統一編號只能輸入數字
     const invoiceNumberInput = document.getElementById("invoiceNumber");
     if (invoiceNumberInput) {
@@ -62,6 +69,7 @@ document.addEventListener("DOMContentLoaded", function () {
     } else {
         console.error("Invoice number input not found!");
     }
+    
     // 限制所有口味輸入框只能輸入數字
     const flavorInputs = document.querySelectorAll(".flavor-item input[type='text']");
     if (flavorInputs.length === 0) {
@@ -75,6 +83,7 @@ document.addEventListener("DOMContentLoaded", function () {
             });
         });
     }
+    
     // 控制發票區塊顯示與隱藏
     const showInvoiceInfo = document.getElementById("showInvoiceInfo");
     const invoiceSection = document.getElementById("invoiceSection");
@@ -90,6 +99,7 @@ document.addEventListener("DOMContentLoaded", function () {
     } else {
         console.error("Invoice checkbox or section not found!");
     }
+    
     // 計算總計
     function calculateTotal() {
         let totalCount = 0;
@@ -101,11 +111,13 @@ document.addEventListener("DOMContentLoaded", function () {
                 totalCount += qty;
             }
         });
+        
         let isValid = totalCount % 10 === 0 && totalCount > 0;
         let displayText = `<div class="total-summary">`;
         const boxes = totalCount / 10;
         const boxesText = Number.isInteger(boxes) ? boxes : boxes.toFixed(1);
         displayText += `<div class="total-row">總枝數: <strong>${totalCount}</strong> 枝，共 <strong>${boxesText}</strong> 盒。</div>`;
+        
         if (totalCount > 0) {
             let qStickPrice = totalCount * 14;
             let shippingFee = 0;
@@ -119,6 +131,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 shippingFee = 0;
             }
             let totalPrice = qStickPrice + shippingFee;
+            
             if (isValid) {
                 displayText += `<div class="total-sub">⤷ Q棒價格為 <strong>${qStickPrice}</strong> 元。</div>`;
                 displayText += `<div class="total-sub">⤷ 運費價格為 <strong>${shippingFee}</strong> 元。</div>`;
@@ -131,6 +144,7 @@ document.addEventListener("DOMContentLoaded", function () {
         totalCountText.innerHTML = displayText;
         console.log("Total calculated:", { totalCount, isValid });
     }
+    
     // 取得訂購內容
     function getOrderDetails() {
         const flavorData = [
@@ -143,6 +157,7 @@ document.addEventListener("DOMContentLoaded", function () {
         let orderDetails = "";
         let totalCount = 0;
         let qStickPrice = 0;
+        
         flavorData.forEach(flavor => {
             let quantity = parseInt(document.getElementById(flavor.id)?.value) || 0;
             if (quantity > 0) {
@@ -151,6 +166,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 qStickPrice += quantity * 14;
             }
         });
+        
         let shippingFee = 0;
         if (totalCount >= 10 && totalCount <= 30) {
             shippingFee = 160;
@@ -162,12 +178,15 @@ document.addEventListener("DOMContentLoaded", function () {
             shippingFee = 0;
         }
         let totalPrice = qStickPrice + shippingFee;
+        
         return { orderDetails, totalCount, qStickPrice, shippingFee, totalPrice };
     }
+    
     // 表單提交
     orderForm.addEventListener("submit", function (event) {
         event.preventDefault();
         console.log("Form submitted, validating...");
+        
         // 必填欄位驗證
         let requiredFields = [
             { id: "customerName", label: "收件人姓名" },
@@ -192,10 +211,11 @@ document.addEventListener("DOMContentLoaded", function () {
             console.log("Missing fields:", missingFields);
             return;
         }
+        
         // 驗證到貨日期是否為今天或以後
         const eventDate = document.getElementById("eventDate").value.trim();
         const today = new Date();
-        today.setHours(0, 0, 0, 0); // 將今天時間設為 00:00:00 以進行比較
+        today.setHours(0, 0, 0, 0); 
         const selectedDate = new Date(eventDate);
         if (selectedDate < today) {
             alert("到貨日期必須為今天或以後，請重新選擇日期。");
@@ -203,6 +223,7 @@ document.addEventListener("DOMContentLoaded", function () {
             console.log("Invalid date selected:", eventDate);
             return;
         }
+        
         // 取得表單資料
         const customerName = document.getElementById("customerName").value.trim();
         const phoneNumber = document.getElementById("phoneNumber").value.trim();
@@ -211,6 +232,7 @@ document.addEventListener("DOMContentLoaded", function () {
         const invoiceNumber = document.getElementById("invoiceNumber").value.trim();
         const deliveryTime = document.getElementById("deliveryTime").value.trim();
         const packingMethod = document.getElementById("packingMethod").value.trim();
+        
         // 訂購內容與數量驗證
         const { orderDetails, totalCount, qStickPrice, shippingFee, totalPrice } = getOrderDetails();
         if (totalCount % 10 !== 0 || totalCount === 0) {
@@ -218,6 +240,7 @@ document.addEventListener("DOMContentLoaded", function () {
             console.log("Invalid total count:", totalCount);
             return;
         }
+        
         // 確認訊息
         let confirmationMessage = `請確認您的訂單資訊，若正確無誤請點選右下方"送出"：\n\n\n`;
         confirmationMessage += `📌 收件人姓名：${customerName}\n\n`;
@@ -235,7 +258,8 @@ document.addEventListener("DOMContentLoaded", function () {
         confirmationMessage += `⤷ Q棒價格為 ${qStickPrice} 元\n`;
         confirmationMessage += `⤷ 運費價格為 ${shippingFee} 元\n\n`;
         confirmationMessage += `總金額：${totalPrice} 元。\n`;
-        // 彈出確認視窗
+        
+        // 彈出確認視窗結構
         let confirmBox = document.createElement("div");
         confirmBox.style = `
             position: fixed;
@@ -254,6 +278,7 @@ document.addEventListener("DOMContentLoaded", function () {
         messageText.textContent = confirmationMessage;
         let buttonContainer = document.createElement("div");
         buttonContainer.style = "display: flex; justify-content: space-between; margin-top: 20px;";
+        
         let cancelButton = document.createElement("button");
         cancelButton.textContent = "返回";
         cancelButton.style = "background: #ccc; color: #000; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;";
@@ -262,14 +287,22 @@ document.addEventListener("DOMContentLoaded", function () {
             document.body.removeChild(overlay);
             console.log("Form submission cancelled.");
         };
+        
         let submitButton = document.createElement("button");
         submitButton.textContent = "送出";
         submitButton.style = "background: #ff6600; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;";
+        
+        // **優化後的送出邏輯**
         submitButton.onclick = () => {
+            // 在處理數據前，先禁用按鈕，防止二次點擊
+            submitButton.disabled = true;
+            submitButton.textContent = "處理中...";
+
             // 1. 移除確認視窗和遮罩 (同步操作)
             document.body.removeChild(confirmBox);
             document.body.removeChild(overlay);
 
+            // 準備 FormData
             const formData = new FormData();
             formData.append("entry.707832955", customerName);
             formData.append("entry.148881326", phoneNumber);
@@ -304,26 +337,31 @@ document.addEventListener("DOMContentLoaded", function () {
             orderForm.reset();
             calculateTotal();
             
-            // 4. 【重要修改】使用 setTimeout 延遲 alert，確保 DOM 移除操作的視覺更新完成
-            setTimeout(() => {
+            // 4. 使用 Promise 延遲 alert，確保 DOM 移除操作的視覺更新完成
+            Promise.resolve().then(() => {
                 alert(`非常感謝您的填寫，再麻煩您通知負責人員您已完成填單，以確認您的訂單與付訂，尚未付訂前皆未完成訂購程序喔^^
 若已超過服務時間(10:00-22:00)，則翌日處理，謝謝您^^
 ※請注意再與服務人員確認且付訂前，此筆訂單尚未成立。`);
                 console.log("Form submitted and reset.");
-            }, 0); // 延遲 0ms 將 alert 推入事件隊列末尾
+            });
         };
+        // **優化後的送出邏輯結束**
+        
         buttonContainer.appendChild(cancelButton);
         buttonContainer.appendChild(submitButton);
         confirmBox.appendChild(messageText);
         confirmBox.appendChild(buttonContainer);
+        
         const overlay = document.createElement("div");
         overlay.style = "position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.3); z-index: 999;";
         document.body.appendChild(overlay);
         document.body.appendChild(confirmBox);
         console.log("Confirmation box displayed.");
     });
+    
     // 初始化計算
     calculateTotal();
+    
     function parseLocalDate(dateStr) {
         const [year, month, day] = dateStr.split("-");
         return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
