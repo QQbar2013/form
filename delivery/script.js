@@ -266,8 +266,10 @@ document.addEventListener("DOMContentLoaded", function () {
         submitButton.textContent = "送出";
         submitButton.style = "background: #ff6600; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;";
         submitButton.onclick = () => {
+            // 1. 移除確認視窗和遮罩 (同步操作)
             document.body.removeChild(confirmBox);
             document.body.removeChild(overlay);
+
             const formData = new FormData();
             formData.append("entry.707832955", customerName);
             formData.append("entry.148881326", phoneNumber);
@@ -286,6 +288,8 @@ document.addEventListener("DOMContentLoaded", function () {
             formData.append("entry.1473298831", qStickPrice.toString());
             formData.append("entry.1548748978", shippingFee.toString());
             formData.append("entry.1440063522", totalPrice.toString());
+            
+            // 2. 發送資料 (非同步操作)
             fetch("https://docs.google.com/forms/d/e/1FAIpQLScOiw6rFsnau8AxHKxr3zHgTofSyg6dIrky4Nhx7xoLqf8EWQ/formResponse", {
                 method: "POST",
                 mode: "no-cors",
@@ -295,12 +299,18 @@ document.addEventListener("DOMContentLoaded", function () {
             }).catch(error => {
                 console.error("Form submission error:", error);
             });
+            
+            // 3. 重置表單 (同步操作)
             orderForm.reset();
             calculateTotal();
-            alert(`非常感謝您的填寫，再麻煩您通知負責人員您已完成填單，以確認您的訂單與付訂，尚未付訂前皆未完成訂購程序喔^^
+            
+            // 4. 【重要修改】使用 setTimeout 延遲 alert，確保 DOM 移除操作的視覺更新完成
+            setTimeout(() => {
+                alert(`非常感謝您的填寫，再麻煩您通知負責人員您已完成填單，以確認您的訂單與付訂，尚未付訂前皆未完成訂購程序喔^^
 若已超過服務時間(10:00-22:00)，則翌日處理，謝謝您^^
 ※請注意再與服務人員確認且付訂前，此筆訂單尚未成立。`);
-            console.log("Form submitted and reset.");
+                console.log("Form submitted and reset.");
+            }, 0); // 延遲 0ms 將 alert 推入事件隊列末尾
         };
         buttonContainer.appendChild(cancelButton);
         buttonContainer.appendChild(submitButton);
