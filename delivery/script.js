@@ -1,11 +1,9 @@
 document.addEventListener("DOMContentLoaded", function () {
     console.log("DOM fully loaded, initializing form...");
-    
     // 確認表單元素存在
     const orderForm = document.getElementById("orderForm");
     const totalCountText = document.getElementById("totalCountText");
     const eventDateInput = document.getElementById("eventDate");
-    
     if (!orderForm || !totalCountText || !eventDateInput) {
         console.error("Required elements not found:", {
             orderForm: !!orderForm,
@@ -14,7 +12,6 @@ document.addEventListener("DOMContentLoaded", function () {
         });
         return;
     }
-    
     // 清空表單
     orderForm.reset();
     totalCountText.innerHTML = `
@@ -22,14 +19,12 @@ document.addEventListener("DOMContentLoaded", function () {
             <div class="total-row">總枝數: <strong>0</strong> 枝。</div>
         </div>
     `;
-    
     // 初始化 flatpickr：到貨日期
     const eventDatePicker = flatpickr("#eventDate", {
         dateFormat: "Y-m-d",
         minDate: "today", // 限制為今天或以後
         maxDate: new Date().fp_incr(180)
     });
-    
     // Restrict event date input range
     eventDateInput.addEventListener("change", function () {
         setTimeout(() => {
@@ -47,7 +42,6 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         }, 1500);
     });
-    
     // 限制聯絡電話只能輸入數字
     const phoneNumberInput = document.getElementById("phoneNumber");
     if (phoneNumberInput) {
@@ -58,7 +52,6 @@ document.addEventListener("DOMContentLoaded", function () {
     } else {
         console.error("Phone number input not found!");
     }
-    
     // 限制統一編號只能輸入數字
     const invoiceNumberInput = document.getElementById("invoiceNumber");
     if (invoiceNumberInput) {
@@ -69,7 +62,6 @@ document.addEventListener("DOMContentLoaded", function () {
     } else {
         console.error("Invoice number input not found!");
     }
-    
     // 限制所有口味輸入框只能輸入數字
     const flavorInputs = document.querySelectorAll(".flavor-item input[type='text']");
     if (flavorInputs.length === 0) {
@@ -83,7 +75,6 @@ document.addEventListener("DOMContentLoaded", function () {
             });
         });
     }
-    
     // 控制發票區塊顯示與隱藏
     const showInvoiceInfo = document.getElementById("showInvoiceInfo");
     const invoiceSection = document.getElementById("invoiceSection");
@@ -99,7 +90,6 @@ document.addEventListener("DOMContentLoaded", function () {
     } else {
         console.error("Invoice checkbox or section not found!");
     }
-    
     // 計算總計
     function calculateTotal() {
         let totalCount = 0;
@@ -111,13 +101,11 @@ document.addEventListener("DOMContentLoaded", function () {
                 totalCount += qty;
             }
         });
-        
         let isValid = totalCount % 10 === 0 && totalCount > 0;
         let displayText = `<div class="total-summary">`;
         const boxes = totalCount / 10;
         const boxesText = Number.isInteger(boxes) ? boxes : boxes.toFixed(1);
         displayText += `<div class="total-row">總枝數: <strong>${totalCount}</strong> 枝，共 <strong>${boxesText}</strong> 盒。</div>`;
-        
         if (totalCount > 0) {
             let qStickPrice = totalCount * 14;
             let shippingFee = 0;
@@ -131,7 +119,6 @@ document.addEventListener("DOMContentLoaded", function () {
                 shippingFee = 0;
             }
             let totalPrice = qStickPrice + shippingFee;
-            
             if (isValid) {
                 displayText += `<div class="total-sub">⤷ Q棒價格為 <strong>${qStickPrice}</strong> 元。</div>`;
                 displayText += `<div class="total-sub">⤷ 運費價格為 <strong>${shippingFee}</strong> 元。</div>`;
@@ -144,7 +131,6 @@ document.addEventListener("DOMContentLoaded", function () {
         totalCountText.innerHTML = displayText;
         console.log("Total calculated:", { totalCount, isValid });
     }
-    
     // 取得訂購內容
     function getOrderDetails() {
         const flavorData = [
@@ -157,7 +143,6 @@ document.addEventListener("DOMContentLoaded", function () {
         let orderDetails = "";
         let totalCount = 0;
         let qStickPrice = 0;
-        
         flavorData.forEach(flavor => {
             let quantity = parseInt(document.getElementById(flavor.id)?.value) || 0;
             if (quantity > 0) {
@@ -166,7 +151,6 @@ document.addEventListener("DOMContentLoaded", function () {
                 qStickPrice += quantity * 14;
             }
         });
-        
         let shippingFee = 0;
         if (totalCount >= 10 && totalCount <= 30) {
             shippingFee = 160;
@@ -178,16 +162,63 @@ document.addEventListener("DOMContentLoaded", function () {
             shippingFee = 0;
         }
         let totalPrice = qStickPrice + shippingFee;
-        
         return { orderDetails, totalCount, qStickPrice, shippingFee, totalPrice };
     }
-    
+
+    // 新增：顯示感謝訊息的自定義模態框
+    function showThankYouModal() {
+        const thankYouMessage = `非常感謝您的填寫，再麻煩您通知負責人員您已完成填單，以確認您的訂單與付訂，尚未付訂前皆未完成訂購程序喔^^
+若已超過服務時間(10:00-22:00)，則翌日處理，謝謝您^^
+※請注意再與服務人員確認且付訂前，此筆訂單尚未成立。`;
+
+        // 建立遮罩
+        const thankYouOverlay = document.createElement("div");
+        thankYouOverlay.style = "position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.3); z-index: 999;";
+        
+        // 建立訊息框
+        const thankYouBox = document.createElement("div");
+        thankYouBox.style = `
+            position: fixed;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            width: 90%; max-width: 400px;
+            z-index: 1001; text-align: center;
+        `;
+        
+        const messageText = document.createElement("p");
+        messageText.style = "font-size: 16px; white-space: pre-line; text-align: left;";
+        messageText.textContent = thankYouMessage;
+        
+        const closeButton = document.createElement("button");
+        closeButton.textContent = "確認";
+        closeButton.style = "background: #ff6600; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-top: 15px;";
+        
+        // 關閉函數
+        const closeHandler = () => {
+            document.body.removeChild(thankYouBox);
+            document.body.removeChild(thankYouOverlay);
+            // 點擊確認後才導向或重置，這裡直接讓它停留在重置後的頁面
+            console.log("Thank you modal closed.");
+        };
+
+        closeButton.onclick = closeHandler;
+        
+        thankYouBox.appendChild(messageText);
+        thankYouBox.appendChild(closeButton);
+        document.body.appendChild(thankYouOverlay);
+        document.body.appendChild(thankYouBox);
+    }
+
     // 表單提交
     orderForm.addEventListener("submit", function (event) {
         event.preventDefault();
         console.log("Form submitted, validating...");
         
-        // 必填欄位驗證
+        // 必填欄位驗證 (程式碼與前文相同，略)
         let requiredFields = [
             { id: "customerName", label: "收件人姓名" },
             { id: "phoneNumber", label: "收件人電話" },
@@ -212,10 +243,10 @@ document.addEventListener("DOMContentLoaded", function () {
             return;
         }
         
-        // 驗證到貨日期是否為今天或以後
+        // 日期驗證 (程式碼與前文相同，略)
         const eventDate = document.getElementById("eventDate").value.trim();
         const today = new Date();
-        today.setHours(0, 0, 0, 0); 
+        today.setHours(0, 0, 0, 0);
         const selectedDate = new Date(eventDate);
         if (selectedDate < today) {
             alert("到貨日期必須為今天或以後，請重新選擇日期。");
@@ -224,7 +255,7 @@ document.addEventListener("DOMContentLoaded", function () {
             return;
         }
         
-        // 取得表單資料
+        // 取得表單資料 (程式碼與前文相同，略)
         const customerName = document.getElementById("customerName").value.trim();
         const phoneNumber = document.getElementById("phoneNumber").value.trim();
         const orderUnit = document.getElementById("orderUnit").value.trim();
@@ -233,7 +264,7 @@ document.addEventListener("DOMContentLoaded", function () {
         const deliveryTime = document.getElementById("deliveryTime").value.trim();
         const packingMethod = document.getElementById("packingMethod").value.trim();
         
-        // 訂購內容與數量驗證
+        // 訂購內容與數量驗證 (程式碼與前文相同，略)
         const { orderDetails, totalCount, qStickPrice, shippingFee, totalPrice } = getOrderDetails();
         if (totalCount % 10 !== 0 || totalCount === 0) {
             alert("總數量須為10的倍數喔，再麻煩您調整數量喔😊。");
@@ -241,7 +272,7 @@ document.addEventListener("DOMContentLoaded", function () {
             return;
         }
         
-        // 確認訊息
+        // 確認訊息生成 (程式碼與前文相同，略)
         let confirmationMessage = `請確認您的訂單資訊，若正確無誤請點選右下方"送出"：\n\n\n`;
         confirmationMessage += `📌 收件人姓名：${customerName}\n\n`;
         confirmationMessage += `📞 收件人電話：${phoneNumber}\n\n`;
@@ -259,26 +290,19 @@ document.addEventListener("DOMContentLoaded", function () {
         confirmationMessage += `⤷ 運費價格為 ${shippingFee} 元\n\n`;
         confirmationMessage += `總金額：${totalPrice} 元。\n`;
         
-        // 彈出確認視窗結構
+        // 彈出確認視窗結構 (程式碼與前文相同，略)
         let confirmBox = document.createElement("div");
         confirmBox.style = `
-            position: fixed;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            background: #fff;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-            width: 90%; max-width: 500px;
-            max-height: 80vh; overflow-y: auto;
-            z-index: 1000; text-align: left;
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: #fff; padding: 20px; border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2); width: 90%; max-width: 500px;
+            max-height: 80vh; overflow-y: auto; z-index: 1000; text-align: left;
         `;
         let messageText = document.createElement("p");
         messageText.style = "font-size: 16px; white-space: pre-line;";
         messageText.textContent = confirmationMessage;
         let buttonContainer = document.createElement("div");
         buttonContainer.style = "display: flex; justify-content: space-between; margin-top: 20px;";
-        
         let cancelButton = document.createElement("button");
         cancelButton.textContent = "返回";
         cancelButton.style = "background: #ccc; color: #000; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;";
@@ -287,22 +311,21 @@ document.addEventListener("DOMContentLoaded", function () {
             document.body.removeChild(overlay);
             console.log("Form submission cancelled.");
         };
-        
         let submitButton = document.createElement("button");
         submitButton.textContent = "送出";
         submitButton.style = "background: #ff6600; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;";
         
-        // **優化後的送出邏輯**
+        // **最終優化後的送出邏輯**
         submitButton.onclick = () => {
-            // 在處理數據前，先禁用按鈕，防止二次點擊
+            // 禁用按鈕，防止二次點擊
             submitButton.disabled = true;
             submitButton.textContent = "處理中...";
 
-            // 1. 移除確認視窗和遮罩 (同步操作)
+            // 1. 移除自定義的確認視窗和遮罩 (同步操作)
             document.body.removeChild(confirmBox);
             document.body.removeChild(overlay);
-
-            // 準備 FormData
+            
+            // 2. 發送資料 (非同步操作)
             const formData = new FormData();
             formData.append("entry.707832955", customerName);
             formData.append("entry.148881326", phoneNumber);
@@ -322,7 +345,6 @@ document.addEventListener("DOMContentLoaded", function () {
             formData.append("entry.1548748978", shippingFee.toString());
             formData.append("entry.1440063522", totalPrice.toString());
             
-            // 2. 發送資料 (非同步操作)
             fetch("https://docs.google.com/forms/d/e/1FAIpQLScOiw6rFsnau8AxHKxr3zHgTofSyg6dIrky4Nhx7xoLqf8EWQ/formResponse", {
                 method: "POST",
                 mode: "no-cors",
@@ -337,28 +359,23 @@ document.addEventListener("DOMContentLoaded", function () {
             orderForm.reset();
             calculateTotal();
             
-            // 4. 使用 Promise 延遲 alert，確保 DOM 移除操作的視覺更新完成
+            // 4. 【關鍵】使用 Promise.resolve().then() 確保畫面更新後，再顯示「自定義」的感謝訊息
             Promise.resolve().then(() => {
-                alert(`非常感謝您的填寫，再麻煩您通知負責人員您已完成填單，以確認您的訂單與付訂，尚未付訂前皆未完成訂購程序喔^^
-若已超過服務時間(10:00-22:00)，則翌日處理，謝謝您^^
-※請注意再與服務人員確認且付訂前，此筆訂單尚未成立。`);
-                console.log("Form submitted and reset.");
+                showThankYouModal(); // 使用自定義的模態框取代 alert()
+                console.log("Form submitted and reset. Showing custom thank you modal.");
             });
         };
-        // **優化後的送出邏輯結束**
         
         buttonContainer.appendChild(cancelButton);
         buttonContainer.appendChild(submitButton);
         confirmBox.appendChild(messageText);
         confirmBox.appendChild(buttonContainer);
-        
         const overlay = document.createElement("div");
         overlay.style = "position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.3); z-index: 999;";
         document.body.appendChild(overlay);
         document.body.appendChild(confirmBox);
         console.log("Confirmation box displayed.");
     });
-    
     // 初始化計算
     calculateTotal();
     
