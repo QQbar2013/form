@@ -176,8 +176,8 @@ document.addEventListener("DOMContentLoaded", function () {
             isValid = false;
         } else if (location === "三重取貨點" && (time < "14:00" || time > "17:30")) {
             isValid = false;
-        } else if (location === "三重取貨點（早上）" && (time < "08:00" || time > "09:00")) {
-            isValid = false;
+        } else if (location === "三重取貨點（早上）") {
+            if (time < "08:00" || time > "09:00") isValid = false;
         }
         if (!isValid && !checkOnly) {
             alert(getPickupNotification(location));
@@ -300,7 +300,9 @@ document.addEventListener("DOMContentLoaded", function () {
         });
         return { orderDetails, totalCount, totalPrice, fifteenYuanTotal };
     }
-    document.getElementById("orderForm").addEventListener("submit", function (event) {
+    
+    // 改為 async 以便進行 fetch 核對
+    document.getElementById("orderForm").addEventListener("submit", async function (event) {
         event.preventDefault();
         // Validate required fields
         let requiredFields = [
@@ -328,7 +330,59 @@ document.addEventListener("DOMContentLoaded", function () {
             alert("請填寫以下欄位：\n\n" + missingFields.join("\n"));
             return;
         }
-        pickupLocationElement.dataset.clicked = "true";
+
+        // Get order details first
+        const { orderDetails, totalCount, totalPrice, fifteenYuanTotal } = getOrderDetails();
+        const calculatedCount = Math.ceil(totalCount / 1.1);
+        const bonusCount = Math.floor(calculatedCount / 10);
+        const adjustedPrice = totalPrice - bonusCount * 12;
+
+        // Basic Validations
+        if (totalCount < 165) {
+            alert(`總枝數 ${totalCount} 枝未達最低要求 165 枝喔😊。`);
+            return;
+        }
+        if ((calculatedCount + bonusCount) !== totalCount) {
+            alert(` ${totalCount} 枝無法拆解成『訂購 + 贈送』的買十送一組合，請調整或增加枝數喔😊`);
+            return;
+        }
+
+        // === [新增：產能總量限制檢查] ===
+        const gasUrl = "https://script.google.com/macros/s/AKfycbzE7wP4x3S5k9BOpooS7VkiYMPYdPP2Wx9KDWaOnXZ5GLtWqE1OCHnBnjIy8jQQdWjK/exec";
+        const submitBtn = event.submitter || document.querySelector("input[type='submit']");
+        
+        submitBtn.disabled = true;
+        const originalBtnText = submitBtn.value;
+        submitBtn.value = "正在核對產能中...";
+
+        try {
+            const checkResponse = await fetch(gasUrl, {
+                method: "POST",
+                body: JSON.stringify({
+                    eventDate: document.getElementById("eventDate").value,
+                    totalCount: totalCount,
+                    orderType: "mold" // 模具版固定參數
+                })
+            });
+            const checkResult = await checkResponse.json();
+
+            if (checkResult.status === "error") {
+                alert(checkResult.message);
+                submitBtn.disabled = false;
+                submitBtn.value = originalBtnText;
+                return; // 產能不足，中斷
+            }
+            console.log("產能檢查通過:", checkResult.message);
+
+        } catch (error) {
+            alert("系統連線異常，請稍後再試。");
+            submitBtn.disabled = false;
+            submitBtn.value = originalBtnText;
+            return;
+        }
+        submitBtn.disabled = false;
+        submitBtn.value = originalBtnText;
+        // === [產能檢查結束] ===
 
         // Get form values
         const customerName = document.getElementById("customerName").value.trim();
@@ -340,16 +394,13 @@ document.addEventListener("DOMContentLoaded", function () {
         const pickupLocation = pickupLocationElement.value;
         const pickupDate = document.getElementById("pickupDate").value.trim();
         const pickupTime = document.getElementById("pickupTime").value.trim();
-        // Validate pickup time
+
+        // Validate pickup time & date range again
         const pickupTimeInput = document.getElementById("pickupTime");
-        const isValidTime = validatePickupTime(pickupLocation, pickupTime, false, pickupTimeInput);
-        pickupTimeInput.dataset.valid = isValidTime ? "true" : "false";
-        if (pickupTimeInput.dataset.valid !== "true") {
-            alert("請確認您輸入的取貨時間是否正確喔！");
-            pickupTimeInput.focus();
-            return;
+        if (!validatePickupTime(pickupLocation, pickupTime, true)) {
+             alert("請確認您輸入的取貨時間是否正確喔！");
+             return;
         }
-        // Validate pickup date range
         const pickupDateObj = parseLocalDate(pickupDate);
         const eventDateObj = parseLocalDate(eventDate);
         const minPickupDate = new Date(eventDateObj);
@@ -358,22 +409,7 @@ document.addEventListener("DOMContentLoaded", function () {
             alert("請選擇活動日期前 30 天到活動當天的日期");
             return;
         }
-        // Get order details
-        const { orderDetails, totalCount, totalPrice, fifteenYuanTotal } = getOrderDetails();
-        const calculatedCount = Math.ceil(totalCount / 1.1);
-        const bonusCount = Math.floor(calculatedCount / 10);
-        const adjustedPrice = totalPrice - bonusCount * 12;
-        // Validate total count (must be at least 165)
-        if (totalCount < 165) {
-            alert(`總枝數 ${totalCount} 枝未達最低要求 165 枝喔😊。`);
-            return;
-        }
-        // Validate buy-10-get-1-free
-        if ((calculatedCount + bonusCount) !== totalCount) {
-            const diff = (calculatedCount + bonusCount) - totalCount;
-            alert(` ${totalCount} 枝無法拆解成『訂購 + 贈送』的買十送一組合，請調整或增加枝數喔😊`);
-            return;
-        }
+
         // Create confirmation message
         let confirmationMessage = `請確認您的訂單資訊，若正確無誤請點選右下方"送出"：\n\n\n`;
         confirmationMessage += `📌 訂購人姓名：${customerName}\n\n`;
@@ -393,19 +429,14 @@ document.addEventListener("DOMContentLoaded", function () {
         if (fifteenYuanTotal > 0) {
             confirmationMessage += ` ⤷ 贈送口味為 12 元口味。\n`;
         }
+        
         // Display confirmation dialog
         let confirmBox = document.createElement("div");
         confirmBox.style = `
-            position: fixed;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            background: #fff;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-            width: 90%; max-width: 500px;
-            max-height: 80vh; overflow-y: auto;
-            z-index: 1000; text-align: left;
+            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: #fff; padding: 20px; border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2); width: 90%; max-width: 500px;
+            max-height: 80vh; overflow-y: auto; z-index: 1000; text-align: left;
         `;
         let messageText = document.createElement("p");
         messageText.style = "font-size: 16px; white-space: pre-line;";
@@ -419,10 +450,11 @@ document.addEventListener("DOMContentLoaded", function () {
             document.body.removeChild(confirmBox);
             document.body.removeChild(overlay);
         };
-        let submitButton = document.createElement("button");
-        submitButton.textContent = "送出";
-        submitButton.style = "background: #ff6600; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;";
-        submitButton.onclick = () => {
+        let finalSubmitButton = document.createElement("button");
+        finalSubmitButton.textContent = "送出";
+        finalSubmitButton.style = "background: #ff6600; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;";
+        
+        finalSubmitButton.onclick = () => {
             document.body.removeChild(confirmBox);
             document.body.removeChild(overlay);
             const formData = new FormData();
@@ -445,29 +477,24 @@ document.addEventListener("DOMContentLoaded", function () {
             formData.append("entry.1676199734", document.getElementById("qtyOrange").value || "0");
             formData.append("entry.1154026181", document.getElementById("qtyPeach").value || "0");
             formData.append("entry.236488691", document.getElementById("qtyMango").value || "0");
-            console.log("🚀 送出前的 formData 項目：");
-            for (let [key, value] of formData.entries()) {
-                console.log(`${key}: ${value}`);
-            }
+            
             fetch("https://docs.google.com/forms/u/0/d/e/1FAIpQLSe6tzVbIUYkpADid6OwhxLitHyK4GgzQJMRHvLdwnNZA60mZg/formResponse", {
-                method: "POST",
-                mode: "no-cors",
-                body: formData
+                method: "POST", mode: "no-cors", body: formData
             });
             document.getElementById("orderForm").reset();
             document.querySelectorAll("input[name='pickupLocation']").forEach(radio => {
                 radio.dataset.clicked = "false";
             });
-            window.calculatedCount = 0;   // ← 新增
-            window.promoValid = true;     // ← 新增（恢復預設狀態）
-            updatePromoMessage();         // ← 新增（會把提示條隱藏）
+            window.calculatedCount = 0;
+            window.promoValid = true;
+            updatePromoMessage();
             calculateTotal();
             alert(`非常感謝您的填寫，再麻煩您通知負責人員您已完成填單，以確認您的訂單與付訂，尚未付訂前皆未完成訂購程序喔^^
 若已超過服務時間(10:00-22:00)，則翌日處理，謝謝您^^
 ※請注意再與服務人員確認且付訂前，此筆訂單尚未成立。`);
         };
         buttonContainer.appendChild(cancelButton);
-        buttonContainer.appendChild(submitButton);
+        buttonContainer.appendChild(finalSubmitButton);
         confirmBox.appendChild(messageText);
         confirmBox.appendChild(buttonContainer);
         const overlay = document.createElement("div");
@@ -475,6 +502,7 @@ document.addEventListener("DOMContentLoaded", function () {
         document.body.appendChild(overlay);
         document.body.appendChild(confirmBox);
     });
+
     function calculateTotal() {
         let twelveYuanTotal = 0;
         let fifteenYuanTotal = 0;
@@ -492,9 +520,7 @@ document.addEventListener("DOMContentLoaded", function () {
         let calculatedCount = Math.ceil(totalCount / 1.1);
         let bonusCount = Math.floor(calculatedCount / 10);
         
-        // ✳️ 新增：先存起來，讓下面驗證不通過時也能更新提示條
         window.calculatedCount = calculatedCount;
-
         
         let isValid = (calculatedCount + bonusCount) === totalCount;
         let hasInput = totalCount > 0;
@@ -505,25 +531,16 @@ document.addEventListener("DOMContentLoaded", function () {
             displayText += `<br>`;
         }
         if (!isValid) {
-            let suggestedBuy = calculatedCount;
-            let suggestedBonus = Math.floor(suggestedBuy / 10);
-            let difference = (suggestedBuy + suggestedBonus) - totalCount;
             displayText += `<div class="total-row error-text">
                 ${totalCount} 枝無法拆解成『訂購 + 贈送』的買十送一組合，請調整或增加枝數喔😊
             </div>`;
             document.getElementById("totalCountText").innerHTML = displayText;
-
-            // ✳️ 新增：標記不合法，並立即刷新提示條（顯示「請幫我填寫贈送 1 枝的口味喔」）
             window.promoValid = false;
             updatePromoMessage();
-
-            
             return;
         }
         
-        // ✳️ 新增：合法
         window.promoValid = true;
-        
         if (hasInput) {
             displayText += `<div class="total-sub" style="color: red; font-weight: bold; margin: 0;">
                 ⤷ 訂購 ${calculatedCount} 枝 + 贈送 ${bonusCount} 枝。
@@ -539,9 +556,9 @@ document.addEventListener("DOMContentLoaded", function () {
         }
         displayText += `</div>`;
         document.getElementById("totalCountText").innerHTML = displayText;
-
-        updatePromoMessage(); // ← 新增
+        updatePromoMessage();
     }
+
     // Disabled flavors handling
     const disabledFlavors = ["qtyMango"];
     document.querySelectorAll(".flavor-item input[type='text']").forEach(input => {
@@ -555,14 +572,16 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         });
     });
+
     ["optionLehua", "optionShilin", "optionSanchong", "optionSanchongMorning"].forEach(id => {
         document.getElementById(id).style.display = "none";
     });
+
     function parseLocalDate(dateStr) {
         const [year, month, day] = dateStr.split("-");
         return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
     }
-    // Control invoice section display
+
     document.getElementById("showInvoiceInfo").addEventListener("change", function () {
         const invoiceSection = document.getElementById("invoiceSection");
         invoiceSection.style.display = this.checked ? "flex" : "none";
@@ -578,9 +597,8 @@ function updatePromoMessage() {
   if (!bar) return;
 
   const paid  = Number(window.calculatedCount) || 0;
-  const valid = window.promoValid !== false; // 預設視為 true
+  const valid = window.promoValid !== false;
 
-  // 沒輸入 → 隱藏 + 移除手機上邊距
   if (paid === 0) {
     bar.classList.remove("show");
     bar.style.display = "none";
@@ -589,15 +607,12 @@ function updatePromoMessage() {
     return;
   }
 
-  // 顯示
   bar.style.display = "";
   bar.classList.add("show");
 
-  // 不合法 → 顯示「請幫我填寫贈送口味」
   if (!valid) {
     bar.textContent = "請幫我填寫「贈送 1 枝」的口味喔 😊";
   } else {
-    // 合法 → 顯示推廣文案
     const r = paid % 10;
     bar.textContent =
       r === 0 ? "🎉 太棒了，這是完美的買十送一組合🍡💛" :
@@ -605,14 +620,13 @@ function updatePromoMessage() {
                 `再 ${10 - r} 枝就送 1 枝 🎁`;
   }
 
-  // 🔧 手機：計算提示條高度，替 body 增加上邊距避免蓋住內容
-  //（桌機無影響；僅在 max-width:768px 的 CSS 才會生效）
   requestAnimationFrame(() => {
     const h = bar.offsetHeight || 48;
     document.body.style.setProperty('--promoH', h + 'px');
     document.body.classList.add('promo-fixed-padding');
   });
 }
+
 window.addEventListener('resize', () => {
   const bar = document.getElementById("promoMsg");
   if (!bar || bar.style.display === 'none') return;
