@@ -1,6 +1,10 @@
 document.addEventListener("DOMContentLoaded", function () {
-      // ✅ 每次載入頁面就清空表單
+    // ✅ 每次載入頁面就清空表單
     document.getElementById("orderForm").reset();
+
+    // ✅ 新增：初始化按鈕文字為「前往確認」
+    const initialSubmitBtn = document.querySelector("input[type='submit']");
+    if (initialSubmitBtn) initialSubmitBtn.value = "前往確認";
 
     // 清空取貨地點 radio 的 clicked 標記
     document.querySelectorAll("input[name='pickupLocation']").forEach(radio => {
@@ -15,105 +19,105 @@ document.addEventListener("DOMContentLoaded", function () {
     today.setHours(0, 0, 0, 0);
     let maxDate = new Date();
     maxDate.setDate(today.getDate() + 180);
-  // ✅ 初始化 flatpickr：活動日、取貨日、取貨時間
-const eventDatePicker = flatpickr("#eventDate", {
-  dateFormat: "Y-m-d",
-  minDate: "today",
-  maxDate: new Date().fp_incr(180),
-  onChange: function (selectedDates, dateStr, instance) {
-    if (!dateStr) return;
+    // ✅ 初始化 flatpickr：活動日、取貨日、取貨時間
+    const eventDatePicker = flatpickr("#eventDate", {
+        dateFormat: "Y-m-d",
+        minDate: "today",
+        maxDate: new Date().fp_incr(180),
+        onChange: function (selectedDates, dateStr, instance) {
+            if (!dateStr) return;
 
-    const eventDate = new Date(dateStr);
-    const minPickupDate = new Date(eventDate);
-    minPickupDate.setDate(eventDate.getDate() - 30);
+            const eventDate = new Date(dateStr);
+            const minPickupDate = new Date(eventDate);
+            minPickupDate.setDate(eventDate.getDate() - 30);
 
-    pickupDatePicker.set("minDate", minPickupDate);
-    pickupDatePicker.set("maxDate", dateStr);
+            pickupDatePicker.set("minDate", minPickupDate);
+            pickupDatePicker.set("maxDate", dateStr);
 
-    updateAvailableLocations(dateStr);
-  }
-});
+            updateAvailableLocations(dateStr);
+        }
+    });
 
-const pickupDatePicker = flatpickr("#pickupDate", {
-  dateFormat: "Y-m-d"
-});
+    const pickupDatePicker = flatpickr("#pickupDate", {
+        dateFormat: "Y-m-d"
+    });
 
-flatpickr("#pickupTime", {
-  enableTime: true,
-  noCalendar: true,
-  dateFormat: "H:i",
-  time_24hr: true,
-  minTime: "00:00",
-  maxTime: "23:59",
-  onOpen: function (selectedDates, dateStr, instance) {
-    const location = document.querySelector("input[name='pickupLocation']:checked")?.value;
+    flatpickr("#pickupTime", {
+        enableTime: true,
+        noCalendar: true,
+        dateFormat: "H:i",
+        time_24hr: true,
+        minTime: "00:00",
+        maxTime: "23:59",
+        onOpen: function (selectedDates, dateStr, instance) {
+            const location = document.querySelector("input[name='pickupLocation']:checked")?.value;
 
-    if (!location) {
-      // ✅ 未選擇地點 → 設定為不可選
-      instance.set("minTime", null);
-      instance.set("maxTime", null);
-      return;
-    }
+            if (!location) {
+                // ✅ 未選擇地點 → 設定為不可選
+                instance.set("minTime", null);
+                instance.set("maxTime", null);
+                return;
+            }
 
-    if (location === "樂華店") {
-      instance.set("minTime", "16:40");
-      instance.set("maxTime", "22:00");
-    } else if (location === "士林店") {
-      instance.set("minTime", "18:00");
-      instance.set("maxTime", "22:00");
-    } else if (location === "三重取貨點") {
-      instance.set("minTime", "14:00");
-      instance.set("maxTime", "17:30");
-    } else if (location === "三重取貨點（早上）") {
-      instance.set("minTime", "08:00");
-      instance.set("maxTime", "09:00");
-    } else {
-      instance.set("minTime", "00:00");
-      instance.set("maxTime", "23:59");
-    }
-  }
-});
+            if (location === "樂華店") {
+                instance.set("minTime", "16:40");
+                instance.set("maxTime", "22:00");
+            } else if (location === "士林店") {
+                instance.set("minTime", "18:00");
+                instance.set("maxTime", "22:00");
+            } else if (location === "三重取貨點") {
+                instance.set("minTime", "14:00");
+                instance.set("maxTime", "17:30");
+            } else if (location === "三重取貨點（早上）") {
+                instance.set("minTime", "08:00");
+                instance.set("maxTime", "09:00");
+            } else {
+                instance.set("minTime", "00:00");
+                instance.set("maxTime", "23:59");
+            }
+        }
+    });
 
 
 
     let eventDateInput = document.getElementById("eventDate");
-//    eventDateInput.setAttribute("min", today.toISOString().split("T")[0]);
-//    eventDateInput.setAttribute("max", maxDate.toISOString().split("T")[0]);
+    //    eventDateInput.setAttribute("min", today.toISOString().split("T")[0]);
+    //    eventDateInput.setAttribute("max", maxDate.toISOString().split("T")[0]);
 
-// 🔸第 10 行：加在所有程式最上面
-const locationConfig = {
-  lehua: {
-    blacklist: {
-      dates: [],
-      ranges: []
-    }
-  },
-  shilin: {
-    blacklist: {
-      dates: ["2025-05-03"],
-      ranges: []
-    }
-  },
-  sanchong: {
-    blacklist: {
-      dates: [],
-      ranges: [
-        { start: "2025-10-08", end: "2025-10-30" },
-        { start: "2025-11-01", end: "2025-11-06" },
-        { start: "2025-11-09", end: "2025-12-05" },
-        { start: "2025-12-07", end: "2099-05-24" }
-      ]
-    }
-  },
-  sanchongMorning: {
-    whitelist: [
-          "2025-10-31",
-          "2025-11-08",
-          "2025-12-06"
+    // 🔸第 10 行：加在所有程式最上面
+    const locationConfig = {
+        lehua: {
+            blacklist: {
+                dates: [],
+                ranges: []
+            }
+        },
+        shilin: {
+            blacklist: {
+                dates: ["2025-05-03"],
+                ranges: []
+            }
+        },
+        sanchong: {
+            blacklist: {
+                dates: [],
+                ranges: [
+                    { start: "2025-10-08", end: "2025-10-30" },
+                    { start: "2025-11-01", end: "2025-11-06" },
+                    { start: "2025-11-09", end: "2025-12-05" },
+                    { start: "2025-12-07", end: "2099-05-24" }
+                ]
+            }
+        },
+        sanchongMorning: {
+            whitelist: [
+                "2025-10-31",
+                "2025-11-08",
+                "2025-12-06"
 
-    ]
-  }
-};
+            ]
+        }
+    };
 
 
 
@@ -169,9 +173,9 @@ const locationConfig = {
         }, 500);
     });
     // ✅ 強制刷新取貨時間 flatpickr 的限制
-    let pickupTimeFlatpickr =     document.querySelector("#pickupTime")._flatpickr;
+    let pickupTimeFlatpickr = document.querySelector("#pickupTime")._flatpickr;
     if (pickupTimeFlatpickr) {
-      pickupTimeFlatpickr.setDate(pickupTimeFlatpickr.input.value,     true);
+        pickupTimeFlatpickr.setDate(pickupTimeFlatpickr.input.value, true);
     }
 
 
@@ -182,129 +186,129 @@ const locationConfig = {
     });
 
     // **取貨地點可取消選取**
-// 監聽取貨地點變更
-document.querySelectorAll(".pickup-option input[type='radio']").forEach(radio => {
-    radio.addEventListener("click", function () {
-        // 直接清除 clicked 標記，只記錄目前選的
-        document.querySelectorAll("input[name='pickupLocation']").forEach(r => {
-            r.dataset.clicked = "false";
-        });
-        this.dataset.clicked = "true";
+    // 監聽取貨地點變更
+    document.querySelectorAll(".pickup-option input[type='radio']").forEach(radio => {
+        radio.addEventListener("click", function () {
+            // 直接清除 clicked 標記，只記錄目前選的
+            document.querySelectorAll("input[name='pickupLocation']").forEach(r => {
+                r.dataset.clicked = "false";
+            });
+            this.dataset.clicked = "true";
 
-        const pickupTimeInput = document.getElementById("pickupTime");
-        const selectedTime = pickupTimeInput.value;
+            const pickupTimeInput = document.getElementById("pickupTime");
+            const selectedTime = pickupTimeInput.value;
 
-        if (selectedTime) {
-            const isValid = validatePickupTime(this.value, selectedTime, true);
-            if (!isValid) {
-                alert(getPickupNotification(this.value));
-                pickupTimeInput.value = "";
+            if (selectedTime) {
+                const isValid = validatePickupTime(this.value, selectedTime, true);
+                if (!isValid) {
+                    alert(getPickupNotification(this.value));
+                    pickupTimeInput.value = "";
+                }
+                pickupTimeInput.dataset.valid = isValid ? "true" : "false";
             }
-            pickupTimeInput.dataset.valid = isValid ? "true" : "false";
-        }
+        });
     });
-});
 
-// **取貨時間檢查函數**
-function validatePickupTime(location, time, checkOnly = false, inputElement = null) {
-    let isValid = true;
+    // **取貨時間檢查函數**
+    function validatePickupTime(location, time, checkOnly = false, inputElement = null) {
+        let isValid = true;
 
-    if (location === "樂華店" && (time < "16:40" || time > "22:00")) {
-        isValid = false;
-    } else if (location === "士林店" && (time < "18:00" || time > "22:00")) {
-        isValid = false;
-    } else if (location === "三重取貨點" && (time < "14:00" || time > "17:30")) {
-        isValid = false;
-    } else if (location === "三重取貨點（早上）" && (time < "08:00" || time > "09:00")) {
-        isValid = false;
-    }
-
-    if (!isValid && !checkOnly) {
-        alert(getPickupNotification(location));
-        if (inputElement) inputElement.value = ""; // ✅ 清空指定的輸入框
-    }
-
-    return isValid;
-}
-
-
-
-// **根據取貨地點顯示不同的通知**
-function getPickupNotification(location) {
-    if (location === "樂華店") {
-        return "樂華店取貨時間為 16:40 - 22:00喔！";
-    } else if (location === "士林店") {
-        return "士林店取貨時間為 18:00 - 22:00喔！";
-    } else if (location === "三重取貨點") {
-        return "三重取貨點取貨時間為 14:00 - 17:30喔！";
-    } else if (location === "三重取貨點（早上）") {
-        return "三重取貨點（早上）取貨時間為 08:00 - 09:00喔！";
-    }
-    return "請選擇正確的取貨地點。";
-}
-
-
-// 🔸第 130 行左右
-function updateAvailableLocations(selectedDateStr) {
-  const selectedDate = new Date(selectedDateStr);
-
-  const locations = {
-    lehua: document.getElementById("optionLehua"),
-    shilin: document.getElementById("optionShilin"),
-    sanchong: document.getElementById("optionSanchong"),
-    sanchongMorning: document.getElementById("optionSanchongMorning")
-  };
-
-  Object.keys(locations).forEach(key => {
-    const el = locations[key];
-
-    // ✅ 特殊處理三重早上：只在白名單且活動日＝取貨日才顯示
-if (key === "sanchongMorning") {
-  const pickupDateStr = document.getElementById("pickupDate").value;
-  const eventDateStr = document.getElementById("eventDate").value;
-  const whiteList = locationConfig.sanchongMorning.whitelist;
-
-  // ✅ 預設隱藏
-  let shouldShow = false;
-
-  if (
-    pickupDateStr &&
-    eventDateStr &&
-    pickupDateStr === eventDateStr &&
-    whiteList.includes(pickupDateStr)
-  ) {
-    shouldShow = true;
-  }
-
-  // 強制先隱藏，避免沒日期時還顯示
-  el.style.display = shouldShow ? "flex" : "none";
-  return;
-}
-
-
-
-    // 其他一般地點 → 判斷黑名單邏輯
-    const { blacklist } = locationConfig[key];
-    let shouldHide = false;
-
-    if (blacklist.dates.includes(selectedDateStr)) {
-      shouldHide = true;
-    }
-
-    if (!shouldHide && blacklist.ranges.length > 0) {
-      for (let range of blacklist.ranges) {
-        const start = new Date(range.start);
-        const end = new Date(range.end);
-        if (selectedDate >= start && selectedDate <= end) {
-          shouldHide = true;
-          break;
+        if (location === "樂華店" && (time < "16:40" || time > "22:00")) {
+            isValid = false;
+        } else if (location === "士林店" && (time < "18:00" || time > "22:00")) {
+            isValid = false;
+        } else if (location === "三重取貨點" && (time < "14:00" || time > "17:30")) {
+            isValid = false;
+        } else if (location === "三重取貨點（早上）" && (time < "08:00" || time > "09:00")) {
+            isValid = false;
         }
-      }
+
+        if (!isValid && !checkOnly) {
+            alert(getPickupNotification(location));
+            if (inputElement) inputElement.value = ""; // ✅ 清空指定的輸入框
+        }
+
+        return isValid;
     }
 
-    el.style.display = shouldHide ? "none" : "flex";
-  });
-}
+
+
+    // **根據取貨地點顯示不同的通知**
+    function getPickupNotification(location) {
+        if (location === "樂華店") {
+            return "樂華店取貨時間為 16:40 - 22:00喔！";
+        } else if (location === "士林店") {
+            return "士林店取貨時間為 18:00 - 22:00喔！";
+        } else if (location === "三重取貨點") {
+            return "三重取貨點取貨時間為 14:00 - 17:30喔！";
+        } else if (location === "三重取貨點（早上）") {
+            return "三重取貨點（早上）取貨時間為 08:00 - 09:00喔！";
+        }
+        return "請選擇正確的取貨地點。";
+    }
+
+
+    // 🔸第 130 行左右
+    function updateAvailableLocations(selectedDateStr) {
+        const selectedDate = new Date(selectedDateStr);
+
+        const locations = {
+            lehua: document.getElementById("optionLehua"),
+            shilin: document.getElementById("optionShilin"),
+            sanchong: document.getElementById("optionSanchong"),
+            sanchongMorning: document.getElementById("optionSanchongMorning")
+        };
+
+        Object.keys(locations).forEach(key => {
+            const el = locations[key];
+
+            // ✅ 特殊處理三重早上：只在白名單且活動日＝取貨日才顯示
+            if (key === "sanchongMorning") {
+                const pickupDateStr = document.getElementById("pickupDate").value;
+                const eventDateStr = document.getElementById("eventDate").value;
+                const whiteList = locationConfig.sanchongMorning.whitelist;
+
+                // ✅ 預設隱藏
+                let shouldShow = false;
+
+                if (
+                    pickupDateStr &&
+                    eventDateStr &&
+                    pickupDateStr === eventDateStr &&
+                    whiteList.includes(pickupDateStr)
+                ) {
+                    shouldShow = true;
+                }
+
+                // 強制先隱藏，避免沒日期時還顯示
+                el.style.display = shouldShow ? "flex" : "none";
+                return;
+            }
+
+
+
+            // 其他一般地點 → 判斷黑名單邏輯
+            const { blacklist } = locationConfig[key];
+            let shouldHide = false;
+
+            if (blacklist.dates.includes(selectedDateStr)) {
+                shouldHide = true;
+            }
+
+            if (!shouldHide && blacklist.ranges.length > 0) {
+                for (let range of blacklist.ranges) {
+                    const start = new Date(range.start);
+                    const end = new Date(range.end);
+                    if (selectedDate >= start && selectedDate <= end) {
+                        shouldHide = true;
+                        break;
+                    }
+                }
+            }
+
+            el.style.display = shouldHide ? "none" : "flex";
+        });
+    }
 
 
 
@@ -313,21 +317,20 @@ if (key === "sanchongMorning") {
     let pickupTimeInput = document.getElementById("pickupTime");
     pickupTimeInput.setAttribute("step", "60");
 
-pickupTimeInput.addEventListener("blur", function () {
-    const selectedTime = this.value;
-    const selectedLocation = document.querySelector(".pickup-option input[type='radio']:checked");
-    if (!selectedLocation) return;
+    pickupTimeInput.addEventListener("blur", function () {
+        const selectedTime = this.value;
+        const selectedLocation = document.querySelector(".pickup-option input[type='radio']:checked");
+        if (!selectedLocation) return;
 
-    const isValid = validatePickupTime(selectedLocation.value, selectedTime, false, this);
+        const isValid = validatePickupTime(selectedLocation.value, selectedTime, false, this);
 
-    // ✅ 新增這一行：標記合法狀態
-    this.dataset.valid = isValid ? "true" : "false";
-});
-
-
+        // ✅ 新增這一行：標記合法狀態
+        this.dataset.valid = isValid ? "true" : "false";
+    });
 
 
-  
+
+
     // 限制統一編號只能輸入數字
     document.getElementById("invoiceNumber").addEventListener("input", function () {
         this.value = this.value.replace(/\D/g, "");
@@ -341,246 +344,285 @@ pickupTimeInput.addEventListener("blur", function () {
         });
     });
 
-function getOrderDetails() {
-    const flavorData = [
-        { name: "12元口味 - 多多", id: "qtyDuoDuo" },
-        { name: "12元口味 - 葡萄", id: "qtyGrape" },
-        { name: "12元口味 - 荔枝", id: "qtyLychee" },
-        { name: "12元口味 - 百香果", id: "qtyPassionFruit" },
-        { name: "12元口味 - 草莓", id: "qtyStrawberry" },
-        { name: "15元口味 - 蘋果", id: "qtyApple" },
-        { name: "15元口味 - 鳳梨", id: "qtyPineapple" },
-        { name: "15元口味 - 柳橙", id: "qtyOrange" },
-        { name: "15元口味 - 水蜜桃", id: "qtyPeach" },
-        { name: "15元口味 - 芒果", id: "qtyMango" }
-    ];
+    function getOrderDetails() {
+        const flavorData = [
+            { name: "12元口味 - 多多", id: "qtyDuoDuo" },
+            { name: "12元口味 - 葡萄", id: "qtyGrape" },
+            { name: "12元口味 - 荔枝", id: "qtyLychee" },
+            { name: "12元口味 - 百香果", id: "qtyPassionFruit" },
+            { name: "12元口味 - 草莓", id: "qtyStrawberry" },
+            { name: "15元口味 - 蘋果", id: "qtyApple" },
+            { name: "15元口味 - 鳳梨", id: "qtyPineapple" },
+            { name: "15元口味 - 柳橙", id: "qtyOrange" },
+            { name: "15元口味 - 水蜜桃", id: "qtyPeach" },
+            { name: "15元口味 - 芒果", id: "qtyMango" }
+        ];
 
-    let orderDetails = "";
-    let totalCount = 0;
-    let totalPrice = 0;
-    let fifteenYuanTotal = 0;
+        let orderDetails = "";
+        let totalCount = 0;
+        let totalPrice = 0;
+        let fifteenYuanTotal = 0;
 
-    flavorData.forEach(flavor => {
-        let quantity = parseInt(document.getElementById(flavor.id)?.value) || 0;
-        if (quantity > 0) {
-            orderDetails += `${flavor.name}：${quantity} 枝\n`;
-            totalCount += quantity;
-            totalPrice += flavor.name.includes("12元") ? quantity * 12 : quantity * 15;
+        flavorData.forEach(flavor => {
+            let quantity = parseInt(document.getElementById(flavor.id)?.value) || 0;
+            if (quantity > 0) {
+                orderDetails += `${flavor.name}：${quantity} 枝\n`;
+                totalCount += quantity;
+                totalPrice += flavor.name.includes("12元") ? quantity * 12 : quantity * 15;
 
-            if (flavor.name.includes("15元")) {
-                fifteenYuanTotal += quantity;
+                if (flavor.name.includes("15元")) {
+                    fifteenYuanTotal += quantity;
+                }
             }
-        }
-    });
-
-    return { orderDetails, totalCount, totalPrice, fifteenYuanTotal };
-}
-
-  
-document.getElementById("orderForm").addEventListener("submit", function (event) {
-    event.preventDefault();
-
-    // ✅ 必填欄位驗證（顯示缺漏欄位名稱）
-    let requiredFields = [
-        { id: "customerName", label: "訂購人姓名" },
-        { id: "phoneNumber", label: "聯絡電話" },
-        { id: "eventDate", label: "活動日期" },
-        { id: "pickupDate", label: "取貨日期" },
-        { id: "pickupTime", label: "取貨時間" }
-    ];
-
-    let missingFields = [];
-
-    requiredFields.forEach(field => {
-        let input = document.getElementById(field.id);
-        if (!input || !input.value.trim()) {
-            missingFields.push(field.label);
-            if (input) input.style.border = "2px solid red";
-        } else {
-            input.style.border = "";
-        }
-    });
-
-    let pickupLocationElement = document.querySelector("input[name='pickupLocation']:checked");
-    if (!pickupLocationElement) {
-        missingFields.push("取貨地點");
-    }
-
-    if (missingFields.length > 0) {
-        alert("請填寫以下欄位：\n\n" + missingFields.join("\n"));
-        return;
-    }
-
-    // 標記已選地點（避免 radio 被取消）
-    pickupLocationElement.dataset.clicked = "true";
-
-    // ✅ 取值
-    const customerName = document.getElementById("customerName").value.trim();
-    const phoneNumber = document.getElementById("phoneNumber").value.trim();
-    const orderUnit = document.getElementById("orderUnit").value.trim();
-    const eventDate = document.getElementById("eventDate").value.trim();
-    const invoiceTitle = document.getElementById("invoiceTitle").value.trim();
-    const invoiceNumber = document.getElementById("invoiceNumber").value.trim();
-    const pickupLocation = pickupLocationElement.value;
-    const pickupDate = document.getElementById("pickupDate").value.trim();
-    const pickupTime = document.getElementById("pickupTime").value.trim();
-
-    // ✅ 再次嚴格檢查時間
-    const pickupTimeInput = document.getElementById("pickupTime");
-
-    // 再次驗證合法時間（萬一 blur 沒觸發）
-    const isValidTime = validatePickupTime(pickupLocation, pickupTime, false, pickupTimeInput);
-    pickupTimeInput.dataset.valid = isValidTime ? "true" : "false";
-
-    if (pickupTimeInput.dataset.valid !== "true") {
-        alert("請確認您輸入的取貨時間是否正確喔！");
-        pickupTimeInput.focus();
-        return;
-    }
-
-
-    // ✅【取貨日區間驗證】
-    const pickupDateObj = parseLocalDate(pickupDate);
-    const eventDateObj = parseLocalDate(eventDate);
-    const minPickupDate = new Date(eventDateObj);
-    minPickupDate.setDate(eventDateObj.getDate() - 30);
-    if (pickupDateObj < minPickupDate || pickupDateObj > eventDateObj) {
-        alert("請選擇活動日期前 30 天到活動當天的日期");
-        return;
-    }
-
-    // ✅ 訂購內容
-    const { orderDetails, totalCount, totalPrice, fifteenYuanTotal } = getOrderDetails();
-    const calculatedCount = Math.ceil(totalCount / 1.1);
-    const bonusCount = Math.floor(calculatedCount / 10);
-    const adjustedPrice = totalPrice - bonusCount * 12;
-
-    // ✅ 買十送一數量驗證
-    if ((calculatedCount + bonusCount) !== totalCount) {
-        const diff = (calculatedCount + bonusCount) - totalCount;
-        alert(`若要購買 ${calculatedCount} 枝，贈送 ${bonusCount} 枝。請再挑選 ${diff} 枝。`);
-        return;
-    }
-
-    if (totalCount > 164) {
-        alert(`總枝數 ${totalCount} 枝超過上限 164 枝，請減少 ${totalCount - 164} 枝。`);
-        return;
-    }
-
-    // ✅ 確認訊息組合
-    let confirmationMessage = `請確認您的訂單資訊，若正確無誤請點選右下方"送出"\n\n\n`;
-    confirmationMessage += `📌 訂購人姓名：${customerName}\n\n`;
-    confirmationMessage += `📞 聯絡電話：${phoneNumber}\n\n`;
-    confirmationMessage += `🏫 訂購單位：${orderUnit}\n\n`;
-    confirmationMessage += `📅 活動日期：${eventDate}\n\n`;
-    if (invoiceTitle) confirmationMessage += `🧾 收據抬頭：${invoiceTitle}\n\n`;
-    if (invoiceNumber) confirmationMessage += `💳 統一編號：${invoiceNumber}\n\n`;
-    confirmationMessage += `✮✯✮✯✮✯✮\n\n`;
-    confirmationMessage += `🏬 取貨地點：${pickupLocation}\n\n`;
-    confirmationMessage += `🏬 取貨日期：${pickupDate}\n\n`;
-    confirmationMessage += `⏰ 取貨時間：${pickupTime}\n\n`;
-    confirmationMessage += `--\n`;
-    confirmationMessage += `🛒 訂購內容：\n${orderDetails}\n\n`;
-    confirmationMessage += `🔢 總枝數：${totalCount} 枝，共 ${adjustedPrice} 元。\n\n`;
-    confirmationMessage += `    ⤷ 訂購 ${calculatedCount} 枝 + 贈送 ${bonusCount} 枝。\n`;
-    if (fifteenYuanTotal > 0) {
-        confirmationMessage += `    ⤷ 贈送口味為 12 元口味。\n`;
-    }
-
-    // ✅ 彈出視窗
-    let confirmBox = document.createElement("div");
-    confirmBox.style = `
-        position: fixed;
-        top: 50%; left: 50%;
-        transform: translate(-50%, -50%);
-        background: #fff;
-        padding: 20px;
-        border-radius: 10px;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-        width: 90%; max-width: 500px;
-        max-height: 80vh; overflow-y: auto;
-        z-index: 1000; text-align: left;
-    `;
-
-    let messageText = document.createElement("p");
-    messageText.style = "font-size: 16px; white-space: pre-line;";
-    messageText.textContent = confirmationMessage;
-
-    let buttonContainer = document.createElement("div");
-    buttonContainer.style = "display: flex; justify-content: space-between; margin-top: 20px;";
-
-    let cancelButton = document.createElement("button");
-    cancelButton.textContent = "返回";
-    cancelButton.style = "background: #ccc; color: #000; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;";
-    cancelButton.onclick = () => {
-        document.body.removeChild(confirmBox);
-        document.body.removeChild(overlay);
-    };
-
-    let submitButton = document.createElement("button");
-    submitButton.textContent = "送出";
-    submitButton.style = "background: #ff6600; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;";
-    submitButton.onclick = () => {
-        document.body.removeChild(confirmBox);
-        document.body.removeChild(overlay);
-
-        const formData = new FormData();
-        formData.append("entry.153434121", customerName);
-        formData.append("entry.1286553898", phoneNumber);
-        formData.append("entry.29286919", orderUnit);
-        formData.append("entry.1406293128", invoiceTitle);
-        formData.append("entry.307667347", invoiceNumber);
-        formData.append("entry.2132577574", eventDate);
-        formData.append("entry.969880587", pickupLocation);
-        formData.append("entry.355577760", pickupDate);
-        formData.append("entry.1822166015", pickupTime);
-
-        // 各口味
-        formData.append("entry.316562737", document.getElementById("qtyDuoDuo").value || "0");
-        formData.append("entry.2045995529", document.getElementById("qtyGrape").value || "0");
-        formData.append("entry.632518397", document.getElementById("qtyLychee").value || "0");
-        formData.append("entry.1388020976", document.getElementById("qtyPassionFruit").value || "0");
-        formData.append("entry.1942859558", document.getElementById("qtyStrawberry").value || "0");
-        formData.append("entry.761436590", document.getElementById("qtyApple").value || "0");
-        formData.append("entry.454770086", document.getElementById("qtyPineapple").value || "0");
-        formData.append("entry.1676199734", document.getElementById("qtyOrange").value || "0");
-        formData.append("entry.1154026181", document.getElementById("qtyPeach").value || "0");
-        formData.append("entry.236488691", document.getElementById("qtyMango").value || "0");
-        formData.append("entry.1110750172", document.getElementById("qtyStrawberryDuoDuo")?.value || "0");
-
-        console.log("🚀 送出前的 formData 項目：");
-        for (let [key, value] of formData.entries()) {
-            console.log(`${key}: ${value}`);
-        }
-
-        fetch("https://docs.google.com/forms/u/0/d/e/1FAIpQLSe6tzVbIUYkpADid6OwhxLitHyK4GgzQJMRHvLdwnNZA60mZg/formResponse", {
-            method: "POST",
-            mode: "no-cors",
-            body: formData
         });
 
-        document.getElementById("orderForm").reset();
-        document.querySelectorAll("input[name='pickupLocation']").forEach(radio => {
-            radio.dataset.clicked = "false";
-        });
-        calculateTotal();
+        return { orderDetails, totalCount, totalPrice, fifteenYuanTotal };
+    }
 
-        alert(`非常感謝您的填寫，再麻煩您通知負責人員您已完成填單，以確認您的訂單與付訂，尚未付訂前皆未完成訂購程序喔^^
+
+    // ✅ 修改為 async 以便執行非同步產能檢查
+    document.getElementById("orderForm").addEventListener("submit", async function (event) {
+        event.preventDefault();
+
+        // ✅ 必填欄位驗證（顯示缺漏欄位名稱）
+        let requiredFields = [
+            { id: "customerName", label: "訂購人姓名" },
+            { id: "phoneNumber", label: "聯絡電話" },
+            { id: "eventDate", label: "活動日期" },
+            { id: "pickupDate", label: "取貨日期" },
+            { id: "pickupTime", label: "取貨時間" }
+        ];
+
+        let missingFields = [];
+
+        requiredFields.forEach(field => {
+            let input = document.getElementById(field.id);
+            if (!input || !input.value.trim()) {
+                missingFields.push(field.label);
+                if (input) input.style.border = "2px solid red";
+            } else {
+                input.style.border = "";
+            }
+        });
+
+        let pickupLocationElement = document.querySelector("input[name='pickupLocation']:checked");
+        if (!pickupLocationElement) {
+            missingFields.push("取貨地點");
+        }
+
+        if (missingFields.length > 0) {
+            alert("請填寫以下欄位：\n\n" + missingFields.join("\n"));
+            return;
+        }
+
+        // 標記已選地點（避免 radio 被取消）
+        pickupLocationElement.dataset.clicked = "true";
+
+        // ✅ 取值
+        const customerName = document.getElementById("customerName").value.trim();
+        const phoneNumber = document.getElementById("phoneNumber").value.trim();
+        const orderUnit = document.getElementById("orderUnit").value.trim();
+        const eventDate = document.getElementById("eventDate").value.trim();
+        const invoiceTitle = document.getElementById("invoiceTitle").value.trim();
+        const invoiceNumber = document.getElementById("invoiceNumber").value.trim();
+        const pickupLocation = pickupLocationElement.value;
+        const pickupDate = document.getElementById("pickupDate").value.trim();
+        const pickupTime = document.getElementById("pickupTime").value.trim();
+
+        // ✅ 再次嚴格檢查時間
+        const pickupTimeInput = document.getElementById("pickupTime");
+
+        // 再次驗證合法時間（萬一 blur 沒觸發）
+        const isValidTime = validatePickupTime(pickupLocation, pickupTime, false, pickupTimeInput);
+        pickupTimeInput.dataset.valid = isValidTime ? "true" : "false";
+
+        if (pickupTimeInput.dataset.valid !== "true") {
+            alert("請確認您輸入的取貨時間是否正確喔！");
+            pickupTimeInput.focus();
+            return;
+        }
+
+
+        // ✅【取貨日區間驗證】
+        const pickupDateObj = parseLocalDate(pickupDate);
+        const eventDateObj = parseLocalDate(eventDate);
+        const minPickupDate = new Date(eventDateObj);
+        minPickupDate.setDate(eventDateObj.getDate() - 30);
+        if (pickupDateObj < minPickupDate || pickupDateObj > eventDateObj) {
+            alert("請選擇活動日期前 30 天到活動當天的日期");
+            return;
+        }
+
+        // ✅ 訂購內容
+        const { orderDetails, totalCount, totalPrice, fifteenYuanTotal } = getOrderDetails();
+        const calculatedCount = Math.ceil(totalCount / 1.1);
+        const bonusCount = Math.floor(calculatedCount / 10);
+        const adjustedPrice = totalPrice - bonusCount * 12;
+
+        // ✅ 買十送一數量驗證
+        if ((calculatedCount + bonusCount) !== totalCount) {
+            const diff = (calculatedCount + bonusCount) - totalCount;
+            alert(`若要購買 ${calculatedCount} 枝，贈送 ${bonusCount} 枝。請再挑選 ${diff} 枝。`);
+            return;
+        }
+
+        if (totalCount > 164) {
+            alert(`總枝數 ${totalCount} 枝超過上限 164 枝，請減少 ${totalCount - 164} 枝。`);
+            return;
+        }
+
+        // 🚀 === [新增：產能總量限制檢查 - 打包版] ===
+        const gasUrl = "https://script.google.com/macros/s/AKfycbzE7wP4x3S5k9BOpooS7VkiYMPYdPP2Wx9KDWaOnXZ5GLtWqE1OCHnBnjIy8jQQdWjK/exec";
+        const submitBtn = event.submitter || document.querySelector("input[type='submit']");
+        
+        // 暫時禁用按鈕，防止重複點擊
+        submitBtn.disabled = true;
+        const originalBtnText = submitBtn.value;
+        submitBtn.value = "正在核對產能中...";
+
+        try {
+            const checkResponse = await fetch(gasUrl, {
+                method: "POST",
+                body: JSON.stringify({
+                    eventDate: eventDate,
+                    totalCount: totalCount,
+                    orderType: "packing" // 打包版固定參數
+                })
+            });
+            const checkResult = await checkResponse.json();
+
+            if (checkResult.status === "error") {
+                alert(checkResult.message);
+                submitBtn.disabled = false;
+                submitBtn.value = originalBtnText;
+                return; // 產能不足，中斷流程
+            }
+        } catch (error) {
+            alert("系統連線異常，請稍後再試。");
+            submitBtn.disabled = false;
+            submitBtn.value = originalBtnText;
+            return;
+        }
+        
+        // 檢查通過，恢復按鈕狀態
+        submitBtn.disabled = false;
+        submitBtn.value = originalBtnText;
+        // 🚀 === [產能檢查結束] ===
+
+        // ✅ 確認訊息組合
+        let confirmationMessage = `請確認您的訂單資訊，若正確無誤請點選右下方"送出"\n\n\n`;
+        confirmationMessage += `📌 訂購人姓名：${customerName}\n\n`;
+        confirmationMessage += `📞 聯絡電話：${phoneNumber}\n\n`;
+        confirmationMessage += `🏫 訂購單位：${orderUnit}\n\n`;
+        confirmationMessage += `📅 活動日期：${eventDate}\n\n`;
+        if (invoiceTitle) confirmationMessage += `🧾 收據抬頭：${invoiceTitle}\n\n`;
+        if (invoiceNumber) confirmationMessage += `💳 統一編號：${invoiceNumber}\n\n`;
+        confirmationMessage += `✮✯✮✯✮✯✮\n\n`;
+        confirmationMessage += `🏬 取貨地點：${pickupLocation}\n\n`;
+        confirmationMessage += `🏬 取貨日期：${pickupDate}\n\n`;
+        confirmationMessage += `⏰ 取貨時間：${pickupTime}\n\n`;
+        confirmationMessage += `--\n`;
+        confirmationMessage += `🛒 訂購內容：\n${orderDetails}\n\n`;
+        confirmationMessage += `🔢 總枝數：${totalCount} 枝，共 ${adjustedPrice} 元。\n\n`;
+        confirmationMessage += `    ⤷ 訂購 ${calculatedCount} 枝 + 贈送 ${bonusCount} 枝。\n`;
+        if (fifteenYuanTotal > 0) {
+            confirmationMessage += `    ⤷ 贈送口味為 12 元口味。\n`;
+        }
+
+        // ✅ 彈出視窗
+        let confirmBox = document.createElement("div");
+        confirmBox.style = `
+            position: fixed;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            width: 90%; max-width: 500px;
+            max-height: 80vh; overflow-y: auto;
+            z-index: 1000; text-align: left;
+        `;
+
+        let messageText = document.createElement("p");
+        messageText.style = "font-size: 16px; white-space: pre-line;";
+        messageText.textContent = confirmationMessage;
+
+        let buttonContainer = document.createElement("div");
+        buttonContainer.style = "display: flex; justify-content: space-between; margin-top: 20px;";
+
+        let cancelButton = document.createElement("button");
+        cancelButton.textContent = "返回";
+        cancelButton.style = "background: #ccc; color: #000; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;";
+        cancelButton.onclick = () => {
+            document.body.removeChild(confirmBox);
+            document.body.removeChild(overlay);
+        };
+
+        let submitButton = document.createElement("button");
+        submitButton.textContent = "送出";
+        submitButton.style = "background: #ff6600; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;";
+        submitButton.onclick = () => {
+            document.body.removeChild(confirmBox);
+            document.body.removeChild(overlay);
+
+            const formData = new FormData();
+            formData.append("entry.153434121", customerName);
+            formData.append("entry.1286553898", phoneNumber);
+            formData.append("entry.29286919", orderUnit);
+            formData.append("entry.1406293128", invoiceTitle);
+            formData.append("entry.307667347", invoiceNumber);
+            formData.append("entry.2132577574", eventDate);
+            formData.append("entry.969880587", pickupLocation);
+            formData.append("entry.355577760", pickupDate);
+            formData.append("entry.1822166015", pickupTime);
+
+            // 各口味
+            formData.append("entry.316562737", document.getElementById("qtyDuoDuo").value || "0");
+            formData.append("entry.2045995529", document.getElementById("qtyGrape").value || "0");
+            formData.append("entry.632518397", document.getElementById("qtyLychee").value || "0");
+            formData.append("entry.1388020976", document.getElementById("qtyPassionFruit").value || "0");
+            formData.append("entry.1942859558", document.getElementById("qtyStrawberry").value || "0");
+            formData.append("entry.761436590", document.getElementById("qtyApple").value || "0");
+            formData.append("entry.454770086", document.getElementById("qtyPineapple").value || "0");
+            formData.append("entry.1676199734", document.getElementById("qtyOrange").value || "0");
+            formData.append("entry.1154026181", document.getElementById("qtyPeach").value || "0");
+            formData.append("entry.236488691", document.getElementById("qtyMango").value || "0");
+            formData.append("entry.1110750172", document.getElementById("qtyStrawberryDuoDuo")?.value || "0");
+
+            console.log("🚀 送出前的 formData 項目：");
+            for (let [key, value] of formData.entries()) {
+                console.log(`${key}: ${value}`);
+            }
+
+            fetch("https://docs.google.com/forms/u/0/d/e/1FAIpQLSe6tzVbIUYkpADid6OwhxLitHyK4GgzQJMRHvLdwnNZA60mZg/formResponse", {
+                method: "POST",
+                mode: "no-cors",
+                body: formData
+            });
+
+            document.getElementById("orderForm").reset();
+            document.querySelectorAll("input[name='pickupLocation']").forEach(radio => {
+                radio.dataset.clicked = "false";
+            });
+            calculateTotal();
+
+            alert(`非常感謝您的填寫，再麻煩您通知負責人員您已完成填單，以確認您的訂單與付訂，尚未付訂前皆未完成訂購程序喔^^
 若已超過服務時間(10:00-22:00)，則翌日處理，謝謝您^^
 
 ※請注意再與服務人員確認且付訂前，此筆訂單尚未成立。`);
-    };
+        };
 
-    buttonContainer.appendChild(cancelButton);
-    buttonContainer.appendChild(submitButton);
-    confirmBox.appendChild(messageText);
-    confirmBox.appendChild(buttonContainer);
+        buttonContainer.appendChild(cancelButton);
+        buttonContainer.appendChild(submitButton);
+        confirmBox.appendChild(messageText);
+        confirmBox.appendChild(buttonContainer);
 
-    const overlay = document.createElement("div");
-    overlay.style = "position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.3); z-index: 999;";
-    document.body.appendChild(overlay);
-    document.body.appendChild(confirmBox);
-});
+        const overlay = document.createElement("div");
+        overlay.style = "position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.3); z-index: 999;";
+        document.body.appendChild(overlay);
+        document.body.appendChild(confirmBox);
+    });
 
 
 
@@ -596,6 +638,7 @@ document.getElementById("orderForm").addEventListener("submit", function (event)
             twelveYuanTotal += qty;
         });
 
+        fifteenYuanTotalIds = ["qtyApple", "qtyPineapple", "qtyOrange", "qtyPeach", "qtyMango"];
         fifteenYuanIds.forEach(id => {
             let qty = parseInt(document.getElementById(id).value) || 0;
             fifteenYuanTotal += qty;
@@ -627,13 +670,13 @@ document.getElementById("orderForm").addEventListener("submit", function (event)
         }
 
         if (hasInput) {
-          displayText += `<div class="total-sub" style="color: red; font-weight: bold; margin: 0;">
+            displayText += `<div class="total-sub" style="color: red; font-weight: bold; margin: 0;">
             ⤷ 訂購 ${calculatedCount} 枝 + 贈送 ${bonusCount} 枝。
           </div>`;
         }
 
         if (fifteenYuanTotal > 0) {
-          displayText += `<div class="total-sub" style="color: red; font-weight: bold; margin: 0;">
+            displayText += `<div class="total-sub" style="color: red; font-weight: bold; margin: 0;">
             ⤷ 贈送口味為 12 元口味，若要贈送15元須補3元差價喔。
           </div>`;
         }
