@@ -360,7 +360,7 @@ document.addEventListener("DOMContentLoaded", function () {
                         <h3 style="margin-top: 0; color: #ff6600;">✨ 差一點點就多送一枝！</h3>
                         <p style="font-size: 16px; line-height: 1.6;">目前已訂購 ${calculatedCount} 枝，<br>再 <b style="color:red; font-size: 20px;">${needed}</b> 枝就再<b>加送 1 枝</b>喔！</p>
                         <div style="display: flex; gap: 10px; margin-top: 20px;">
-                            <button id="goNext" style="flex: 1; padding: 12px; border: 1px solid #ccc; background: #f9f9f9; border-radius: 6px; cursor: pointer;">前往確認頁</button>
+                            <button id="goNext" style="flex: 1; padding: 12px; border: 1px solid #ccc; background: #f9f9f9; border-radius: 6px; cursor: pointer;">不需更改，前往確認頁</button>
                             <button id="backToOrder" style="flex: 1; padding: 12px; border: none; background: #ff6600; color: white; border-radius: 6px; cursor: pointer; font-weight: bold;">馬上去選 ${needed + 1} 枝</button>
                         </div>
                     </div>
