@@ -87,7 +87,7 @@ document.addEventListener("DOMContentLoaded", function () {
         },
         sanchongMorning: {
             whitelist: [
-                "2025-10-31",
+                "2026-03-28",
                 "2025-11-08",
                 "2025-12-06"
             ]
