@@ -470,7 +470,40 @@ document.addEventListener("DOMContentLoaded", function () {
             alert(`總枝數 ${totalCount} 枝超過上限 164 枝，請減少 ${totalCount - 164} 枝。`);
             return;
         }
+// === [新增：買十送一優化引導彈窗] ===
+        const remainder = calculatedCount % 10;
+        if (remainder !== 0) {
+            const needed = 10 - remainder;
+            // 這裡使用 Promise 封裝彈窗，以便配合 async/await 流程
+            const stayToBuyMore = await new Promise((resolve) => {
+                const upsellOverlay = document.createElement("div");
+                upsellOverlay.style = "position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; display: flex; align-items: center; justify-content: center;";
+                
+                upsellOverlay.innerHTML = `
+                    <div style="background: white; padding: 25px; border-radius: 12px; width: 85%; max-width: 400px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
+                        <h3 style="margin-top: 0; color: #ff6600;">✨ 差一點點就多送一枝！</h3>
+                        <p style="font-size: 16px; line-height: 1.6;">目前已訂購 ${calculatedCount} 枝，<br>再 <b style="color:red; font-size: 20px;">${needed}</b> 枝就再<b>加送 1 枝</b>喔！</p>
+                        <div style="display: flex; gap: 10px; margin-top: 20px;">
+                            <button id="goNext" style="flex: 1; padding: 12px; border: 1px solid #ccc; background: #f9f9f9; border-radius: 6px; cursor: pointer;">前往確認頁</button>
+                            <button id="backToOrder" style="flex: 1; padding: 12px; border: none; background: #ff6600; color: white; border-radius: 6px; cursor: pointer; font-weight: bold;">馬上去選 ${needed + 1} 枝</button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(upsellOverlay);
 
+                upsellOverlay.querySelector("#goNext").onclick = () => {
+                    document.body.removeChild(upsellOverlay);
+                    resolve(false); // 不留下，繼續執行後續動作
+                };
+                upsellOverlay.querySelector("#backToOrder").onclick = () => {
+                    document.body.removeChild(upsellOverlay);
+                    resolve(true); // 留下，中斷提交
+                };
+            });
+
+            if (stayToBuyMore) return; // 使用者選擇回去多選幾枝，停止後續產能檢查
+        }
+        // === [優化引導結束] ===
         // 🚀 === [新增：產能總量限制檢查 - 打包版] ===
         const gasUrl = "https://script.google.com/macros/s/AKfycbzE7wP4x3S5k9BOpooS7VkiYMPYdPP2Wx9KDWaOnXZ5GLtWqE1OCHnBnjIy8jQQdWjK/exec";
         const submitBtn = event.submitter || document.querySelector("input[type='submit']");
@@ -754,3 +787,85 @@ document.getElementById("showInvoiceInfo").addEventListener("change", function (
         document.getElementById("invoiceNumber").value = "";
     }
 });
+function updatePromoMessage() {
+
+  const bar = document.getElementById("promoMsg");
+
+  if (!bar) return;
+
+
+
+  const paid  = Number(window.calculatedCount) || 0;
+
+  const valid = window.promoValid !== false;
+
+
+
+  if (paid === 0) {
+
+    bar.classList.remove("show");
+
+    bar.style.display = "none";
+
+    document.body.classList.remove("promo-fixed-padding");
+
+    document.body.style.removeProperty('--promoH');
+
+    return;
+
+  }
+
+
+
+  bar.style.display = "";
+
+  bar.classList.add("show");
+
+
+
+  if (!valid) {
+
+    bar.textContent = "請幫我填寫「贈送 1 枝」的口味喔 😊";
+
+  } else {
+
+    const r = paid % 10;
+
+    bar.textContent =
+
+      r === 0 ? "🎉 太棒了，這是完美的買十送一組合🍡💛" :
+
+      r === 9 ? "再 1 枝就送 1 枝 ✨" :
+
+                `再 ${10 - r} 枝就送 1 枝 🎁`;
+
+  }
+
+
+
+  requestAnimationFrame(() => {
+
+    const h = bar.offsetHeight || 48;
+
+    document.body.style.setProperty('--promoH', h + 'px');
+
+    document.body.classList.add('promo-fixed-padding');
+
+  });
+
+}
+
+
+
+window.addEventListener('resize', () => {
+
+  const bar = document.getElementById("promoMsg");
+
+  if (!bar || bar.style.display === 'none') return;
+
+  const h = bar.offsetHeight || 48;
+
+  document.body.style.setProperty('--promoH', h + 'px');
+
+});
+
