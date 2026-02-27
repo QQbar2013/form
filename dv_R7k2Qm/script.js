@@ -1,6 +1,9 @@
 document.addEventListener("DOMContentLoaded", function () {
     console.log("DOM fully loaded, initializing form...");
     
+    // [新增] 產能核對 API 網址 (請填入您部署後的 GAS 網址)
+    const gasUrl = "https://script.google.com/macros/s/AKfycbzE7wP4x3S5k9BOpooS7VkiYMPYdPP2Wx9KDWaOnXZ5GLtWqE1OCHnBnjIy8jQQdWjK/exec";
+    
     // 確認表單元素存在
     const orderForm = document.getElementById("orderForm");
     const totalCountText = document.getElementById("totalCountText");
@@ -232,8 +235,8 @@ document.addEventListener("DOMContentLoaded", function () {
         document.body.appendChild(thankYouBox);
     }
 
-    // 表單提交
-    orderForm.addEventListener("submit", function (event) {
+    // [修改] 表單提交：加入 async 以支援產能核對
+    orderForm.addEventListener("submit", async function (event) {
         event.preventDefault();
         console.log("Form submitted, validating...");
         
@@ -268,13 +271,76 @@ document.addEventListener("DOMContentLoaded", function () {
         today.setHours(0, 0, 0, 0); 
         const selectedDate = new Date(eventDate);
         if (selectedDate < today) {
-            alert("到貨日期必須為今天或以後，請重新選擇日期。");
+            alert("到貨日期必須為今天 or 以後，請重新選擇日期。");
             document.getElementById("eventDate").style.border = "2px solid red";
             console.log("Invalid date selected:", eventDate);
             return;
         }
+
+        // 🚀 [新增] 產能總量限制檢查
+        const { orderDetails, totalCount, qStickPrice, shippingFee, totalPrice } = getOrderDetails();
+        const submitBtn = event.submitter || orderForm.querySelector("button[type='submit']") || orderForm.querySelector("input[type='submit']");
         
-        // 取得表單資料
+        // 暫時禁用按鈕，防止重複點擊
+        let originalBtnValue = "";
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            originalBtnValue = submitBtn.value || submitBtn.textContent;
+            if (submitBtn.tagName === "INPUT") {
+                submitBtn.value = "正在核對產能中...";
+            } else {
+                submitBtn.textContent = "正在核對產能中...";
+            }
+        }
+
+        try {
+            const checkResponse = await fetch(gasUrl, {
+                method: "POST",
+                body: JSON.stringify({
+                    eventDate: eventDate,
+                    totalCount: totalCount,
+                    orderType: "delivery" // 宅配版固定參數
+                })
+            });
+            const checkResult = await checkResponse.json();
+
+            if (checkResult.status === "error") {
+                alert(checkResult.message);
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    if (submitBtn.tagName === "INPUT") {
+                        submitBtn.value = originalBtnValue;
+                    } else {
+                        submitBtn.textContent = originalBtnValue;
+                    }
+                }
+                return; // 產能不足，中斷流程
+            }
+        } catch (error) {
+            alert("系統連線異常，請稍後再試。");
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                if (submitBtn.tagName === "INPUT") {
+                    submitBtn.value = originalBtnValue;
+                } else {
+                    submitBtn.textContent = originalBtnValue;
+                }
+            }
+            return;
+        }
+        
+        // 檢查通過，恢復按鈕狀態
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            if (submitBtn.tagName === "INPUT") {
+                submitBtn.value = originalBtnValue;
+            } else {
+                submitBtn.textContent = originalBtnValue;
+            }
+        }
+        // 🚀 [產能檢查結束]
+        
+        // 取得剩餘表單資料
         const customerName = document.getElementById("customerName").value.trim();
         const phoneNumber = document.getElementById("phoneNumber").value.trim();
         const orderUnit = document.getElementById("orderUnit").value.trim();
@@ -283,10 +349,9 @@ document.addEventListener("DOMContentLoaded", function () {
         const deliveryTime = document.getElementById("deliveryTime").value.trim();
         const packingMethod = document.getElementById("packingMethod").value.trim();
         
-        // 訂購內容與數量驗證
-        const { orderDetails, totalCount, qStickPrice, shippingFee, totalPrice } = getOrderDetails();
+        // 數量倍數驗證
         if (totalCount % 10 !== 0 || totalCount === 0) {
-            alert("總數量須為10的倍數喔，再麻煩您調整數量喔😊。");
+            alert("總數量須為 10 的倍數喔，再麻煩您調整數量喔😊。");
             console.log("Invalid total count:", totalCount);
             return;
         }
@@ -374,7 +439,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 console.error("Form submission error:", error);
             });
             
-            // 3. 重置表單 (同步操作) - 雖然最終會重載，但習慣上先執行重置。
+            // 3. 重置表單 (同步操作)
             orderForm.reset();
             calculateTotal();
             
