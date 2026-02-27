@@ -358,10 +358,10 @@ document.addEventListener("DOMContentLoaded", function () {
                 upsellOverlay.innerHTML = `
                     <div style="background: white; padding: 25px; border-radius: 12px; width: 85%; max-width: 400px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
                         <h3 style="margin-top: 0; color: #ff6600;">✨ 差一點點就多送一枝！</h3>
-                        <p style="font-size: 16px; line-height: 1.6;">目前已訂購 ${calculatedCount} 枝，<br>再 <b style="color:red; font-size: 20px;">${needed}</b> 枝就再<b>加送 1 枝</b>喔！</p>
+                        <p style="font-size: 16px; line-height: 1.6;">再 <b style="color:red; font-size: 20px;">${needed}</b> 枝就再<b>加送 1 枝</b>喔！</p>
                         <div style="display: flex; gap: 10px; margin-top: 20px;">
-                            <button id="goNext" style="flex: 1; padding: 12px; border: 1px solid #ccc; background: #f9f9f9; border-radius: 6px; cursor: pointer;">不需更改，前往確認頁</button>
-                            <button id="backToOrder" style="flex: 1; padding: 12px; border: none; background: #ff6600; color: white; border-radius: 6px; cursor: pointer; font-weight: bold;">馬上去選 ${needed + 1} 枝</button>
+                            <button id="goNext" style="flex: 1; padding: 12px; border: 1px solid #ccc; background: #f9f9f9; border-radius: 6px; cursor: pointer; line-height: 1.4;">不需更改<br>前往確認頁</button>
+                            <button id="backToOrder" style="flex: 1; padding: 12px; border: none; background: #ff6600; color: white; border-radius: 6px; cursor: pointer; font-weight: bold; line-height: 1.4;">馬上去選<br>${needed + 1} 枝</button>
                         </div>
                     </div>
                 `;
@@ -379,8 +379,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
             if (stayToBuyMore) return; // 使用者選擇回去多選幾枝，停止後續產能檢查
         }
-        // === [優化引導結束] ===        
-
+        // === [優化引導結束] ===
 
         
         // === [新增：產能總量限制檢查] ===
