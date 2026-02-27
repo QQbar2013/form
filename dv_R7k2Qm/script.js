@@ -1,8 +1,4 @@
 document.addEventListener("DOMContentLoaded", function () {
-    // 防止同一份 script 被重複初始化
-    if (window.__deliveryFormInitialized) return;
-    window.__deliveryFormInitialized = true;
-
     console.log("DOM fully loaded, initializing form...");
 
     const gasUrl = "https://script.google.com/macros/s/AKfycbzE7wP4x3S5k9BOpooS7VkiYMPYdPP2Wx9KDWaOnXZ5GLtWqE1OCHnBnjIy8jQQdWjK/exec";
@@ -12,16 +8,14 @@ document.addEventListener("DOMContentLoaded", function () {
 
     if (!orderForm || !totalCountText || !eventDateInput) return;
 
-    let isSubmitting = false; // 防雙送出 / 防雙核對
+    // 防止同一頁 script 被重複初始化
+    if (orderForm.dataset.initialized === "1") return;
+    orderForm.dataset.initialized = "1";
 
     orderForm.reset();
-    totalCountText.innerHTML = `
-        <div class="total-summary">
-            <div class="total-row">總枝數: <strong>0</strong> 枝。</div>
-        </div>
-    `;
+    totalCountText.innerHTML = `<div class="total-summary"><div class="total-row">總枝數: <strong>0</strong> 枝。</div></div>`;
 
-    flatpickr("#eventDate", {
+    const eventDatePicker = flatpickr("#eventDate", {
         dateFormat: "Y-m-d",
         minDate: "today",
         maxDate: new Date().fp_incr(180)
@@ -33,7 +27,6 @@ document.addEventListener("DOMContentLoaded", function () {
             let eventDate = parseLocalDate(this.value);
             let today = new Date();
             today.setHours(0, 0, 0, 0);
-
             if (eventDate < today) {
                 alert("請選擇今天到 180 天內的日期");
                 this.value = "";
@@ -70,21 +63,17 @@ document.addEventListener("DOMContentLoaded", function () {
     function calculateTotal() {
         let totalCount = 0;
         ["qtyDuoDuo", "qtyGrape", "qtyLychee", "qtyPassionFruit", "qtyStrawberry"].forEach(id => {
-            totalCount += (parseInt(document.getElementById(id)?.value, 10) || 0);
+            totalCount += (parseInt(document.getElementById(id).value) || 0);
         });
 
         let isValid = totalCount % 10 === 0 && totalCount > 0;
         let boxes = totalCount / 10;
 
-        let displayText = `
-            <div class="total-summary">
-                <div class="total-row">總枝數: <strong>${totalCount}</strong> 枝，共 <strong>${boxes}</strong> 盒。</div>
-        `;
+        let displayText = `<div class="total-summary"><div class="total-row">總枝數: <strong>${totalCount}</strong> 枝，共 <strong>${boxes}</strong> 盒。</div>`;
         if (totalCount > 0 && !isValid) {
             displayText += `<div class="total-row error-text">總數量須為10的倍數喔😊</div>`;
         }
         displayText += `</div>`;
-
         totalCountText.innerHTML = displayText;
     }
 
@@ -101,7 +90,7 @@ document.addEventListener("DOMContentLoaded", function () {
         let totalCount = 0;
 
         flavors.forEach(f => {
-            let qty = parseInt(document.getElementById(f.id)?.value, 10) || 0;
+            let qty = parseInt(document.getElementById(f.id)?.value) || 0;
             if (qty > 0) {
                 orderDetails += `${f.name}：${qty} 枝\n`;
                 totalCount += qty;
@@ -128,28 +117,11 @@ document.addEventListener("DOMContentLoaded", function () {
 
         const thankYouOverlay = document.createElement("div");
         thankYouOverlay.id = "thankYouOverlay";
-        thankYouOverlay.style = `
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: rgba(0,0,0,0.3);
-            z-index: 999;
-        `;
+        thankYouOverlay.style = "position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.3); z-index: 999;";
 
         const thankYouBox = document.createElement("div");
         thankYouBox.id = "thankYouBox";
-        thankYouBox.style = `
-            position: fixed;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            background: #fff;
-            padding: 20px;
-            border-radius: 10px;
-            width: 90%;
-            max-width: 400px;
-            z-index: 1001;
-            text-align: center;
-        `;
+        thankYouBox.style = `position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #fff; padding: 20px; border-radius: 10px; width: 90%; max-width: 400px; z-index: 1001; text-align: center;`;
         thankYouBox.innerHTML = `
             <p style="text-align:left; white-space:pre-line;">非常感謝您的填寫...</p>
             <button id="finalClose" style="background:#ff6600; color:white; border:none; padding:10px 20px; border-radius:5px; cursor:pointer;">確認</button>
@@ -162,150 +134,105 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     function removeConfirmModal() {
-        const overlay = document.getElementById("confirmOverlay");
-        const box = document.getElementById("confirmBox");
+        const overlay = document.getElementById("capacityOverlay");
+        const confirmBox = document.getElementById("capacityConfirmBox");
         if (overlay) overlay.remove();
-        if (box) box.remove();
+        if (confirmBox) confirmBox.remove();
     }
 
-    function fetchWithTimeout(url, options = {}, timeout = 12000) {
-        const controller = new AbortController();
-        const timer = setTimeout(() => controller.abort(), timeout);
-
-        return fetch(url, {
-            ...options,
-            signal: controller.signal
-        }).finally(() => clearTimeout(timer));
-    }
-
-    async function fetchCapacityCheck(eventDate, totalCount) {
-        const res = await fetchWithTimeout(gasUrl, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                eventDate,
-                totalCount,
-                orderType: "delivery"
-            })
-        }, 12000);
-
-        if (!res.ok) {
-            throw new Error(`HTTP ${res.status}`);
-        }
-
-        return await res.json();
-    }
-
+    // 🚀 核心修正版：表單提交邏輯
     orderForm.addEventListener("submit", async function (event) {
         event.preventDefault();
 
-        // 防止連點、Enter 重複送出、重複綁定導致的第二次 submit
-        if (isSubmitting) return;
-        isSubmitting = true;
+        // 防止重複送出 / 產能核對重複執行
+        if (orderForm.dataset.submitting === "1") return;
+        orderForm.dataset.submitting = "1";
 
-        const { orderDetails, totalCount, totalPrice } = getOrderDetails();
-
+        // 1. 基礎驗證
+        const { orderDetails, totalCount, qStickPrice, shippingFee, totalPrice } = getOrderDetails();
         if (totalCount % 10 !== 0 || totalCount === 0) {
             alert("總數量須為10的倍數喔😊");
-            isSubmitting = false;
+            orderForm.dataset.submitting = "0";
             return;
         }
 
+        // 2. 鎖定按鈕
         const submitBtn =
             event.submitter ||
             orderForm.querySelector("button[type='submit']") ||
             orderForm.querySelector("input[type='submit']");
 
         if (!submitBtn) {
-            alert("找不到送出按鈕，請重新整理頁面後再試。");
-            isSubmitting = false;
+            alert("找不到送出按鈕，請重新整理後再試。");
+            orderForm.dataset.submitting = "0";
             return;
         }
 
-        const isInputBtn = submitBtn.tagName === "INPUT";
-        const originalText = isInputBtn ? submitBtn.value : submitBtn.textContent;
+        const originalText = submitBtn.value || submitBtn.textContent;
 
         const resetBtn = () => {
             submitBtn.disabled = false;
-            if (isInputBtn) submitBtn.value = originalText;
+            if (submitBtn.tagName === "INPUT") submitBtn.value = originalText;
             else submitBtn.textContent = originalText;
-            isSubmitting = false;
+            orderForm.dataset.submitting = "0";
         };
 
         submitBtn.disabled = true;
-        if (isInputBtn) submitBtn.value = "正在核對產能中...";
+        if (submitBtn.tagName === "INPUT") submitBtn.value = "正在核對產能中...";
         else submitBtn.textContent = "正在核對產能中...";
 
+        // 3. 產能核對（保留你原本的 POST 格式，只加 timeout）
         const eventDate = document.getElementById("eventDate").value;
 
-        // 先移除舊的確認視窗，避免殘留造成「看起來像跳兩次」
-        removeConfirmModal();
-
         try {
-            const result = await fetchCapacityCheck(eventDate, totalCount);
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 12000);
+
+            const res = await fetch(gasUrl, {
+                method: "POST",
+                body: JSON.stringify({ eventDate, totalCount, orderType: "delivery" }),
+                signal: controller.signal
+            });
+
+            clearTimeout(timeoutId);
+
+            const result = await res.json();
 
             if (result.status === "error") {
-                alert(result.message || "該日期產能不足，請改選其他日期。");
+                alert(result.message);
                 resetBtn();
                 return;
             }
         } catch (e) {
-            console.error("capacity check error:", e);
-
             if (e.name === "AbortError") {
                 alert("產能核對逾時，請稍後再試。");
             } else {
                 alert("系統連線異常，請稍後再試。");
+                console.error("capacity check error:", e);
             }
-
             resetBtn();
             return;
         }
 
+        // 4. 核對成功，準備彈跳視窗
         const customerName = document.getElementById("customerName").value;
         const phoneNumber = document.getElementById("phoneNumber").value;
         const orderUnit = document.getElementById("orderUnit").value;
         const deliveryTime = document.getElementById("deliveryTime").value;
         const packingMethod = document.getElementById("packingMethod").value;
 
-        let confirmationMessage =
-            `請確認您的訂單資訊：\n\n` +
-            `📌 姓名：${customerName}\n` +
-            `📞 電話：${phoneNumber}\n` +
-            `🏠 地址：${orderUnit}\n` +
-            `📅 日期：${eventDate}\n` +
-            `⏰ 時段：${deliveryTime}\n` +
-            `📦 分裝：${packingMethod}\n\n` +
-            `🛒 內容：\n${orderDetails}\n` +
-            `🔢 總枝數：${totalCount}\n` +
-            `💰 總金額：${totalPrice} 元`;
+        let confirmationMessage = `請確認您的訂單資訊：\n\n📌 姓名：${customerName}\n📞 電話：${phoneNumber}\n🏠 地址：${orderUnit}\n📅 日期：${eventDate}\n⏰ 時段：${deliveryTime}\n📦 分裝：${packingMethod}\n\n🛒 內容：\n${orderDetails}\n🔢 總枝數：${totalCount}\n💰 總金額：${totalPrice} 元`;
+
+        // 先移除舊視窗，避免重複彈出
+        removeConfirmModal();
 
         const overlay = document.createElement("div");
-        overlay.id = "confirmOverlay";
-        overlay.style = `
-            position: fixed;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
-            background: rgba(0,0,0,0.3);
-            z-index: 999;
-        `;
+        overlay.id = "capacityOverlay";
+        overlay.style = "position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.3); z-index: 999;";
 
         const confirmBox = document.createElement("div");
-        confirmBox.id = "confirmBox";
-        confirmBox.style = `
-            position: fixed;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            background: #fff;
-            padding: 20px;
-            border-radius: 10px;
-            width: 90%;
-            max-width: 500px;
-            z-index: 1000;
-        `;
-
+        confirmBox.id = "capacityConfirmBox";
+        confirmBox.style = `position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #fff; padding: 20px; border-radius: 10px; width: 90%; max-width: 500px; z-index: 1000;`;
         confirmBox.innerHTML = `
             <p style="white-space:pre-line;">${confirmationMessage}</p>
             <div style="display:flex; justify-content:space-between; margin-top:20px;">
@@ -317,15 +244,17 @@ document.addEventListener("DOMContentLoaded", function () {
         document.body.appendChild(overlay);
         document.body.appendChild(confirmBox);
 
+        // 返回按鈕：移除視窗並恢復按鈕
         document.getElementById("btnBack").onclick = () => {
             removeConfirmModal();
             resetBtn();
         };
 
-        document.getElementById("btnSend").onclick = async () => {
-            const btnSend = document.getElementById("btnSend");
-            btnSend.disabled = true;
-            btnSend.textContent = "送出中...";
+        // 正式送出按鈕
+        document.getElementById("btnSend").onclick = () => {
+            const sendBtn = document.getElementById("btnSend");
+            sendBtn.disabled = true;
+            sendBtn.textContent = "送出中...";
 
             removeConfirmModal();
 
@@ -344,25 +273,22 @@ document.addEventListener("DOMContentLoaded", function () {
             fd.append("entry.1400692215", totalCount);
             fd.append("entry.1440063522", totalPrice);
 
-            try {
-                await fetch(
-                    "https://docs.google.com/forms/d/e/1FAIpQLScOiw6rFsnau8AxHKxr3zHgTofSyg6dIrky4Nhx7xoLqf8EWQ/formResponse",
-                    {
-                        method: "POST",
-                        mode: "no-cors",
-                        body: fd
-                    }
-                );
-
+            fetch("https://docs.google.com/forms/d/e/1FAIpQLScOiw6rFsnau8AxHKxr3zHgTofSyg6dIrky4Nhx7xoLqf8EWQ/formResponse", {
+                method: "POST",
+                mode: "no-cors",
+                body: fd
+            })
+            .then(() => {
                 orderForm.reset();
                 calculateTotal();
-                isSubmitting = false;
+                orderForm.dataset.submitting = "0";
                 showThankYouModal();
-            } catch (e) {
-                console.error("google form submit error:", e);
-                alert("表單送出失敗，請稍後再試。");
+            })
+            .catch((e) => {
+                console.error("form submit error:", e);
+                alert("送出失敗，請稍後再試。");
                 resetBtn();
-            }
+            });
         };
     });
 
