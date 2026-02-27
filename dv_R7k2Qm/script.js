@@ -401,7 +401,7 @@ document.addEventListener("DOMContentLoaded", function () {
         
         // 送出邏輯：使用 requestAnimationFrame 確保視覺更新
         submitButton.onclick = () => {
-            // 禁用按鈕，防止二次點擊
+            // 禁用按鈕，防止重複點擊
             submitButton.disabled = true;
             submitButton.textContent = "處理中...";
 
