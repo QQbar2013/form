@@ -1,6 +1,9 @@
 document.addEventListener("DOMContentLoaded", function () {
     console.log("DOM fully loaded, initializing form...");
     
+    // [新增設定] 產能核對 API 網址
+    const gasUrl = "https://script.google.com/macros/s/AKfycbzE7wP4x3S5k9BOpooS7VkiYMPYdPP2Wx9KDWaOnXZ5GLtWqE1OCHnBnjIy8jQQdWjK/exec";
+
     // 確認表單元素存在
     const orderForm = document.getElementById("orderForm");
     const totalCountText = document.getElementById("totalCountText");
@@ -232,12 +235,12 @@ document.addEventListener("DOMContentLoaded", function () {
         document.body.appendChild(thankYouBox);
     }
 
-    // 表單提交
-    orderForm.addEventListener("submit", function (event) {
+    // 表單提交 (改為 async 函式以處理產能核對)
+    orderForm.addEventListener("submit", async function (event) {
         event.preventDefault();
         console.log("Form submitted, validating...");
         
-        // 必填欄位驗證
+        // 必選欄位驗證
         let requiredFields = [
             { id: "customerName", label: "收件人姓名" },
             { id: "phoneNumber", label: "收件人電話" },
@@ -273,6 +276,46 @@ document.addEventListener("DOMContentLoaded", function () {
             console.log("Invalid date selected:", eventDate);
             return;
         }
+
+        // 訂購內容與數量驗證
+        const { orderDetails, totalCount, qStickPrice, shippingFee, totalPrice } = getOrderDetails();
+        if (totalCount % 10 !== 0 || totalCount === 0) {
+            alert("總數量須為10的倍數喔，再麻煩您調整數量喔😊。");
+            console.log("Invalid total count:", totalCount);
+            return;
+        }
+
+        // --- [核心修改]：在顯示確認視窗前先進行產能核對 ---
+        const submitBtnOnPage = event.submitter || orderForm.querySelector("button[type='submit']");
+        const originalBtnText = submitBtnOnPage.textContent;
+        
+        submitBtnOnPage.disabled = true;
+        submitBtnOnPage.textContent = "核對產能中...";
+
+        try {
+            const res = await fetch(gasUrl, {
+                method: "POST",
+                body: JSON.stringify({ eventDate, totalCount, orderType: "delivery" })
+            });
+            const result = await res.json();
+            
+            if (result.status === "error") {
+                alert(result.message);
+                submitBtnOnPage.disabled = false;
+                submitBtnOnPage.textContent = originalBtnText;
+                return;
+            }
+        } catch (e) {
+            console.error("Capacity check failed:", e);
+            alert("產能核對系統連線異常，請檢查網路或稍後再試。");
+            submitBtnOnPage.disabled = false;
+            submitBtnOnPage.textContent = originalBtnText;
+            return;
+        }
+
+        // 核對成功，恢復按鈕並繼續顯示確認視窗
+        submitBtnOnPage.disabled = false;
+        submitBtnOnPage.textContent = originalBtnText;
         
         // 取得表單資料
         const customerName = document.getElementById("customerName").value.trim();
@@ -282,14 +325,6 @@ document.addEventListener("DOMContentLoaded", function () {
         const invoiceNumber = document.getElementById("invoiceNumber").value.trim();
         const deliveryTime = document.getElementById("deliveryTime").value.trim();
         const packingMethod = document.getElementById("packingMethod").value.trim();
-        
-        // 訂購內容與數量驗證
-        const { orderDetails, totalCount, qStickPrice, shippingFee, totalPrice } = getOrderDetails();
-        if (totalCount % 10 !== 0 || totalCount === 0) {
-            alert("總數量須為10的倍數喔，再麻煩您調整數量喔😊。");
-            console.log("Invalid total count:", totalCount);
-            return;
-        }
         
         // 確認訊息生成
         let confirmationMessage = `請確認您的訂單資訊，若正確無誤請點選右下方"送出"：\n\n\n`;
@@ -334,17 +369,14 @@ document.addEventListener("DOMContentLoaded", function () {
         submitButton.textContent = "送出";
         submitButton.style = "background: #ff6600; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;";
         
-        // 送出邏輯：使用 requestAnimationFrame 確保視覺更新
+        // 送出邏輯
         submitButton.onclick = () => {
-            // 禁用按鈕，防止二次點擊
             submitButton.disabled = true;
             submitButton.textContent = "處理中...";
 
-            // 1. 移除自定義的確認視窗和遮罩 (同步操作)
             document.body.removeChild(confirmBox);
             document.body.removeChild(overlay);
             
-            // 2. 發送資料 (非同步操作)
             const formData = new FormData();
             formData.append("entry.707832955", customerName);
             formData.append("entry.148881326", phoneNumber);
@@ -374,14 +406,12 @@ document.addEventListener("DOMContentLoaded", function () {
                 console.error("Form submission error:", error);
             });
             
-            // 3. 重置表單 (同步操作) - 雖然最終會重載，但習慣上先執行重置。
             orderForm.reset();
             calculateTotal();
             
-            // 4. 使用 requestAnimationFrame 確保瀏覽器完成重繪後再顯示感謝模態框
             window.requestAnimationFrame(() => {
                 showThankYouModal(); 
-                console.log("Form submitted and reset. Showing custom thank you modal after frame repaint.");
+                console.log("Form submitted and reset.");
             });
         };
         
