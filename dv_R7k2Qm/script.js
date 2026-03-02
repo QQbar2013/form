@@ -228,11 +228,25 @@ document.addEventListener("DOMContentLoaded", function () {
         document.body.appendChild(thankYouBox);
     }
 
-    // 表單提交（核心整合邏輯）
+    // 表單提交事件
     orderForm.addEventListener("submit", async function (event) {
         event.preventDefault();
         console.log("Form submitted, validating...");
         
+        // 取得提交按鈕對象
+        const submitBtnOnPage = event.submitter || orderForm.querySelector("button[type='submit']");
+        const originalBtnText = submitBtnOnPage.textContent || submitBtnOnPage.value;
+        
+        // 定義一個恢復按鈕狀態的功能，避免重複代碼並防止狀態卡死
+        const resetSubmitBtn = () => {
+            submitBtnOnPage.disabled = false;
+            if (submitBtnOnPage.tagName === "BUTTON") {
+                submitBtnOnPage.textContent = originalBtnText;
+            } else {
+                submitBtnOnPage.value = originalBtnText;
+            }
+        };
+
         // 1. 必填欄位驗證
         let requiredFields = [
             { id: "customerName", label: "收件人姓名" },
@@ -255,10 +269,11 @@ document.addEventListener("DOMContentLoaded", function () {
         if (missingFields.length > 0) {
             alert("請填寫以下欄位：\n\n" + missingFields.join("\n"));
             console.log("Missing fields:", missingFields);
+            resetSubmitBtn(); // 驗證失敗，恢復按鈕
             return;
         }
         
-        // 2. 日期與數量初步驗證
+        // 2. 日期驗證
         const eventDate = document.getElementById("eventDate").value.trim();
         const today = new Date();
         today.setHours(0, 0, 0, 0); 
@@ -266,22 +281,25 @@ document.addEventListener("DOMContentLoaded", function () {
         if (selectedDate < today) {
             alert("到貨日期必須為今天或以後，請重新選擇日期。");
             document.getElementById("eventDate").style.border = "2px solid red";
+            resetSubmitBtn(); // 驗證失敗，恢復按鈕
             return;
         }
         
+        // 3. 數量驗證
         const { orderDetails, totalCount, qStickPrice, shippingFee, totalPrice } = getOrderDetails();
         if (totalCount % 10 !== 0 || totalCount === 0) {
             alert("總數量須為10的倍數喔，再麻煩您調整數量喔😊。");
+            resetSubmitBtn(); // 驗證失敗，恢復按鈕
             return;
         }
 
-        // 3. 執行產能核對（鎖定按鈕並顯示狀態）
-        const submitBtnOnPage = event.submitter || orderForm.querySelector("button[type='submit']");
-        const originalBtnText = submitBtnOnPage.textContent || submitBtnOnPage.value;
-        
+        // 4. 開始產能核對（鎖定按鈕）
         submitBtnOnPage.disabled = true;
-        if (submitBtnOnPage.tagName === "BUTTON") submitBtnOnPage.textContent = "正在核對產能中...";
-        else submitBtnOnPage.value = "正在核對產能中...";
+        if (submitBtnOnPage.tagName === "BUTTON") {
+            submitBtnOnPage.textContent = "正在核對產能中...";
+        } else {
+            submitBtnOnPage.value = "正在核對產能中...";
+        }
 
         // 強迫 UI 渲染
         await new Promise(resolve => setTimeout(resolve, 50));
@@ -295,26 +313,20 @@ document.addEventListener("DOMContentLoaded", function () {
             
             if (result.status === "error") {
                 alert(result.message);
-                submitBtnOnPage.disabled = false;
-                if (submitBtnOnPage.tagName === "BUTTON") submitBtnOnPage.textContent = originalBtnText;
-                else submitBtnOnPage.value = originalBtnText;
+                resetSubmitBtn(); // 產能不足，恢復按鈕文字與狀態
                 return;
             }
         } catch (e) {
             console.error("Capacity check failed:", e);
             alert("產能核對系統連線異常，請檢查網路或稍後再試。");
-            submitBtnOnPage.disabled = false;
-            if (submitBtnOnPage.tagName === "BUTTON") submitBtnOnPage.textContent = originalBtnText;
-            else submitBtnOnPage.value = originalBtnText;
+            resetSubmitBtn(); // 網路出錯，恢復按鈕文字與狀態
             return;
         }
 
-        // 產能核對通過，恢復按鈕文字
-        submitBtnOnPage.disabled = false;
-        if (submitBtnOnPage.tagName === "BUTTON") submitBtnOnPage.textContent = originalBtnText;
-        else submitBtnOnPage.value = originalBtnText;
+        // 產能核對成功，顯示確認視窗前將按鈕恢復，以便使用者如果「返回」可以再次點擊
+        resetSubmitBtn();
         
-        // 4. 生成確認視窗
+        // 5. 取得剩餘表單資料並生成確認視窗
         const customerName = document.getElementById("customerName").value.trim();
         const phoneNumber = document.getElementById("phoneNumber").value.trim();
         const orderUnit = document.getElementById("orderUnit").value.trim();
