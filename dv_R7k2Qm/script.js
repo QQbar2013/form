@@ -185,17 +185,15 @@ document.addEventListener("DOMContentLoaded", function () {
         return { orderDetails, totalCount, qStickPrice, shippingFee, totalPrice };
     }
 
-    // 新增：顯示感謝訊息的自定義模態框 (取代 alert)
+    // 顯示感謝訊息的自定義模態框
     function showThankYouModal() {
         const thankYouMessage = `非常感謝您的填寫，再麻煩您通知負責人員您已完成填單，以確認您的訂單與付訂，尚未付訂前皆未完成訂購程序喔^^
 若已超過服務時間(10:00-22:00)，則翌日處理，謝謝您^^
 ※請注意再與服務人員確認且付訂前，此筆訂單尚未成立。`;
 
-        // 建立遮罩
         const thankYouOverlay = document.createElement("div");
-        thankYouOverlay.style = "position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.3); z-index: 999;";
+        thankYouOverlay.style = "position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.3); z-index: 9999;";
         
-        // 建立訊息框
         const thankYouBox = document.createElement("div");
         thankYouBox.style = `
             position: fixed;
@@ -206,7 +204,7 @@ document.addEventListener("DOMContentLoaded", function () {
             border-radius: 10px;
             box-shadow: 0 4px 10px rgba(0,0,0,0.2);
             width: 90%; max-width: 400px;
-            z-index: 1001; text-align: center;
+            z-index: 10000; text-align: center;
         `;
         
         const messageText = document.createElement("p");
@@ -217,30 +215,25 @@ document.addEventListener("DOMContentLoaded", function () {
         closeButton.textContent = "確認";
         closeButton.style = "background: #ff6600; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-top: 15px;";
         
-        // 關閉函數 (已修改為強制重載)
         const closeHandler = () => {
             document.body.removeChild(thankYouBox);
             document.body.removeChild(thankYouOverlay);
-            
-            // 🚨 關鍵修改：強制頁面重載
             window.location.reload(); 
-            console.log("Thank you modal closed. Page is reloading...");
         };
 
         closeButton.onclick = closeHandler;
-        
         thankYouBox.appendChild(messageText);
         thankYouBox.appendChild(closeButton);
         document.body.appendChild(thankYouOverlay);
         document.body.appendChild(thankYouBox);
     }
 
-    // 表單提交 (改為 async 函式以處理產能核對)
+    // 表單提交（核心整合邏輯）
     orderForm.addEventListener("submit", async function (event) {
         event.preventDefault();
         console.log("Form submitted, validating...");
         
-        // 必選欄位驗證
+        // 1. 必填欄位驗證
         let requiredFields = [
             { id: "customerName", label: "收件人姓名" },
             { id: "phoneNumber", label: "收件人電話" },
@@ -256,7 +249,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 missingFields.push(field.label);
                 if (input) input.style.border = "2px solid red";
             } else {
-                input.style.border = "";
+                if (input) input.style.border = "";
             }
         });
         if (missingFields.length > 0) {
@@ -265,7 +258,7 @@ document.addEventListener("DOMContentLoaded", function () {
             return;
         }
         
-        // 日期驗證
+        // 2. 日期與數量初步驗證
         const eventDate = document.getElementById("eventDate").value.trim();
         const today = new Date();
         today.setHours(0, 0, 0, 0); 
@@ -273,24 +266,25 @@ document.addEventListener("DOMContentLoaded", function () {
         if (selectedDate < today) {
             alert("到貨日期必須為今天或以後，請重新選擇日期。");
             document.getElementById("eventDate").style.border = "2px solid red";
-            console.log("Invalid date selected:", eventDate);
             return;
         }
-
-        // 訂購內容與數量驗證
+        
         const { orderDetails, totalCount, qStickPrice, shippingFee, totalPrice } = getOrderDetails();
         if (totalCount % 10 !== 0 || totalCount === 0) {
             alert("總數量須為10的倍數喔，再麻煩您調整數量喔😊。");
-            console.log("Invalid total count:", totalCount);
             return;
         }
 
-        // --- [核心修改]：在顯示確認視窗前先進行產能核對 ---
+        // 3. 執行產能核對（鎖定按鈕並顯示狀態）
         const submitBtnOnPage = event.submitter || orderForm.querySelector("button[type='submit']");
-        const originalBtnText = submitBtnOnPage.textContent;
+        const originalBtnText = submitBtnOnPage.textContent || submitBtnOnPage.value;
         
         submitBtnOnPage.disabled = true;
-        submitBtnOnPage.textContent = "核對產能中...";
+        if (submitBtnOnPage.tagName === "BUTTON") submitBtnOnPage.textContent = "正在核對產能中...";
+        else submitBtnOnPage.value = "正在核對產能中...";
+
+        // 強迫 UI 渲染
+        await new Promise(resolve => setTimeout(resolve, 50));
 
         try {
             const res = await fetch(gasUrl, {
@@ -302,22 +296,25 @@ document.addEventListener("DOMContentLoaded", function () {
             if (result.status === "error") {
                 alert(result.message);
                 submitBtnOnPage.disabled = false;
-                submitBtnOnPage.textContent = originalBtnText;
+                if (submitBtnOnPage.tagName === "BUTTON") submitBtnOnPage.textContent = originalBtnText;
+                else submitBtnOnPage.value = originalBtnText;
                 return;
             }
         } catch (e) {
             console.error("Capacity check failed:", e);
             alert("產能核對系統連線異常，請檢查網路或稍後再試。");
             submitBtnOnPage.disabled = false;
-            submitBtnOnPage.textContent = originalBtnText;
+            if (submitBtnOnPage.tagName === "BUTTON") submitBtnOnPage.textContent = originalBtnText;
+            else submitBtnOnPage.value = originalBtnText;
             return;
         }
 
-        // 核對成功，恢復按鈕並繼續顯示確認視窗
+        // 產能核對通過，恢復按鈕文字
         submitBtnOnPage.disabled = false;
-        submitBtnOnPage.textContent = originalBtnText;
+        if (submitBtnOnPage.tagName === "BUTTON") submitBtnOnPage.textContent = originalBtnText;
+        else submitBtnOnPage.value = originalBtnText;
         
-        // 取得表單資料
+        // 4. 生成確認視窗
         const customerName = document.getElementById("customerName").value.trim();
         const phoneNumber = document.getElementById("phoneNumber").value.trim();
         const orderUnit = document.getElementById("orderUnit").value.trim();
@@ -326,7 +323,6 @@ document.addEventListener("DOMContentLoaded", function () {
         const deliveryTime = document.getElementById("deliveryTime").value.trim();
         const packingMethod = document.getElementById("packingMethod").value.trim();
         
-        // 確認訊息生成
         let confirmationMessage = `請確認您的訂單資訊，若正確無誤請點選右下方"送出"：\n\n\n`;
         confirmationMessage += `📌 收件人姓名：${customerName}\n\n`;
         confirmationMessage += `📞 收件人電話：${phoneNumber}\n\n`;
@@ -344,13 +340,12 @@ document.addEventListener("DOMContentLoaded", function () {
         confirmationMessage += `⤷ 運費價格為 ${shippingFee} 元\n\n`;
         confirmationMessage += `總金額：${totalPrice} 元。\n`;
         
-        // 彈出確認視窗結構
         let confirmBox = document.createElement("div");
         confirmBox.style = `
             position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
             background: #fff; padding: 20px; border-radius: 10px;
             box-shadow: 0 4px 10px rgba(0,0,0,0.2); width: 90%; max-width: 500px;
-            max-height: 80vh; overflow-y: auto; z-index: 1000; text-align: left;
+            max-height: 80vh; overflow-y: auto; z-index: 10000; text-align: left;
         `;
         let messageText = document.createElement("p");
         messageText.style = "font-size: 16px; white-space: pre-line;";
@@ -360,20 +355,22 @@ document.addEventListener("DOMContentLoaded", function () {
         let cancelButton = document.createElement("button");
         cancelButton.textContent = "返回";
         cancelButton.style = "background: #ccc; color: #000; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;";
+        
+        const overlay = document.createElement("div");
+        overlay.style = "position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.3); z-index: 9999;";
+
         cancelButton.onclick = () => {
             document.body.removeChild(confirmBox);
             document.body.removeChild(overlay);
-            console.log("Form submission cancelled.");
         };
+
         let submitButton = document.createElement("button");
         submitButton.textContent = "送出";
         submitButton.style = "background: #ff6600; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;";
         
-        // 送出邏輯
         submitButton.onclick = () => {
             submitButton.disabled = true;
             submitButton.textContent = "處理中...";
-
             document.body.removeChild(confirmBox);
             document.body.removeChild(overlay);
             
@@ -400,33 +397,21 @@ document.addEventListener("DOMContentLoaded", function () {
                 method: "POST",
                 mode: "no-cors",
                 body: formData
-            }).then(() => {
-                console.log("Form data submitted successfully.");
-            }).catch(error => {
-                console.error("Form submission error:", error);
             });
             
             orderForm.reset();
             calculateTotal();
-            
-            window.requestAnimationFrame(() => {
-                showThankYouModal(); 
-                console.log("Form submitted and reset.");
-            });
+            window.requestAnimationFrame(() => showThankYouModal());
         };
         
         buttonContainer.appendChild(cancelButton);
         buttonContainer.appendChild(submitButton);
         confirmBox.appendChild(messageText);
         confirmBox.appendChild(buttonContainer);
-        const overlay = document.createElement("div");
-        overlay.style = "position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.3); z-index: 999;";
         document.body.appendChild(overlay);
         document.body.appendChild(confirmBox);
-        console.log("Confirmation box displayed.");
     });
     
-    // 初始化計算
     calculateTotal();
     
     function parseLocalDate(dateStr) {
