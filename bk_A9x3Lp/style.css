@@ -496,3 +496,46 @@ input[type="submit"]:hover {
     order: 3;
   }
 }
+
+
+/* === 提示條主體（全裝置固定浮動視窗）=== */
+#promoMsg {
+  display: none;        /* 初始隱藏，由 JS 控制顯示 */
+  position: fixed;      /* 固定在畫面上 */
+  top: 0;               /* 釘在最上方 */
+  left: 0;              /* 貼齊左側 */
+  width: 100%;          /* 滿版寬度 */
+  z-index: 10000;       /* 確保蓋過所有元素，包含日期彈出視窗 */
+  background: #fff;
+  color: #ff6600;
+  font-weight: 700;
+  text-align: center;
+  padding: 12px 0;      /* 上下留一點呼吸空間 */
+  font-size: 18px;
+  border-bottom: 1px solid rgba(0,0,0,0.1);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.15); /* 加深陰影產生浮動感 */
+  opacity: 0;           /* 初始透明度為 0 */
+  pointer-events: none; /* 隱藏時不可點擊 */
+  transition: opacity .25s ease, padding .25s ease, font-size .25s ease;
+  box-sizing: border-box; /* 確保 padding 不會讓寬度爆出螢幕 */
+}
+
+/* 顯示時的狀態 */
+#promoMsg.show {
+  display: block;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* 確保橫幅顯示時，整個網頁內容往下推，不會遮擋到最上方的訂購單標題 */
+body.promo-fixed-padding {
+  padding-top: var(--promoH, 50px);
+}
+
+/* 響應式：手機版字體微調 */
+@media (max-width: 768px) {
+  #promoMsg {
+    font-size: 16px; 
+    padding: 10px 0;
+  }
+}
