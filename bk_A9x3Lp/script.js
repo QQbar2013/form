@@ -20,29 +20,34 @@ document.addEventListener("DOMContentLoaded", function () {
     let maxDate = new Date();
     maxDate.setDate(today.getDate() + 180);
     // ✅ 初始化 flatpickr：活動日、取貨日、取貨時間
+    // Initialize flatpickr for event date, pickup date, and pickup time
     const eventDatePicker = flatpickr("#eventDate", {
+        disableMobile: "true", // 👈 新增：強制手機使用統一的日曆介面，避開原生 Bug
         dateFormat: "Y-m-d",
         minDate: "today",
         maxDate: new Date().fp_incr(180),
         onChange: function (selectedDates, dateStr, instance) {
-            if (!dateStr) return;
-
-            const eventDate = new Date(dateStr);
+            if (!dateStr || selectedDates.length === 0) return;
+            
+            // 直接抓取 selectedDates[0] 避免字串轉換的時區問題
+            const eventDate = selectedDates[0]; 
             const minPickupDate = new Date(eventDate);
             minPickupDate.setDate(eventDate.getDate() - 1);
-
+            
             pickupDatePicker.set("minDate", minPickupDate);
-            pickupDatePicker.set("maxDate", dateStr);
-
+            pickupDatePicker.set("maxDate", eventDate);
+            pickupDatePicker.setDate(minPickupDate, true);
             updateAvailableLocations(dateStr);
         }
     });
 
     const pickupDatePicker = flatpickr("#pickupDate", {
+        disableMobile: "true", // 👈 新增：強制手機使用統一的日曆介面
         dateFormat: "Y-m-d"
     });
 
     flatpickr("#pickupTime", {
+        disableMobile: "true", // 👈 新增：強制手機使用統一的時間介面
         enableTime: true,
         noCalendar: true,
         dateFormat: "H:i",
@@ -51,14 +56,11 @@ document.addEventListener("DOMContentLoaded", function () {
         maxTime: "23:59",
         onOpen: function (selectedDates, dateStr, instance) {
             const location = document.querySelector("input[name='pickupLocation']:checked")?.value;
-
             if (!location) {
-                // ✅ 未選擇地點 → 設定為不可選
                 instance.set("minTime", null);
                 instance.set("maxTime", null);
                 return;
             }
-
             if (location === "樂華店") {
                 instance.set("minTime", "16:40");
                 instance.set("maxTime", "22:00");
@@ -77,7 +79,6 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         }
     });
-
 
 
     let eventDateInput = document.getElementById("eventDate");
@@ -137,7 +138,12 @@ document.addEventListener("DOMContentLoaded", function () {
             minPickupDate.setDate(eventDate.getDate() - 1);
             let pickupDateInput = document.getElementById("pickupDate");
             if (!isNaN(minPickupDate.getTime())) {
-                pickupDateInput.setAttribute("min", minPickupDate.toISOString().split("T")[0]);
+                // 👈 修正：避免使用 toISOString() 產生時差，改為抓取本地時間
+                let y = minPickupDate.getFullYear();
+                let m = String(minPickupDate.getMonth() + 1).padStart(2, '0');
+                let d = String(minPickupDate.getDate()).padStart(2, '0');
+                
+                pickupDateInput.setAttribute("min", `${y}-${m}-${d}`);
                 pickupDateInput.setAttribute("max", this.value);
             }
             updateAvailableLocations(this.value);
