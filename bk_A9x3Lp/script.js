@@ -464,6 +464,12 @@ document.addEventListener("DOMContentLoaded", function () {
         const bonusCount = Math.floor(calculatedCount / 10);
         const adjustedPrice = totalPrice - bonusCount * 12;
 
+        // 👇 加上這一段，防止空訂單送出！
+        if (totalCount === 0) {
+            alert(`請填寫欲訂購的口味及數量喔😊`);
+            return;
+        }
+        // 👆 ----------------------
         // ✅ 買十送一數量驗證
         if ((calculatedCount + bonusCount) !== totalCount) {
             const diff = (calculatedCount + bonusCount) - totalCount;
@@ -664,7 +670,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
 
-    function calculateTotal() {
+function calculateTotal() {
         let twelveYuanTotal = 0;
         let fifteenYuanTotal = 0;
 
@@ -676,7 +682,6 @@ document.addEventListener("DOMContentLoaded", function () {
             twelveYuanTotal += qty;
         });
 
-        fifteenYuanTotalIds = ["qtyApple", "qtyPineapple", "qtyOrange", "qtyPeach", "qtyMango"];
         fifteenYuanIds.forEach(id => {
             let qty = parseInt(document.getElementById(id).value) || 0;
             fifteenYuanTotal += qty;
@@ -685,6 +690,10 @@ document.addEventListener("DOMContentLoaded", function () {
         let totalCount = twelveYuanTotal + fifteenYuanTotal;
         let calculatedCount = Math.ceil(totalCount / 1.1);
         let bonusCount = Math.floor(calculatedCount / 10);
+        
+        // ✅ 讓最上方的提示橫幅能讀取最新數量
+        window.calculatedCount = calculatedCount;
+
         let isValid = (calculatedCount + bonusCount) === totalCount;
         let hasInput = totalCount > 0;
         let totalPrice = twelveYuanTotal * 12 + fifteenYuanTotal * 15 - bonusCount * 12;
@@ -692,8 +701,7 @@ document.addEventListener("DOMContentLoaded", function () {
         let displayText = `<div class="total-summary">`;
 
         if (totalCount > 0) {
-            displayText += `<div class="total-row">總枝數: ${totalCount} 枝。</div>`;
-            displayText += `<br>`;
+            displayText += `<div class="total-row">總枝數: ${totalCount} 枝。</div><br>`;
         }
 
         if (!isValid) {
@@ -704,8 +712,15 @@ document.addEventListener("DOMContentLoaded", function () {
                 若要購買 ${suggestedBuy} 枝，贈送 ${suggestedBonus} 枝。請再挑選 ${difference} 枝。
             </div>`;
             document.getElementById("totalCountText").innerHTML = displayText;
+            
+            // ✅ 觸發橫幅更新為「還差 X 枝」
+            window.promoValid = false;
+            updatePromoMessage();
             return;
         }
+
+        // ✅ 觸發橫幅更新為正確狀態
+        window.promoValid = true;
 
         if (hasInput) {
             displayText += `<div class="total-sub" style="color: red; font-weight: bold; margin: 0;">
@@ -719,20 +734,18 @@ document.addEventListener("DOMContentLoaded", function () {
           </div>`;
         }
 
-
         if (totalCount > 0) {
             displayText += `<div class="total-row">總金額: ${totalPrice} 元。</div>`;
-
         }
 
         displayText += `</div>`;
-
         document.getElementById("totalCountText").innerHTML = displayText;
+
+        // ✅ 執行橫幅動畫與更新
+        updatePromoMessage();
     }
-
-    calculateTotal();
-});
-
+    calculateTotal(); // 👈 確保這行有留著
+}); // 👈 確保這行有留著
 // **所有口味的 ID 對照表**
 // 12元口味
 // - qtyDuoDuo      (多多)
