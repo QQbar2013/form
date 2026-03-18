@@ -388,6 +388,8 @@ document.addEventListener("DOMContentLoaded", function () {
         let requiredFields = [
             { id: "customerName", label: "訂購人姓名" },
             { id: "phoneNumber", label: "聯絡電話" },
+            { id: "orderSchool", label: "訂購學校/公司" }, // 新增
+            { id: "orderClass", label: "訂購班級/部門" },  // 新增
             { id: "eventDate", label: "活動日期" },
             { id: "pickupDate", label: "取貨日期" },
             { id: "pickupTime", label: "取貨時間" }
@@ -421,7 +423,10 @@ document.addEventListener("DOMContentLoaded", function () {
         // ✅ 取值
         const customerName = document.getElementById("customerName").value.trim();
         const phoneNumber = document.getElementById("phoneNumber").value.trim();
-        const orderUnit = document.getElementById("orderUnit").value.trim();
+// 抓取兩個新欄位，並用空格組合
+        const orderSchool = document.getElementById("orderSchool").value.trim();
+        const orderClass = document.getElementById("orderClass").value.trim();
+        const orderUnit = `${orderSchool} ${orderClass}`;
         const eventDate = document.getElementById("eventDate").value.trim();
         const invoiceTitle = document.getElementById("invoiceTitle").value.trim();
         const invoiceNumber = document.getElementById("invoiceNumber").value.trim();
