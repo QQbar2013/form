@@ -29,7 +29,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
             const eventDate = new Date(dateStr);
             const minPickupDate = new Date(eventDate);
-            minPickupDate.setDate(eventDate.getDate() - 30);
+            minPickupDate.setDate(eventDate.getDate() - 1);
 
             pickupDatePicker.set("minDate", minPickupDate);
             pickupDatePicker.set("maxDate", dateStr);
@@ -134,7 +134,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 return;
             }
             let minPickupDate = new Date(eventDate);
-            minPickupDate.setDate(eventDate.getDate() - 30);
+            minPickupDate.setDate(eventDate.getDate() - 1);
             let pickupDateInput = document.getElementById("pickupDate");
             if (!isNaN(minPickupDate.getTime())) {
                 pickupDateInput.setAttribute("min", minPickupDate.toISOString().split("T")[0]);
@@ -155,9 +155,9 @@ document.addEventListener("DOMContentLoaded", function () {
             let eventDate = new Date(eventDateInput.value);
             eventDate.setHours(0, 0, 0, 0);
             let minPickupDate = new Date(eventDate);
-            minPickupDate.setDate(eventDate.getDate() - 30);
+            minPickupDate.setDate(eventDate.getDate() - 1);
             if (selectedDate < minPickupDate || selectedDate > eventDate) {
-                alert("請選擇活動日期前 30 天到活動當天的日期");
+                alert("請選擇活動日期前一日到活動當天的日期");
                 this.value = "";
             }
 
@@ -447,9 +447,9 @@ document.addEventListener("DOMContentLoaded", function () {
         const pickupDateObj = parseLocalDate(pickupDate);
         const eventDateObj = parseLocalDate(eventDate);
         const minPickupDate = new Date(eventDateObj);
-        minPickupDate.setDate(eventDateObj.getDate() - 30);
+        minPickupDate.setDate(eventDateObj.getDate() - 1);
         if (pickupDateObj < minPickupDate || pickupDateObj > eventDateObj) {
-            alert("請選擇活動日期前 30 天到活動當天的日期");
+            alert("請選擇活動日期前一日到活動當天的日期");
             return;
         }
 
