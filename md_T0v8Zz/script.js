@@ -8,24 +8,33 @@ document.addEventListener("DOMContentLoaded", function () {
     // Clear total amount display
     document.getElementById("totalCountText").innerHTML = "";
     // Initialize flatpickr for event date, pickup date, and pickup time
+// Initialize flatpickr for event date, pickup date, and pickup time
     const eventDatePicker = flatpickr("#eventDate", {
+        disableMobile: "true", // 👈 新增：強制手機使用統一的日曆介面，避開原生 Bug
         dateFormat: "Y-m-d",
         minDate: "today",
         maxDate: new Date().fp_incr(180),
         onChange: function (selectedDates, dateStr, instance) {
-            if (!dateStr) return;
-            const eventDate = new Date(dateStr);
+            if (!dateStr || selectedDates.length === 0) return;
+            
+            // 直接抓取 selectedDates[0] 避免字串轉換的時區問題
+            const eventDate = selectedDates[0]; 
             const minPickupDate = new Date(eventDate);
             minPickupDate.setDate(eventDate.getDate() - 1);
+            
             pickupDatePicker.set("minDate", minPickupDate);
-            pickupDatePicker.set("maxDate", dateStr);
+            pickupDatePicker.set("maxDate", eventDate);
             updateAvailableLocations(dateStr);
         }
     });
+
     const pickupDatePicker = flatpickr("#pickupDate", {
+        disableMobile: "true", // 👈 新增：強制手機使用統一的日曆介面
         dateFormat: "Y-m-d"
     });
+
     flatpickr("#pickupTime", {
+        disableMobile: "true", // 👈 新增：強制手機使用統一的時間介面
         enableTime: true,
         noCalendar: true,
         dateFormat: "H:i",
@@ -113,7 +122,12 @@ document.addEventListener("DOMContentLoaded", function () {
             minPickupDate.setDate(eventDate.getDate() - 1);
             let pickupDateInput = document.getElementById("pickupDate");
             if (!isNaN(minPickupDate.getTime())) {
-                pickupDateInput.setAttribute("min", minPickupDate.toISOString().split("T")[0]);
+                // 👈 修正：避免使用 toISOString() 產生時差，改為抓取本地時間
+                let y = minPickupDate.getFullYear();
+                let m = String(minPickupDate.getMonth() + 1).padStart(2, '0');
+                let d = String(minPickupDate.getDate()).padStart(2, '0');
+                
+                pickupDateInput.setAttribute("min", `${y}-${m}-${d}`);
                 pickupDateInput.setAttribute("max", this.value);
             }
             updateAvailableLocations(this.value);
