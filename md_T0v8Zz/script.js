@@ -24,6 +24,7 @@ document.addEventListener("DOMContentLoaded", function () {
             
             pickupDatePicker.set("minDate", minPickupDate);
             pickupDatePicker.set("maxDate", eventDate);
+            pickupDatePicker.setDate(minPickupDate, true);
             updateAvailableLocations(dateStr);
         }
     });
