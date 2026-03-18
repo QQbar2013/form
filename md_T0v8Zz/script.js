@@ -60,14 +60,14 @@ document.addEventListener("DOMContentLoaded", function () {
     const locationConfig = {
         lehua: {
             blacklist: {
-                dates: ["2025-11-08"],
+                dates: ["2026-04-04"],
                 ranges: []
             }
         },
         shilin: {
             blacklist: {
                 dates: [
-                    "2025-05-03",
+                    "2026-04-04",
                     "2025-11-08"
                 ],
                 ranges: []
