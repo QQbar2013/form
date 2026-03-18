@@ -739,7 +739,15 @@ document.addEventListener("DOMContentLoaded", function () {
             // 🚀 === [自訂成功送出視窗 結束] ===
 
         }; // 這是 submitButton.onclick 的大結尾
-
+        buttonContainer.appendChild(cancelButton);
+        buttonContainer.appendChild(finalSubmitButton);
+        confirmBox.appendChild(messageText);
+        confirmBox.appendChild(buttonContainer);
+        const overlay = document.createElement("div");
+        overlay.style = "position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.3); z-index: 999;";
+        document.body.appendChild(overlay);
+        document.body.appendChild(confirmBox);
+    });
 
 function calculateTotal() {
         let twelveYuanTotal = 0;
