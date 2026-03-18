@@ -544,20 +544,98 @@ document.addEventListener("DOMContentLoaded", function () {
             window.promoValid = true;
             updatePromoMessage();
             calculateTotal();
-            alert(`非常感謝您的填寫，再麻煩您通知負責人員您已完成填單，以確認您的訂單與付訂，尚未付訂前皆未完成訂購程序喔^^
-若已超過服務時間(10:00-22:00)，則翌日處理，謝謝您^^
-※請注意再與服務人員確認且付訂前，此筆訂單尚未成立。`);
-        };
-        buttonContainer.appendChild(cancelButton);
-        buttonContainer.appendChild(finalSubmitButton);
-        confirmBox.appendChild(messageText);
-        confirmBox.appendChild(buttonContainer);
-        const overlay = document.createElement("div");
-        overlay.style = "position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.3); z-index: 999;";
-        document.body.appendChild(overlay);
-        document.body.appendChild(confirmBox);
-    });
 
+
+                        // 🚀 === [新增：根據時間與金額判斷提示訊息] ===
+            const currentHour = new Date().getHours();
+            const isServiceTime = currentHour >= 10 && currentHour < 22; // 10:00 ~ 21:59
+            const isHighAmount = adjustedPrice >= 1000; // 總金額 >= 1000
+
+            let alertMessage = "";
+
+            if (isServiceTime) {
+                if (!isHighAmount) {
+                    // 1. 營業時間內 且 低於 1000
+                    alertMessage = `非常感謝您的填寫，再麻煩您點選下方按鈕通知負責人員您已完成填單，服務人員將於30-50分鐘內與您確認訂單細節，尚未確認前皆未完成訂購程序喔^^\n\n※請注意在與服務人員確認訂單前，此筆訂單尚未成立。`;
+                } else {
+                    // 2. 營業時間內 且 高於等於 1000
+                    alertMessage = `非常感謝您的填寫，再麻煩您點選下方按鈕通知負責人員您已完成填單，服務人員將於30-50分鐘內與您確認訂單細節與付訂，尚未付訂前皆未完成訂購程序喔^^\n\n※請注意在與服務人員確認訂單與付訂前，此筆訂單尚未成立。`;
+                }
+            } else {
+                if (!isHighAmount) {
+                    // 3. 非營業時間 且 低於 1000
+                    alertMessage = `非常感謝您的填寫，再麻煩您點選下方按鈕通知負責人員您已完成填單。服務人員將於服務時間內(10:00-22:00)與您確認訂單細節，尚未確認前皆未完成訂購程序喔^^\n\n※請注意在與服務人員確認訂單前，此筆訂單尚未成立。`;
+                } else {
+                    // 4. 非營業時間 且 高於等於 1000
+                    alertMessage = `非常感謝您的填寫，再麻煩您點選下方按鈕通知負責人員您已完成填單。服務人員將於服務時間內(10:00-22:00)與您確認訂單細節與付訂，尚未付訂前皆未完成訂購程序喔^^\n\n※請注意在與服務人員確認訂單與付訂前，此筆訂單尚未成立。`;
+                }
+            }
+
+
+            // 🚀 === [新增：自訂成功送出視窗 (取代原本的 alert)] ===
+            // 建立半透明背景遮罩
+            let successOverlay = document.createElement("div");
+            successOverlay.style = "position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1999;";
+            
+            // 建立白底彈出視窗
+            let successBox = document.createElement("div");
+            successBox.style = `
+                position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+                background: #fff; padding: 25px; border-radius: 12px;
+                box-shadow: 0 10px 25px rgba(0,0,0,0.2); width: 85%; max-width: 400px;
+                z-index: 2000; text-align: center;
+            `;
+
+            // 提示文字
+            let successText = document.createElement("p");
+            successText.style = "font-size: 16px; white-space: pre-line; text-align: left; line-height: 1.6; color: #333;";
+            successText.textContent = alertMessage;
+
+            // 🟢 你要的「前往告知」按鈕
+            let goLineBtn = document.createElement("button");
+            goLineBtn.textContent = "前往告知"; // 👈 按鈕文字在這裡設定！
+            goLineBtn.style = "margin-top: 20px; background: #ff6600; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-size: 16px; font-weight: bold; width: 100%; box-sizing: border-box;";
+
+            // 按下按鈕後的跳轉邏輯
+            goLineBtn.onclick = () => {
+                // 先關閉視窗
+                document.body.removeChild(successBox);
+                document.body.removeChild(successOverlay);
+
+            // 🚀 === [新增：判斷網址後綴並導向對應的 LINE] ===
+            const urlParams = new URLSearchParams(window.location.search);
+            const source = urlParams.get('v'); 
+
+            // 在這裡填入你三個官方 LINE 的加入/聊天連結
+            const lineLinks = {
+                "lH4m8Q5v": "https://lin.ee/ts3AVmE", 
+                "sL9x7P2k": "https://lin.ee/ne8VszX", 
+                "mL3w6R9j": "https://lin.ee/yuKF8z7"  
+            };
+
+                if (source && lineLinks[source]) {
+                    window.location.href = lineLinks[source];
+                } else {
+                    window.scrollTo(0, 0); 
+                }
+            };
+
+            // 把文字和按鈕放進視窗，把視窗和遮罩放進網頁
+            successBox.appendChild(successText);
+            successBox.appendChild(goLineBtn);
+            document.body.appendChild(successOverlay);
+            document.body.appendChild(successBox);
+            // 🚀 === [自訂成功送出視窗 結束] ===
+
+        }; // 這是 submitButton.onclick 的大結尾
+
+
+
+
+
+
+
+            
     function calculateTotal() {
         let twelveYuanTotal = 0;
         let fifteenYuanTotal = 0;
