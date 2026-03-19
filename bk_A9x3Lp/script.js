@@ -651,10 +651,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 body: formData
             });
 
-            document.getElementById("orderForm").reset();
-            document.querySelectorAll("input[name='pickupLocation']").forEach(radio => {
-                radio.dataset.clicked = "false";
-            });
+
             calculateTotal();
 
             // 🚀 === [新增：根據時間與金額判斷提示訊息] ===
@@ -709,7 +706,10 @@ document.addEventListener("DOMContentLoaded", function () {
 
             // 按下按鈕後的跳轉邏輯
             goLineBtn.onclick = () => {
-                // 先關閉視窗
+                document.getElementById("orderForm").reset();
+                document.querySelectorAll("input[name='pickupLocation']").forEach(radio => {
+                radio.dataset.clicked = "false";
+            });
                 document.body.removeChild(successBox);
                 document.body.removeChild(successOverlay);
 
