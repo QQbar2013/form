@@ -13,6 +13,8 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 
+<div id="promoMsg">買十送一中 🍡 可混搭口味喔～</div>
+  
 <div class="booking-form-w3layouts">
     <form id="orderForm">
         <!-- 訂購單標題 -->
@@ -36,12 +38,23 @@
 
 <div class="main-flex-w3ls-sectns">
     <div class="form-w3-agile-text1">
-        <label for="orderUnit">訂購單位：(ex: XX國中 703班 or XX公司)</label>
-        <input type="text" id="orderUnit" required>
+        <label for="orderSchool">訂購學校/公司：</label>
+        <input type="text" id="orderSchool" placeholder="例如：寒天高中 或 Q棒公司" required>
     </div>
     <div class="form-w3-agile-text2">
+        <label for="orderClass">訂購班級/部門：</label>
+        <input type="text" id="orderClass" placeholder="例如：1061班 或 業務部" required>
+    </div>
+</div>
+
+<div class="main-flex-w3ls-sectns">
+    <div class="form-w3-agile-text1">
         <label for="eventDate">活動日期：</label>
         <input type="date" id="eventDate" required>
+    </div>
+    <div class="form-w3-agile-text2">
+        <label for="pickupDate">取貨日期：</label>
+        <input type="date" id="pickupDate" required>
     </div>
 </div>
 
@@ -67,14 +80,7 @@
     </div>
 </div>
       
-        <!-- ✅ 取貨日期（50%） -->
-        <div class="main-flex-w3ls-sectns">
-            <div class="form-w3-agile-text1" style="flex: 1 1 48%;">
-                <label for="pickupDate">取貨日期：</label>
-                <input type="date" id="pickupDate" required>
-            </div>
-            <div style="flex: 1 1 48%;"></div> <!-- 空白右半邊 -->
-        </div>
+
 
         <!-- ✅ 取貨地點全寬 -->
         <div class="pickup-location-container pickup-location">
@@ -207,13 +213,9 @@
 
 
         <!-- 送出按鈕 -->
-        <input type="submit" value="送出">
+        <input type="submit" value="前往確認">
     </form>
-  <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        console.log(document.getElementById("orderUnit")); // 確保找到 input
-    });
-</script>
+
 
 </div>
 <!-- partial -->
