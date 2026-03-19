@@ -740,7 +740,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
         }; // 這是 submitButton.onclick 的大結尾
         buttonContainer.appendChild(cancelButton);
-        buttonContainer.appendChild(finalSubmitButton);
+        buttonContainer.appendChild(submitButton);
         confirmBox.appendChild(messageText);
         confirmBox.appendChild(buttonContainer);
         const overlay = document.createElement("div");
