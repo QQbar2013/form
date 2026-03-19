@@ -8,24 +8,34 @@ document.addEventListener("DOMContentLoaded", function () {
     // Clear total amount display
     document.getElementById("totalCountText").innerHTML = "";
     // Initialize flatpickr for event date, pickup date, and pickup time
+// Initialize flatpickr for event date, pickup date, and pickup time
     const eventDatePicker = flatpickr("#eventDate", {
+        disableMobile: "true", // 👈 新增：強制手機使用統一的日曆介面，避開原生 Bug
         dateFormat: "Y-m-d",
         minDate: "today",
         maxDate: new Date().fp_incr(180),
         onChange: function (selectedDates, dateStr, instance) {
-            if (!dateStr) return;
-            const eventDate = new Date(dateStr);
+            if (!dateStr || selectedDates.length === 0) return;
+            
+            // 直接抓取 selectedDates[0] 避免字串轉換的時區問題
+            const eventDate = selectedDates[0]; 
             const minPickupDate = new Date(eventDate);
-            minPickupDate.setDate(eventDate.getDate() - 30);
+            minPickupDate.setDate(eventDate.getDate() - 1);
+            
             pickupDatePicker.set("minDate", minPickupDate);
-            pickupDatePicker.set("maxDate", dateStr);
+            pickupDatePicker.set("maxDate", eventDate);
+            pickupDatePicker.setDate(minPickupDate, true);
             updateAvailableLocations(dateStr);
         }
     });
+
     const pickupDatePicker = flatpickr("#pickupDate", {
+        disableMobile: "true", // 👈 新增：強制手機使用統一的日曆介面
         dateFormat: "Y-m-d"
     });
+
     flatpickr("#pickupTime", {
+        disableMobile: "true", // 👈 新增：強制手機使用統一的時間介面
         enableTime: true,
         noCalendar: true,
         dateFormat: "H:i",
@@ -60,14 +70,14 @@ document.addEventListener("DOMContentLoaded", function () {
     const locationConfig = {
         lehua: {
             blacklist: {
-                dates: ["2025-11-08"],
+                dates: ["2026-03-31"],
                 ranges: []
             }
         },
         shilin: {
             blacklist: {
                 dates: [
-                    "2025-05-03",
+                    "2026-03-31",
                     "2025-11-08"
                 ],
                 ranges: []
@@ -79,17 +89,17 @@ document.addEventListener("DOMContentLoaded", function () {
                 ranges: [
                     { start: "2025-10-08", end: "2025-10-30" },
                     { start: "2025-11-01", end: "2025-11-06" },
-                    { start: "2025-11-09", end: "2025-12-05" },
-                    { start: "2025-12-07", end: "2099-05-24" }
+                    { start: "2025-11-09", end: "2026-03-29" },
+                    { start: "2026-04-01", end: "2099-05-24" }
 
                 ]
             }
         },
         sanchongMorning: {
             whitelist: [
-                "2025-10-31",
-                "2025-11-08",
-                "2025-12-06"
+                "2026-03-28",
+                "2026-04-25",
+                "2026-05-09"
             ]
         }
     };
@@ -110,10 +120,15 @@ document.addEventListener("DOMContentLoaded", function () {
                 return;
             }
             let minPickupDate = new Date(eventDate);
-            minPickupDate.setDate(eventDate.getDate() - 30);
+            minPickupDate.setDate(eventDate.getDate() - 1);
             let pickupDateInput = document.getElementById("pickupDate");
             if (!isNaN(minPickupDate.getTime())) {
-                pickupDateInput.setAttribute("min", minPickupDate.toISOString().split("T")[0]);
+                // 👈 修正：避免使用 toISOString() 產生時差，改為抓取本地時間
+                let y = minPickupDate.getFullYear();
+                let m = String(minPickupDate.getMonth() + 1).padStart(2, '0');
+                let d = String(minPickupDate.getDate()).padStart(2, '0');
+                
+                pickupDateInput.setAttribute("min", `${y}-${m}-${d}`);
                 pickupDateInput.setAttribute("max", this.value);
             }
             updateAvailableLocations(this.value);
@@ -128,9 +143,9 @@ document.addEventListener("DOMContentLoaded", function () {
             let eventDate = new Date(eventDateInput.value);
             eventDate.setHours(0, 0, 0, 0);
             let minPickupDate = new Date(eventDate);
-            minPickupDate.setDate(eventDate.getDate() - 30);
+            minPickupDate.setDate(eventDate.getDate() - 1);
             if (selectedDate < minPickupDate || selectedDate > eventDate) {
-                alert("請選擇活動日期前 30 天到活動當天的日期");
+                alert("請選擇活動日期前一日至活動當天的日期");
                 this.value = "";
             }
             updateAvailableLocations(eventDateInput.value);
@@ -308,6 +323,8 @@ document.addEventListener("DOMContentLoaded", function () {
         let requiredFields = [
             { id: "customerName", label: "訂購人姓名" },
             { id: "phoneNumber", label: "聯絡電話" },
+            { id: "orderSchool", label: "訂購學校/公司" }, // 新增
+            { id: "orderClass", label: "訂購班級/部門" },  // 新增
             { id: "eventDate", label: "活動日期" },
             { id: "pickupDate", label: "取貨日期" },
             { id: "pickupTime", label: "取貨時間" }
@@ -346,7 +363,42 @@ document.addEventListener("DOMContentLoaded", function () {
             alert(` ${totalCount} 枝無法拆解成『訂購 + 贈送』的買十送一組合，請調整或增加枝數喔😊`);
             return;
         }
+// === [新增：買十送一優化引導彈窗] ===
+        const remainder = calculatedCount % 10;
+        if (remainder !== 0) {
+            const needed = 10 - remainder;
+            // 這裡使用 Promise 封裝彈窗，以便配合 async/await 流程
+            const stayToBuyMore = await new Promise((resolve) => {
+                const upsellOverlay = document.createElement("div");
+                upsellOverlay.style = "position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; display: flex; align-items: center; justify-content: center;";
+                
+                upsellOverlay.innerHTML = `
+                    <div style="background: white; padding: 25px; border-radius: 12px; width: 85%; max-width: 400px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
+                        <h3 style="margin-top: 0; color: #ff6600;">✨ 差一點點就多送一枝！</h3>
+                        <p style="font-size: 16px; line-height: 1.6;">再 <b style="color:red; font-size: 20px;">${needed}</b> 枝就再<b>加送 1 枝</b>喔！</p>
+                        <div style="display: flex; gap: 10px; margin-top: 20px;">
+                            <button id="goNext" style="flex: 1; padding: 12px; border: 1px solid #ccc; background: #f9f9f9; border-radius: 6px; cursor: pointer; line-height: 1.4;">不需更改<br>前往確認頁</button>
+                            <button id="backToOrder" style="flex: 1; padding: 12px; border: none; background: #ff6600; color: white; border-radius: 6px; cursor: pointer; font-weight: bold; line-height: 1.4;">馬上去選<br>${needed + 1} 枝</button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(upsellOverlay);
 
+                upsellOverlay.querySelector("#goNext").onclick = () => {
+                    document.body.removeChild(upsellOverlay);
+                    resolve(false); // 不留下，繼續執行後續動作
+                };
+                upsellOverlay.querySelector("#backToOrder").onclick = () => {
+                    document.body.removeChild(upsellOverlay);
+                    resolve(true); // 留下，中斷提交
+                };
+            });
+
+            if (stayToBuyMore) return; // 使用者選擇回去多選幾枝，停止後續產能檢查
+        }
+        // === [優化引導結束] ===
+
+        
         // === [新增：產能總量限制檢查] ===
         const gasUrl = "https://script.google.com/macros/s/AKfycbzE7wP4x3S5k9BOpooS7VkiYMPYdPP2Wx9KDWaOnXZ5GLtWqE1OCHnBnjIy8jQQdWjK/exec";
         const submitBtn = event.submitter || document.querySelector("input[type='submit']");
@@ -387,7 +439,10 @@ document.addEventListener("DOMContentLoaded", function () {
         // Get form values
         const customerName = document.getElementById("customerName").value.trim();
         const phoneNumber = document.getElementById("phoneNumber").value.trim();
-        const orderUnit = document.getElementById("orderUnit").value.trim();
+        // 抓取兩個新欄位，並用空格組合
+        const orderSchool = document.getElementById("orderSchool").value.trim();
+        const orderClass = document.getElementById("orderClass").value.trim();
+        const orderUnit = `${orderSchool} ${orderClass}`;
         const eventDate = document.getElementById("eventDate").value.trim();
         const invoiceTitle = document.getElementById("invoiceTitle").value.trim();
         const invoiceNumber = document.getElementById("invoiceNumber").value.trim();
@@ -404,9 +459,9 @@ document.addEventListener("DOMContentLoaded", function () {
         const pickupDateObj = parseLocalDate(pickupDate);
         const eventDateObj = parseLocalDate(eventDate);
         const minPickupDate = new Date(eventDateObj);
-        minPickupDate.setDate(eventDateObj.getDate() - 30);
+        minPickupDate.setDate(eventDateObj.getDate() - 1);
         if (pickupDateObj < minPickupDate || pickupDateObj > eventDateObj) {
-            alert("請選擇活動日期前 30 天到活動當天的日期");
+            alert("請選擇活動日期前一日到活動當天的日期");
             return;
         }
 
