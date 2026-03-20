@@ -609,10 +609,11 @@ document.addEventListener("DOMContentLoaded", function () {
             document.body.removeChild(overlay);
         };
 
-        let submitButton = document.createElement("button");
-        submitButton.textContent = "送出";
-        submitButton.style = "background: #ff6600; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;";
-        submitButton.onclick = () => {
+let finalSubmitButton = document.createElement("button");
+        finalSubmitButton.textContent = "送出";
+        finalSubmitButton.style = "background: #ff6600; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;";
+        
+        finalSubmitButton.onclick = () => {
             document.body.removeChild(confirmBox);
             document.body.removeChild(overlay);
 
@@ -626,8 +627,6 @@ document.addEventListener("DOMContentLoaded", function () {
             formData.append("entry.969880587", pickupLocation);
             formData.append("entry.355577760", pickupDate);
             formData.append("entry.1822166015", pickupTime);
-
-            // 各口味
             formData.append("entry.316562737", document.getElementById("qtyDuoDuo").value || "0");
             formData.append("entry.2045995529", document.getElementById("qtyGrape").value || "0");
             formData.append("entry.632518397", document.getElementById("qtyLychee").value || "0");
@@ -638,36 +637,97 @@ document.addEventListener("DOMContentLoaded", function () {
             formData.append("entry.1676199734", document.getElementById("qtyOrange").value || "0");
             formData.append("entry.1154026181", document.getElementById("qtyPeach").value || "0");
             formData.append("entry.236488691", document.getElementById("qtyMango").value || "0");
-            formData.append("entry.1110750172", document.getElementById("qtyStrawberryDuoDuo")?.value || "0");
 
-            console.log("🚀 送出前的 formData 項目：");
-            for (let [key, value] of formData.entries()) {
-                console.log(`${key}: ${value}`);
+            // 送出資料
+            fetch("https://docs.google.com/forms/u/0/d/e/1FAIpQLSe6tzVbIUYkpADid6OwhxLitHyK4GgzQJMRHvLdwnNZA60mZg/formResponse", {
+                method: "POST", mode: "no-cors", body: formData
+            });
+
+            // 🚀 [1. 判斷時間與金額，設定專屬訊息]
+            const currentHour = new Date().getHours();
+            const isServiceTime = currentHour >= 10 && currentHour < 22; 
+            const isHighAmount = adjustedPrice >= 1000;
+
+            let alertMessage = "";
+            if (isServiceTime) {
+                if (!isHighAmount) {
+                    alertMessage = `非常感謝您的填寫，再麻煩您點選下方按鈕通知負責人員您已完成填單，服務人員將於30-50分鐘內與您確認訂單細節，尚未確認前皆未完成訂購程序喔^^\n\n※請注意在與服務人員確認訂單前，此筆訂單尚未成立。`;
+                } else {
+                    alertMessage = `非常感謝您的填寫，再麻煩您點選下方按鈕通知負責人員您已完成填單，服務人員將於30-50分鐘內與您確認訂單細節與付訂，尚未付訂前皆未完成訂購程序喔^^\n\n※請注意在與服務人員確認訂單與付訂前，此筆訂單尚未成立。`;
+                }
+            } else {
+                if (!isHighAmount) {
+                    alertMessage = `非常感謝您的填寫，再麻煩您點選下方按鈕通知負責人員您已完成填單。服務人員將於服務時間內(10:00-22:00)與您確認訂單細節，尚未確認前皆未完成訂購程序喔^^\n\n※請注意在與服務人員確認訂單前，此筆訂單尚未成立。`;
+                } else {
+                    alertMessage = `非常感謝您的填寫，再麻煩您點選下方按鈕通知負責人員您已完成填單。服務人員將於服務時間內(10:00-22:00)與您確認訂單細節與付訂，尚未付訂前皆未完成訂購程序喔^^\n\n※請注意在與服務人員確認訂單與付訂前，此筆訂單尚未成立。`;
+                }
             }
 
-            fetch("https://docs.google.com/forms/u/0/d/e/1FAIpQLSe6tzVbIUYkpADid6OwhxLitHyK4GgzQJMRHvLdwnNZA60mZg/formResponse", {
-                method: "POST",
-                mode: "no-cors",
-                body: formData
-            });
+            // 🚀 [2. 建立自訂成功送出視窗]
+            let successOverlay = document.createElement("div");
+            successOverlay.style = "position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1999;";
+            
+            let successBox = document.createElement("div");
+            successBox.style = `
+                position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+                background: #fff; padding: 25px; border-radius: 12px;
+                box-shadow: 0 10px 25px rgba(0,0,0,0.2); width: 85%; max-width: 400px;
+                z-index: 2000; text-align: center;
+            `;
 
-            document.getElementById("orderForm").reset();
-            document.querySelectorAll("input[name='pickupLocation']").forEach(radio => {
-                radio.dataset.clicked = "false";
-            });
-            calculateTotal();
+            let successText = document.createElement("p");
+            successText.style = "font-size: 16px; white-space: pre-line; text-align: left; line-height: 1.6; color: #333;";
+            successText.textContent = alertMessage;
 
-            alert(`非常感謝您的填寫，再麻煩您通知負責人員您已完成填單，以確認您的訂單與付訂，尚未付訂前皆未完成訂購程序喔^^
-若已超過服務時間(10:00-22:00)，則翌日處理，謝謝您^^
+            // 「前往告知」按鈕
+            let goLineBtn = document.createElement("button");
+            goLineBtn.textContent = "前往告知"; 
+            goLineBtn.style = "margin-top: 20px; background: #ff6600; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-size: 16px; font-weight: bold; width: 100%; box-sizing: border-box;";
 
-※請注意再與服務人員確認且付訂前，此筆訂單尚未成立。`);
+            // 🚀 [3. 按鈕點擊後：跳轉 LINE 並清空表單]
+            goLineBtn.onclick = () => {
+                document.body.removeChild(successBox);
+                document.body.removeChild(successOverlay);
+                
+                // 真正要離開前，再清空表單
+                document.getElementById("orderForm").reset();
+                document.querySelectorAll("input[name='pickupLocation']").forEach(radio => {
+                    radio.dataset.clicked = "false";
+                });
+                window.calculatedCount = 0;
+                window.promoValid = true;
+                updatePromoMessage();
+                calculateTotal();
+
+                // 抓取網址後綴並跳轉
+                const urlParams = new URLSearchParams(window.location.search);
+                const source = urlParams.get('v'); 
+                
+                const lineLinks = {
+                    "lH4m8Q5v": "https://lin.ee/ts3AVmE", 
+                    "sL9x7P2k": "https://lin.ee/ne8VszX", 
+                    "mL3w6R9j": "https://lin.ee/yuKF8z7"  
+                };
+
+                if (source && lineLinks[source]) {
+                    window.location.href = lineLinks[source];
+                } else {
+                    window.scrollTo(0, 0); 
+                }
+            };
+
+            // 將客製化彈窗顯示出來
+            successBox.appendChild(successText);
+            successBox.appendChild(goLineBtn);
+            document.body.appendChild(successOverlay);
+            document.body.appendChild(successBox);
         };
 
+        // 🚨 這是把「第一層確認訂單視窗」放進網頁的邏輯（不要刪掉！）
         buttonContainer.appendChild(cancelButton);
-        buttonContainer.appendChild(submitButton);
+        buttonContainer.appendChild(finalSubmitButton);
         confirmBox.appendChild(messageText);
         confirmBox.appendChild(buttonContainer);
-
         const overlay = document.createElement("div");
         overlay.style = "position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.3); z-index: 999;";
         document.body.appendChild(overlay);
