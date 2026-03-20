@@ -70,7 +70,10 @@ document.addEventListener("DOMContentLoaded", function () {
     const locationConfig = {
         lehua: {
             blacklist: {
-                dates: ["2026-03-31"],
+                dates: [
+                    "2026-03-31",
+                    "2026-04-25"
+                ],
                 ranges: []
             }
         },
