@@ -96,7 +96,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     { start: "2025-11-09", end: "2026-03-29" },
                     { start: "2026-04-01", end: "2026-04-17" },
                     { start: "2026-04-19", end: "2026-04-24" },
-                    { start: "2026-04-26", end: "2099-05-08" },
+                    { start: "2026-04-26", end: "2026-05-08" },
                     { start: "2026-05-10", end: "2099-05-24" }
 
                 ]
