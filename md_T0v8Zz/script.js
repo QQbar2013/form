@@ -71,7 +71,7 @@ document.addEventListener("DOMContentLoaded", function () {
         lehua: {
             blacklist: {
                 dates: [
-                    "2026-03-31",
+                    "2026-05-09",
                     "2026-04-18",
                     "2026-04-25"
                 ],
