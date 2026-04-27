@@ -284,6 +284,7 @@ document.addEventListener("DOMContentLoaded", function () {
         };
 
         Object.keys(locations).forEach(key => {
+            if (!el) return; // 👈 加這行：萬一這個網頁沒這個地點選項，就直接跳過，不報錯
             const el = locations[key];
             if (!el) return;
 
