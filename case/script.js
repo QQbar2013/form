@@ -67,49 +67,63 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         }
     });
-    const locationConfig = {
-        lehua: {
-            blacklist: {
-                dates: [
-                    "2026-05-09",
-                    "2026-04-18",
-                    "2026-04-25"
-                ],
-                ranges: []
-            }
-        },
-        shilin: {
-            blacklist: {
-                dates: [
-                    "2026-03-31",
-                    "2025-11-08"
-                ],
-                ranges: []
-            }
-        },
-        sanchong: {
-            blacklist: {
-                dates: [],
-                ranges: [
-                    { start: "2025-10-08", end: "2025-10-30" },
-                    { start: "2025-11-01", end: "2025-11-06" },
-                    { start: "2025-11-09", end: "2026-03-29" },
-                    { start: "2026-04-01", end: "2026-04-17" },
-                    { start: "2026-04-19", end: "2026-04-24" },
-                    { start: "2026-04-26", end: "2026-05-08" },
-                    { start: "2026-05-10", end: "2099-05-24" }
+// 限制活動日期選擇範圍 (今天 ~ 180 天內)
+    let today = new Date();
+    today.setHours(0, 0, 0, 0);
+    let maxDate = new Date();
+    maxDate.setDate(today.getDate() + 180);
 
-                ]
-            }
-        },
-        sanchongMorning: {
-            whitelist: [
-                "2026-03-28",
-                "2026-04-25",
-                "2026-05-09"
-            ]
-        }
+    // --- 這裡開始貼上新程式碼 (取代原本 88-121) ---
+    let locationConfig = {
+        lehua: { blacklist: { dates: [], ranges: [] } },
+        shilin: { blacklist: { dates: [], ranges: [] } },
+        sanchong: { blacklist: { dates: [], ranges: [] } },
+        sanchongMorning: { whitelist: [] }
     };
+
+    async function loadConfigFromSheets() {
+        const sheetCsvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSktBQEhEilW6wi43a5YluhMnCWMLU9swMC3By4eKNGkKWuTwvoNtEgfuAkEdxCK8ceD8Vr3ef_NLoA/pub?gid=0&single=true&output=csv&t=" + Date.now();
+
+        try {
+            const response = await fetch(sheetCsvUrl);
+            const data = await response.text();
+            const rows = data.split("\n").slice(1); 
+
+            const tempConfig = {
+                lehua: { blacklist: { dates: [], ranges: [] } },
+                shilin: { blacklist: { dates: [], ranges: [] } },
+                sanchong: { blacklist: { dates: [], ranges: [] } },
+                sanchongMorning: { whitelist: [] }
+            };
+
+            rows.forEach(row => {
+                const cols = row.split(",").map(c => c.trim().replace(/"/g, ''));
+                if (cols.length < 3) return;
+                const [id, type, start, end] = cols;
+                if (tempConfig[id]) {
+                    if (type === "date") {
+                        tempConfig[id].blacklist.dates.push(start);
+                    } else if (type === "range" && end) {
+                        tempConfig[id].blacklist.ranges.push({ start: start, end: end });
+                    } else if (type === "white") {
+                        tempConfig[id].whitelist.push(start);
+                    }
+                }
+            });
+
+            locationConfig = tempConfig;
+            console.log("✅ 雲端設定已同步:", locationConfig);
+
+            const currentEventDate = document.getElementById("eventDate").value;
+            if (currentEventDate) updateAvailableLocations(currentEventDate);
+        } catch (err) {
+            console.error("❌ 雲端抓取失敗:", err);
+        }
+    }
+
+    loadConfigFromSheets();
+    // --- 新程式碼結束 ---
+    
     // Restrict event date and pickup date input range
     let eventDateInput = document.getElementById("eventDate");
     eventDateInput.addEventListener("change", function () {
@@ -220,6 +234,8 @@ document.addEventListener("DOMContentLoaded", function () {
         return "請選擇正確的取貨地點。";
     }
     function updateAvailableLocations(selectedDateStr) {
+        // ✅ 補上這兩行：如果雲端資料 locationConfig 還沒抓到，先跳出不執行
+        if (!locationConfig || !locationConfig.lehua) return;
         const selectedDate = new Date(selectedDateStr);
         const locations = {
             lehua: document.getElementById("optionLehua"),
