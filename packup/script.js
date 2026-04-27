@@ -85,41 +85,56 @@ document.addEventListener("DOMContentLoaded", function () {
     //    eventDateInput.setAttribute("min", today.toISOString().split("T")[0]);
     //    eventDateInput.setAttribute("max", maxDate.toISOString().split("T")[0]);
 
-    // 🔸第 10 行：加在所有程式最上面
-    const locationConfig = {
-        lehua: {
-            blacklist: {
-                dates: ["2026-05-09"],
-                ranges: []
-            }
-        },
-        shilin: {
-            blacklist: {
-                dates: ["2025-05-03"],
-                ranges: []
-            }
-        },
-        sanchong: {
-            blacklist: {
-                dates: [],
-                ranges: [
-                    { start: "2025-10-08", end: "2025-10-30" },
-                    { start: "2025-11-01", end: "2025-11-06" },
-                    { start: "2025-11-09", end: "2025-12-05" },
-                    { start: "2025-12-07", end: "2099-05-24" }
-                ]
-            }
-        },
-        sanchongMorning: {
-            whitelist: [
-                "2026-03-28",
-                "2026-04-25",
-                "2026-05-09"
-
-            ]
-        }
+    // --- 這裡開始貼上新程式碼 (取代原本 88-121) ---
+    let locationConfig = {
+        lehua: { blacklist: { dates: [], ranges: [] } },
+        shilin: { blacklist: { dates: [], ranges: [] } },
+        sanchong: { blacklist: { dates: [], ranges: [] } },
+        sanchongMorning: { whitelist: [] }
     };
 
+    async function loadConfigFromSheets() {
+        const sheetCsvUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSktBQEhEilW6wi43a5YluhMnCWMLU9swMC3By4eKNGkKWuTwvoNtEgfuAkEdxCK8ceD8Vr3ef_NLoA/pub?gid=0&single=true&output=csv&t=" + Date.now();
+
+        try {
+            const response = await fetch(sheetCsvUrl);
+            const data = await response.text();
+            const rows = data.split("\n").slice(1); 
+
+            const tempConfig = {
+                lehua: { blacklist: { dates: [], ranges: [] } },
+                shilin: { blacklist: { dates: [], ranges: [] } },
+                sanchong: { blacklist: { dates: [], ranges: [] } },
+                sanchongMorning: { whitelist: [] }
+            };
+
+            rows.forEach(row => {
+                const cols = row.split(",").map(c => c.trim().replace(/"/g, ''));
+                if (cols.length < 3) return;
+                const [id, type, start, end] = cols;
+                if (tempConfig[id]) {
+                    if (type === "date") {
+                        tempConfig[id].blacklist.dates.push(start);
+                    } else if (type === "range" && end) {
+                        tempConfig[id].blacklist.ranges.push({ start: start, end: end });
+                    } else if (type === "white") {
+                        tempConfig[id].whitelist.push(start);
+                    }
+                }
+            });
+
+            locationConfig = tempConfig;
+            console.log("✅ 雲端設定已同步:", locationConfig);
+
+            const currentEventDate = document.getElementById("eventDate").value;
+            if (currentEventDate) updateAvailableLocations(currentEventDate);
+        } catch (err) {
+            console.error("❌ 雲端抓取失敗:", err);
+        }
+    }
+
+    loadConfigFromSheets();
+    // --- 新程式碼結束 ---
 
 
 
@@ -256,6 +271,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // 🔸第 130 行左右
     function updateAvailableLocations(selectedDateStr) {
+        // ✅ 關鍵保險：如果資料還沒抓到，先不執行，避免報錯
+        if (!locationConfig || !locationConfig.lehua) return;
+
         const selectedDate = new Date(selectedDateStr);
 
         const locations = {
@@ -267,42 +285,36 @@ document.addEventListener("DOMContentLoaded", function () {
 
         Object.keys(locations).forEach(key => {
             const el = locations[key];
+            if (!el) return;
 
-            // ✅ 特殊處理三重早上：只在白名單且活動日＝取貨日才顯示
+            // ✅ 特殊處理三重早上：只在白名單內顯示
             if (key === "sanchongMorning") {
                 const pickupDateStr = document.getElementById("pickupDate").value;
                 const eventDateStr = document.getElementById("eventDate").value;
-                const whiteList = locationConfig.sanchongMorning.whitelist;
+                const whiteList = locationConfig.sanchongMorning.whitelist || [];
 
-                // ✅ 預設隱藏
                 let shouldShow = false;
-
-                if (
-                    pickupDateStr &&
-                    eventDateStr &&
-                    pickupDateStr === eventDateStr &&
-                    whiteList.includes(pickupDateStr)
-                ) {
+                if (pickupDateStr && eventDateStr && pickupDateStr === eventDateStr && whiteList.includes(pickupDateStr)) {
                     shouldShow = true;
                 }
-
-                // 強制先隱藏，避免沒日期時還顯示
                 el.style.display = shouldShow ? "flex" : "none";
                 return;
             }
 
+            // ✅ 一般地點：判斷雲端抓到的黑名單 (Dates & Ranges)
+            const config = locationConfig[key];
+            if (!config || !config.blacklist) return;
 
-
-            // 其他一般地點 → 判斷黑名單邏輯
-            const { blacklist } = locationConfig[key];
             let shouldHide = false;
 
-            if (blacklist.dates.includes(selectedDateStr)) {
+            // 1. 檢查單一日期
+            if (config.blacklist.dates.includes(selectedDateStr)) {
                 shouldHide = true;
             }
 
-            if (!shouldHide && blacklist.ranges.length > 0) {
-                for (let range of blacklist.ranges) {
+            // 2. 檢查日期範圍
+            if (!shouldHide && config.blacklist.ranges.length > 0) {
+                for (let range of config.blacklist.ranges) {
                     const start = new Date(range.start);
                     const end = new Date(range.end);
                     if (selectedDate >= start && selectedDate <= end) {
