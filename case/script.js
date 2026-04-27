@@ -245,6 +245,7 @@ document.addEventListener("DOMContentLoaded", function () {
         };
         Object.keys(locations).forEach(key => {
             const el = locations[key];
+            if (!el) return; // 👈 加這行：萬一這個網頁沒這個地點選項，就直接跳過，不報錯
             if (key === "sanchongMorning") {
                 const pickupDateStr = document.getElementById("pickupDate").value;
                 const eventDateStr = document.getElementById("eventDate").value;
