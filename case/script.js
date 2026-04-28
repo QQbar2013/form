@@ -97,7 +97,7 @@ document.addEventListener("DOMContentLoaded", function () {
             };
 
             rows.forEach(row => {
-                const cols = row.split(",").map(c => c.trim().replace(/"/g, ''));
+                const cols = row.split(",").map(c => c.trim().replace(/"/g, '').replace(/\//g, '-'));
                 if (cols.length < 3) return;
                 const [id, type, start, end] = cols;
                 if (tempConfig[id]) {
