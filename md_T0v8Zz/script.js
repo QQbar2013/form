@@ -82,7 +82,7 @@ document.addEventListener("DOMContentLoaded", function () {
             blacklist: {
                 dates: [
                     "2026-03-31",
-                    "2025-11-08"
+                    "2026-05-09"
                 ],
                 ranges: []
             }
