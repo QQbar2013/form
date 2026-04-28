@@ -8,7 +8,6 @@ document.addEventListener("DOMContentLoaded", function () {
     // Clear total amount display
     document.getElementById("totalCountText").innerHTML = "";
     // Initialize flatpickr for event date, pickup date, and pickup time
-// Initialize flatpickr for event date, pickup date, and pickup time
     const eventDatePicker = flatpickr("#eventDate", {
         disableMobile: "true", // 👈 新增：強制手機使用統一的日曆介面，避開原生 Bug
         dateFormat: "Y-m-d",
@@ -98,7 +97,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
             rows.forEach(row => {
                 const cols = row.split(",").map(c => c.trim().replace(/"/g, '').replace(/\//g, '-'));
-                if (cols.length < 3) return;
+                if (cols.length < 2) return;
                 const [id, type, start, end] = cols;
                 if (tempConfig[id]) {
                     if (type === "date") {
@@ -114,6 +113,7 @@ document.addEventListener("DOMContentLoaded", function () {
             locationConfig = tempConfig;
             console.log("✅ 雲端設定已同步:", locationConfig);
 
+            // 若使用者在資料抓取完成前就已選了活動日期，補執行一次以正確顯示地點
             const currentEventDate = document.getElementById("eventDate").value;
             if (currentEventDate) updateAvailableLocations(currentEventDate);
         } catch (err) {
@@ -161,7 +161,7 @@ document.addEventListener("DOMContentLoaded", function () {
             if (!this.value) return;
             let selectedDate = parseLocalDate(this.value);
             selectedDate.setHours(0, 0, 0, 0);
-            let eventDate = new Date(eventDateInput.value);
+            let eventDate = parseLocalDate(eventDateInput.value);
             eventDate.setHours(0, 0, 0, 0);
             let minPickupDate = new Date(eventDate);
             minPickupDate.setDate(eventDate.getDate() - 1);
@@ -234,9 +234,11 @@ document.addEventListener("DOMContentLoaded", function () {
         return "請選擇正確的取貨地點。";
     }
     function updateAvailableLocations(selectedDateStr) {
-        // ✅ 補上這兩行：如果雲端資料 locationConfig 還沒抓到，先跳出不執行
+        // 沒有活動日期就不顯示任何地點
+        if (!selectedDateStr) return;
+        // 雲端設定還沒抓到，先等待
         if (!locationConfig || !locationConfig.lehua) return;
-        const selectedDate = new Date(selectedDateStr);
+        const selectedDate = parseLocalDate(selectedDateStr);
         const locations = {
             lehua: document.getElementById("optionLehua"),
             shilin: document.getElementById("optionShilin"),
@@ -269,8 +271,8 @@ document.addEventListener("DOMContentLoaded", function () {
             }
             if (!shouldHide && blacklist.ranges.length > 0) {
                 for (let range of blacklist.ranges) {
-                    const start = new Date(range.start);
-                    const end = new Date(range.end);
+                    const start = parseLocalDate(range.start);
+                    const end = parseLocalDate(range.end);
                     if (selectedDate >= start && selectedDate <= end) {
                         shouldHide = true;
                         break;
@@ -529,7 +531,7 @@ document.addEventListener("DOMContentLoaded", function () {
             document.body.removeChild(confirmBox);
             document.body.removeChild(overlay);
         };
-let finalSubmitButton = document.createElement("button");
+        let finalSubmitButton = document.createElement("button");
         finalSubmitButton.textContent = "送出";
         finalSubmitButton.style = "background: #ff6600; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;";
         
