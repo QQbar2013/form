@@ -95,7 +95,7 @@ document.addEventListener("DOMContentLoaded", function () {
         },
         shilin: {
             blacklist: {
-                dates: ["2025-05-03"],
+                dates: ["2025-05-03","2026-05-09"],
                 ranges: []
             }
         },
