@@ -1,93 +1,70 @@
-// 🎯 將口味限制移到最頂端，並改名為全球唯一變數，徹底根治「Identifier has already been declared」的快取怨念！
+// 🎯 口味限制全球唯一變數，防止重複宣告報錯
 if (typeof window.myGlobalDisabledFlavors === 'undefined') {
     window.myGlobalDisabledFlavors = ["qtyMango"];
 }
 
+// 🌐 宣告全域日期配置變數（給它預設定當作本地備用名單）
+window.locationConfig = {
+    lehua: { blacklist: { dates: ["2026-05-09", "2026-04-18", "2026-04-25"], ranges: [] } },
+    shilin: { blacklist: { dates: ["2026-03-31", "2026-05-09"], ranges: [] } },
+    sanchong: {
+        blacklist: {
+            dates: [],
+            ranges: [
+                { start: "2025-10-08", end: "2025-10-30" },
+                { start: "2025-11-01", end: "2025-11-06" },
+                { start: "2025-11-09", end: "2026-03-29" },
+                { start: "2026-04-01", end: "2026-04-17" },
+                { start: "2026-04-19", end: "2026-04-24" },
+                { start: "2026-04-26", end: "2026-05-08" },
+                { start: "2026-05-10", end: "2099-05-24" }
+            ]
+        }
+    },
+    sanchongMorning: { whitelist: ["2026-03-28", "2026-04-25", "2026-05-09"] }
+};
+
+// 🎯 【關鍵新功能】負責接收 Google 試算表傳回來的 JSONP 資料，並強制刷新網頁地點！
+window.handleJsonpConfig = function (onlineConfig) {
+    window.locationConfig = onlineConfig;
+    console.log("🎉 成功透過 JSONP 動態載入最新的線上日期限定配置！", window.locationConfig);
+    
+    // 立即刷新地點限制顯示
+    const currentEventDate = document.getElementById("eventDate").value;
+    if (currentEventDate && typeof updateAvailableLocations === 'function') {
+        updateAvailableLocations(currentEventDate);
+    }
+};
+
 document.addEventListener("DOMContentLoaded", function () {
-    // 🎯 強制關閉瀏覽器內建的「請填寫這欄」氣泡提示，全面啟用我們的自訂紅框功能！
     const orderForm = document.getElementById("orderForm");
     if (orderForm) {
         orderForm.setAttribute("novalidate", "true");
+        orderForm.reset();
     }
-
-    // Reset form on page load
-    if (orderForm) orderForm.reset();
     
-    // 初始化按鈕文字為「前往確認」
     const initialSubmitBtn = document.querySelector("input[type='submit']");
     if (initialSubmitBtn) initialSubmitBtn.value = "前往確認";
 
-    // Clear pickup location radio clicked markers
     document.querySelectorAll("input[name='pickupLocation']").forEach(radio => {
         radio.dataset.clicked = "false";
     });
-    // Clear total amount display
     document.getElementById("totalCountText").innerHTML = "";
 
-    // 🌐 宣告日期配置變數（先給它你原本的設定當作預設備用）
-    let locationConfig = {
-        lehua: {
-            blacklist: {
-                dates: ["2026-05-09", "2026-04-18", "2026-04-25"],
-                ranges: []
-            }
-        },
-        shilin: {
-            blacklist: {
-                dates: ["2026-03-31", "2026-05-09"],
-                ranges: []
-            }
-        },
-        sanchong: {
-            blacklist: {
-                dates: [],
-                ranges: [
-                    { start: "2025-10-08", end: "2025-10-30" },
-                    { start: "2025-11-01", end: "2025-11-06" },
-                    { start: "2025-11-09", end: "2026-03-29" },
-                    { start: "2026-04-01", end: "2026-04-17" },
-                    { start: "2026-04-19", end: "2026-04-24" },
-                    { start: "2026-04-26", end: "2026-05-08" },
-                    { start: "2026-05-10", end: "2099-05-24" }
-                ]
-            }
-        },
-        sanchongMorning: {
-            whitelist: [
-                "2026-03-28",
-                "2026-04-25",
-                "2026-05-09"
-            ]
-        }
-    };
-
-    // 🚀 從線上檔案讀取最新日期限定，並自動覆蓋上面黑白名單
-    async function fetchOnlineLocationConfig() {
-        const baseUrl = "https://script.google.com/macros/s/AKfycbuvO5OjaPocqyCdR2gNPbO_yV0jcOp7QK1aEODgNvBKEOQa-bgmiVwpmoM2K0D0l2N/exec";
-        const configUrl = `${baseUrl}?_=${new Date().getTime()}`;
-        
-        try {
-            const response = await fetch(configUrl);
-            if (response.ok) {
-                // 🎯 配合 GAS 改回標準 JSON 解析法
-                const onlineConfig = await response.json();
-                
-                locationConfig = onlineConfig; // 成功讀取，覆蓋本地設定
-                console.log("成功動態載入最新的線上日期限定配置！", locationConfig);
-                
-                // 如果此時使用者已經選了日期，立刻刷新地點限制顯示
-                const currentEventDate = document.getElementById("eventDate").value;
-                if (currentEventDate) {
-                    updateAvailableLocations(currentEventDate);
-                }
-            }
-        } catch (error) {
-            console.warn("線上日期設定檔讀取失敗，將自動以程式內預設的備用配置運行。", error);
-        }
+    // 🚀 【JSONP 啟動器】用最安全的方式繞過 CORS 網域封鎖
+    function fetchOnlineLocationConfigViaJsonp() {
+        const baseUrl = "https://script.google.com/macros/s/AKfycbxuvO5OjaPocqyCdR2gNPbO_yV0jcOp7QK1aEODgNvBKEOQa-bgmiVwpmoM2K0D0l2N/exec";
+        const script = document.createElement("script");
+        script.src = `${baseUrl}?_=${new Date().getTime()}`;
+        // 萬一載入失敗的備用安全機制
+        script.onerror = function() {
+            console.warn("線上日期設定檔連線失敗，系統將自動以程式內預設的備用配置運行。");
+        };
+        document.body.appendChild(script);
     }
 
-    // 啟動時立刻執行線上抓取設定
-    fetchOnlineLocationConfig();
+    // 立刻執行線上抓取設定
+    fetchOnlineLocationConfigViaJsonp();
 
     // Initialize flatpickr for event date, pickup date, and pickup time
     const eventDatePicker = flatpickr("#eventDate", {
@@ -206,13 +183,11 @@ document.addEventListener("DOMContentLoaded", function () {
         pickupTimeFlatpickr.setDate(pickupTimeFlatpickr.input.value, true);
     }
 
-    // Restrict phone number to digits only
     let phoneNumberInput = document.getElementById("phoneNumber");
     phoneNumberInput.addEventListener("input", function () {
         this.value = this.value.replace(/\D/g, "");
     });
 
-    // Allow pickup location to be deselected
     document.querySelectorAll(".pickup-option input[type='radio']").forEach(radio => {
         radio.addEventListener("click", function () {
             document.querySelectorAll("input[name='pickupLocation']").forEach(r => {
@@ -263,7 +238,7 @@ document.addEventListener("DOMContentLoaded", function () {
         return "請選擇正確的取貨地點。";
     }
 
-    function updateAvailableLocations(selectedDateStr) {
+    window.updateAvailableLocations = function (selectedDateStr) {
         const selectedDate = new Date(selectedDateStr);
         const locations = {
             lehua: document.getElementById("optionLehua"),
@@ -273,10 +248,11 @@ document.addEventListener("DOMContentLoaded", function () {
         };
         Object.keys(locations).forEach(key => {
             const el = locations[key];
+            if (!el) return;
             if (key === "sanchongMorning") {
                 const pickupDateStr = document.getElementById("pickupDate").value;
                 const eventDateStr = document.getElementById("eventDate").value;
-                const whiteList = locationConfig.sanchongMorning.whitelist;
+                const whiteList = window.locationConfig.sanchongMorning.whitelist;
                 let shouldShow = false;
                 if (
                     pickupDateStr &&
@@ -289,7 +265,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 el.style.display = shouldShow ? "flex" : "none";
                 return;
             }
-            const { blacklist } = locationConfig[key];
+            const { blacklist } = window.locationConfig[key];
             let shouldHide = false;
             if (blacklist.dates.includes(selectedDateStr)) {
                 shouldHide = true;
@@ -318,12 +294,10 @@ document.addEventListener("DOMContentLoaded", function () {
         this.dataset.valid = isValid ? "true" : "false";
     });
 
-    // Restrict invoice number to digits only
     document.getElementById("invoiceNumber").addEventListener("input", function () {
         this.value = this.value.replace(/\D/g, "");
     });
 
-    // 限制口味輸入框只能輸入數字
     document.querySelectorAll(".flavor-item input[type='text']").forEach(input => {
         input.addEventListener("input", function () {
             this.value = this.value.replace(/\D/g, "");
@@ -339,7 +313,6 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     });
 
-    // 取得訂購清單 (全品項改為 15 元)
     function getOrderDetails() {
         const flavorData = [
             { name: "多多", id: "qtyDuoDuo" },
@@ -367,23 +340,15 @@ document.addEventListener("DOMContentLoaded", function () {
         return { orderDetails, totalCount, totalPrice };
     }
     
-    // 表單提交處理邏輯
     document.getElementById("orderForm").addEventListener("submit", async function (event) {
         event.preventDefault();
         
-        // 1. 需要紅框提示的必填欄位
         let requiredFields = [
-            { id: "customerName" },
-            { id: "phoneNumber" },
-            { id: "orderSchool" }, 
-            { id: "orderClass" },  
-            { id: "eventDate" },
-            { id: "pickupDate" },
-            { id: "pickupTime" }
+            { id: "customerName" }, { id: "phoneNumber" }, { id: "orderSchool" }, 
+            { id: "orderClass" }, { id: "eventDate" }, { id: "pickupDate" }, { id: "pickupTime" }
         ];
         let hasError = false;
 
-        // 2. 檢查輸入框（只上紅框）
         requiredFields.forEach(field => {
             let input = document.getElementById(field.id);
             if (!input || !input.value.trim()) {
@@ -394,7 +359,6 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         });
 
-        // 3. 特殊檢查：取貨地點
         let pickupLocationElement = document.querySelector("input[name='pickupLocation']:checked");
         let pickupWrapper = document.querySelector(".pickup-options-wrapper");
         if (!pickupLocationElement) {
@@ -408,7 +372,6 @@ document.addEventListener("DOMContentLoaded", function () {
             if (pickupWrapper) pickupWrapper.style.border = "";
         }
 
-        // 有漏填直接平滑捲動回最頂端並中斷
         if (hasError) {
             window.scrollTo({ top: 0, behavior: 'smooth' });
             return;
@@ -416,7 +379,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
         pickupLocationElement.dataset.clicked = "true";
 
-        // Get form values
         const customerName = document.getElementById("customerName").value.trim();
         const phoneNumber = document.getElementById("phoneNumber").value.trim();
         const orderSchool = document.getElementById("orderSchool").value.trim();
@@ -429,7 +391,6 @@ document.addEventListener("DOMContentLoaded", function () {
         const pickupDate = document.getElementById("pickupDate").value.trim();
         const pickupTime = document.getElementById("pickupTime").value.trim();
 
-        // 再次驗證時間合法性
         const pickupTimeInput = document.getElementById("pickupTime");
         if (!validatePickupTime(pickupLocation, pickupTime, true)) {
              alert("請確認您輸入的取貨時間是否正確喔！");
@@ -452,26 +413,22 @@ document.addEventListener("DOMContentLoaded", function () {
         const bonusCount = Math.floor(calculatedCount / 10);
         const adjustedPrice = totalPrice - bonusCount * 15;
 
-        // 防止提交空訂單
         if (totalCount === 0) {
             alert(`請填寫欲訂購的口味及數量喔😊`);
             return;
         }
 
-        // 買十送一總數核對
         if ((calculatedCount + bonusCount) !== totalCount) {
             const diff = (calculatedCount + bonusCount) - totalCount;
             alert(`若要購買 ${calculatedCount} 枝，贈送 ${bonusCount} 枝。請再挑選 ${diff} 枝。`);
             return;
         }
 
-        // 🔒【總枝數上限 164 枝限制】
         if (totalCount > 164) {
             alert(`總枝數 ${totalCount} 枝超過上限 164 枝，請減少 ${totalCount - 164} 枝喔😊`);
             return;
         }
 
-        // 買十送一促銷加碼引導彈窗
         const remainder = calculatedCount % 10;
         if (remainder !== 0) {
             const needed = 10 - remainder;
@@ -503,7 +460,7 @@ document.addEventListener("DOMContentLoaded", function () {
             if (stayToBuyMore) return; 
         }
         
-        // 產能限制後端核對
+        const gasUrl = "https://script.google.com/macros/s/AKfycbzE7wP4x3S5k9BOpooS7VkiYMPYdPP2Wx9KDWaOnXZ5GLtWqE1OCHnBnjIy8jQQdWjK/exec";
         const submitBtn = event.submitter || document.querySelector("input[type='submit']");
         submitBtn.disabled = true;
         const originalBtnText = submitBtn.value;
@@ -512,11 +469,7 @@ document.addEventListener("DOMContentLoaded", function () {
         try {
             const checkResponse = await fetch(gasUrl, {
                 method: "POST",
-                body: JSON.stringify({
-                    eventDate: eventDate,
-                    totalCount: totalCount,
-                    orderType: "packing" 
-                })
+                body: JSON.stringify({ eventDate: eventDate, totalCount: totalCount, orderType: "packing" })
             });
             const checkResult = await checkResponse.json();
             if (checkResult.status === "error") {
@@ -534,7 +487,6 @@ document.addEventListener("DOMContentLoaded", function () {
         submitBtn.disabled = false;
         submitBtn.value = originalBtnText;
 
-        // Confirmation layout
         let confirmationMessage = `請確認您的訂單資訊，若正確無誤請點選右下方"送出"：\n\n\n`;
         confirmationMessage += `📌 訂購人姓名：${customerName}\n\n`;
         confirmationMessage += `📞 聯絡電話：${phoneNumber}\n\n`;
@@ -735,14 +687,13 @@ document.addEventListener("DOMContentLoaded", function () {
     calculateTotal(); 
 });
 
-// 口味上下架管理對照
-var disabledFlavors = ["qtyMango"];
+// 口味上下架管理
 document.querySelectorAll(".flavor-item input[type='text']").forEach(input => {
     input.addEventListener("input", function () {
         let flavorId = this.id;
         let flavorName = this.parentElement.querySelector("label").textContent;
         let value = this.value.trim();
-        if (disabledFlavors.includes(flavorId) && value !== "" && value !== "0") {
+        if (window.myGlobalDisabledFlavors.includes(flavorId) && value !== "" && value !== "0") {
             alert(`目前尚未開放 ${flavorName} 訂購喔!!`);
             this.value = "";
         }
@@ -750,7 +701,8 @@ document.querySelectorAll(".flavor-item input[type='text']").forEach(input => {
 });
 
 ["optionLehua", "optionShilin", "optionSanchong", "optionSanchongMorning"].forEach(id => {
-    document.getElementById(id).style.display = "none";
+    const el = document.getElementById(id);
+    if (el) el.style.display = "none";
 });
 
 function parseLocalDate(dateStr) {
