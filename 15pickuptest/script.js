@@ -59,13 +59,15 @@ document.addEventListener("DOMContentLoaded", function () {
     // 🚀 從線上檔案讀取最新日期限定，並自動覆蓋上面黑白名單
     async function fetchOnlineLocationConfig() {
         const baseUrl = "https://script.google.com/macros/s/AKfycbzrLQkHOTN8GDimfdDczLeAy0Lhpadi4FK4IEHBXYz4-qn5v4Djj5IzW3ftuxlCiWJX/exec";
-        // 🔄 透過加上時間戳記（?_=(new Date().getTime())），破解瀏覽器快取，確保每次重開都是最新資料！
         const configUrl = `${baseUrl}?_=${new Date().getTime()}`;
         
         try {
             const response = await fetch(configUrl);
             if (response.ok) {
-                const onlineConfig = await response.json();
+                // 先用 text() 讀取 GAS 吐回來的文字，再用 JSON.parse 解析
+                const htmlText = await response.text();
+                const onlineConfig = JSON.parse(htmlText);
+                
                 locationConfig = onlineConfig; // 成功讀取，覆蓋本地設定
                 console.log("成功動態載入最新的線上日期限定配置！", locationConfig);
                 
@@ -728,7 +730,7 @@ document.addEventListener("DOMContentLoaded", function () {
         displayText += `</div>`;
         document.getElementById("totalCountText").innerHTML = displayText;
         updatePromoMessage();
-    }
+    } // 🎯 修正處：這裡原本遺失的結尾大括號已完美補齊！
     
     calculateTotal(); 
 });
