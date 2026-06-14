@@ -49,7 +49,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     document.querySelectorAll("input[name='pickupLocation']").forEach(radio => {
         radio.dataset.clicked = "false";
-        // 初始狀態：尚未選日期，先把每張取貨地點卡片隱藏起來
+        // ✅ 初始狀態：尚未選日期，先把每張取貨地點卡片隱藏起來
         const cardContainer = radio.closest(".pickup-option") || radio.parentElement?.parentElement;
         if (cardContainer) cardContainer.style.display = "none";
     });
@@ -58,7 +58,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // 🚀 【JSONP 啟動器】
     function fetchOnlineLocationConfigViaJsonp() {
-        const baseUrl = "https://script.google.com/macros/s/AKfycbuvO5OjaPocqyCdR2gNPbO_yV0jcOp7QK1aEODgNvBKEOQa-bgmiVwpmoM2K0D0l2N/exec";
+        const baseUrl = "https://script.google.com/macros/s/AKfycbzE7wP4x3S5k9BOpooS7VkiYMPYdPP2Wx9KDWaOnXZ5GLtWqE1OCHnBnjIy8jQQdWjK/exec";
         const script = document.createElement("script");
         script.src = `${baseUrl}?_=${new Date().getTime()}`;
         script.onerror = function() {
@@ -69,7 +69,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     fetchOnlineLocationConfigViaJsonp();
 
-    // 🎯 【全部隱藏取貨地點】小工具
+    // 🎯 【全部隱藏取貨地點】小工具：把每張卡片都藏起來，並取消已勾選的
     function hideAllPickupLocations() {
         document.querySelectorAll("input[name='pickupLocation']").forEach(radio => {
             const cardContainer = radio.closest(".pickup-option") || radio.parentElement?.parentElement;
@@ -162,16 +162,18 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         });
 
-        // 2. 核心控制：直接對整張卡片進行顯示或物理隱藏！
+        // 2. 核心控制：直接抓取網頁上所有取貨地點的 Radio 按鈕進行卡片控制
         const allRadioButtons = document.querySelectorAll("input[name='pickupLocation']");
         allRadioButtons.forEach(radio => {
-            const radioValue = radio.value;
+            const radioValue = radio.value; // 例如："樂華店"
             
             Object.keys(matchValueNames).forEach(key => {
                 if (radioValue === matchValueNames[key]) {
+                    // 向上尋找最接近的白底卡片容器（通常是 .pickup-option 或者其父級 div）
                     const cardContainer = radio.closest(".pickup-option") || radio.parentElement?.parentElement;
                     
                     if (cardContainer) {
+                        // 根據最新的狀態，直接對整張卡片進行顯示或物理隱藏！
                         cardContainer.style.display = visibilityStatus[key] ? "flex" : "none";
                         
                         // 防呆：如果原本勾選的門市被隱藏了，自動取消勾選
@@ -580,6 +582,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 method: "POST", mode: "no-cors", body: formData
             });
 
+            // 清空表單狀態
             document.getElementById("orderForm").reset();
             document.querySelectorAll("input[name='pickupLocation']").forEach(radio => {
                 radio.checked = false;
@@ -590,6 +593,8 @@ document.addEventListener("DOMContentLoaded", function () {
             updatePromoMessage();
             calculateTotal();
 
+            // ✅ 依「網址 v 參數」+「總金額是否 ≥ 1000」決定跳轉的成功頁
+            // 金額 ≥ 1000 → DEP 開頭；金額 < 1000 → NR 開頭
             const isHighAmount = adjustedPrice >= 1000;
             const urlParams = new URLSearchParams(window.location.search);
             const source = urlParams.get('v');
@@ -600,6 +605,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 const prefix = isHighAmount ? "DEP" : "NR";
                 window.location.href = `${baseSuccessUrl}${prefix}${source}.html`;
             } else {
+                // 沒有 v 參數或不認得 → 停在原頁、回到頂部
                 window.scrollTo(0, 0);
             }
         };
@@ -743,3 +749,42 @@ window.addEventListener('resize', () => {
   const h = bar.offsetHeight || 48;
   document.body.style.setProperty('--promoH', h + 'px');
 });
+
+// 🎯 各取貨地點的可取貨時間範圍
+const pickupTimeRules = {
+    "樂華店":            { start: "16:40", end: "22:00" },
+    "士林店":            { start: "18:00", end: "22:00" },
+    "三重取貨點":         { start: "14:00", end: "17:30" },
+    "三重取貨點（早上）":  { start: "08:00", end: "09:00" }
+};
+
+// 將 "HH:mm" 轉成當天的分鐘數，方便比較大小
+function timeStrToMinutes(timeStr) {
+    if (!timeStr || timeStr.indexOf(":") === -1) return null;
+    const parts = timeStr.split(":");
+    const h = parseInt(parts[0], 10);
+    const m = parseInt(parts[1], 10);
+    if (isNaN(h) || isNaN(m)) return null;
+    return h * 60 + m;
+}
+
+// 🎯 驗證取貨時間是否落在該地點的允許範圍內
+function validatePickupTime(location, timeStr) {
+    const rule = pickupTimeRules[location];
+    // 沒有對應規則的地點，不限制（直接通過）
+    if (!rule) return true;
+
+    const t = timeStrToMinutes(timeStr);
+    const startT = timeStrToMinutes(rule.start);
+    const endT = timeStrToMinutes(rule.end);
+    if (t === null) return false;
+
+    return t >= startT && t <= endT;
+}
+
+// 🎯 取貨時間不符時要顯示的提示文字
+function getPickupNotification(location) {
+    const rule = pickupTimeRules[location];
+    if (!rule) return "請確認您輸入的取貨時間是否正確喔！";
+    return `${location}的取貨時間為 ${rule.start} ~ ${rule.end}，請重新選擇取貨時間喔！`;
+}
