@@ -58,7 +58,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // 🚀 【JSONP 啟動器】
     function fetchOnlineLocationConfigViaJsonp() {
-        const baseUrl = "https://script.google.com/macros/s/AKfycbxuvO5OjaPocqyCdR2gNPbO_yV0jcOp7QK1aEODgNvBKEOQa-bgmiVwpmoM2K0D0l2N/exec";
+        const baseUrl = "https://script.google.com/macros/s/AKfycbzE7wP4x3S5k9BOpooS7VkiYMPYdPP2Wx9KDWaOnXZ5GLtWqE1OCHnBnjIy8jQQdWjK/exec";
         const script = document.createElement("script");
         script.src = `${baseUrl}?_=${new Date().getTime()}`;
         script.onerror = function() {
@@ -582,74 +582,32 @@ document.addEventListener("DOMContentLoaded", function () {
                 method: "POST", mode: "no-cors", body: formData
             });
 
-            const currentHour = new Date().getHours();
-            const isServiceTime = currentHour >= 10 && currentHour < 22; 
+            // 清空表單狀態
+            document.getElementById("orderForm").reset();
+            document.querySelectorAll("input[name='pickupLocation']").forEach(radio => {
+                radio.checked = false;
+                radio.dataset.clicked = "false";
+            });
+            window.calculatedCount = 0;
+            window.promoValid = true;
+            updatePromoMessage();
+            calculateTotal();
+
+            // ✅ 依「網址 v 參數」+「總金額是否 ≥ 1000」決定跳轉的成功頁
+            // 金額 ≥ 1000 → DEP 開頭；金額 < 1000 → NR 開頭
             const isHighAmount = adjustedPrice >= 1000;
+            const urlParams = new URLSearchParams(window.location.search);
+            const source = urlParams.get('v');
+            const baseSuccessUrl = "https://qqbar2013.github.io/form/success/";
+            const validSources = ["lH4m8Q5v", "sL9x7P2k", "mL3w6R9j"];
 
-            let alertMessage = "";
-            if (isServiceTime) {
-                if (!isHighAmount) {
-                    alertMessage = `非常感謝您的填寫，再麻煩您點選下方按鈕通知負責人員您已完成填單，服務人員將於30-50分鐘內與您確認訂單細節，尚未確認前皆未完成訂購程序喔^^\n\n※請注意在與服務人員確認訂單前，此筆訂單尚未成立。`;
-                } else {
-                    alertMessage = `非常感謝您的填寫，再麻煩您點選下方按鈕通知負責人員您已完成填單，服務人員將於30-50分鐘內與您確認訂單細節與付訂，尚未付訂前皆未完成訂購程序喔^^\n\n※請注意在與服務人員確認訂單與付訂前，此筆訂單尚未成立。`;
-                }
+            if (source && validSources.includes(source)) {
+                const prefix = isHighAmount ? "DEP" : "NR";
+                window.location.href = `${baseSuccessUrl}${prefix}${source}.html`;
             } else {
-                if (!isHighAmount) {
-                    alertMessage = `非常感謝您的填寫，再麻煩您點選下方按鈕通知負責人員您已完成填單。服務人員將於服務時間內(10:00-22:00)與您確認訂單細節，尚未確認前皆未完成訂購程序喔^^\n\n※請注意在與服務人員確認訂單前，此筆訂單尚未成立。`;
-                } else {
-                    alertMessage = `非常感謝您的填寫，再麻煩您點選下方按鈕通知負責人員您已完成填單。服務人員將於服務時間內(10:00-22:00)與您確認訂單細節與付訂，尚未付訂前皆未完成訂購程序喔^^\n\n※請注意在與服務人員確認訂單與付訂前，此筆訂單尚未成立。`;
-                }
+                // 沒有 v 參數或不認得 → 停在原頁、回到頂部
+                window.scrollTo(0, 0);
             }
-
-            let successOverlay = document.createElement("div");
-            successOverlay.style = "position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1999;";
-            let successBox = document.createElement("div");
-            successBox.style = `
-                position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-                background: #fff; padding: 25px; border-radius: 12px;
-                box-shadow: 0 10px 25px rgba(0,0,0,0.2); width: 85%; max-width: 400px;
-                z-index: 2000; text-align: center;
-            `;
-            let successText = document.createElement("p");
-            successText.style = "font-size: 16px; white-space: pre-line; text-align: left; line-height: 1.6; color: #333;";
-            successText.textContent = alertMessage;
-
-            let goLineBtn = document.createElement("button");
-            goLineBtn.textContent = "前往告知"; 
-            goLineBtn.style = "margin-top: 20px; background: #ff6600; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-size: 16px; font-weight: bold; width: 100%; box-sizing: border-box;";
-
-            goLineBtn.onclick = () => {
-                document.body.removeChild(successBox);
-                document.body.removeChild(successOverlay);
-                
-                document.getElementById("orderForm").reset();
-                document.querySelectorAll("input[name='pickupLocation']").forEach(radio => {
-                    radio.checked = false;
-                    radio.dataset.clicked = "false";
-                });
-                window.calculatedCount = 0;
-                window.promoValid = true;
-                updatePromoMessage();
-                calculateTotal();
-
-                const urlParams = new URLSearchParams(window.location.search);
-                const source = urlParams.get('v'); 
-                const lineLinks = {
-                    "lH4m8Q5v": "https://lin.ee/ts3AVmE", 
-                    "sL9x7P2k": "https://lin.ee/ne8VszX", 
-                    "mL3w6R9j": "https://lin.ee/yuKF8z7"  
-                };
-                if (source && lineLinks[source]) {
-                    window.location.href = lineLinks[source];
-                } else {
-                    window.scrollTo(0, 0); 
-                }
-            };
-
-            successBox.appendChild(successText);
-            successBox.appendChild(goLineBtn);
-            document.body.appendChild(successOverlay);
-            document.body.appendChild(successBox);
         };
 
         buttonContainer.appendChild(cancelButton);
