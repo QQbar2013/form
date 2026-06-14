@@ -2,7 +2,7 @@
 if (typeof window.myGlobalDisabledFlavors === 'undefined') {
     window.myGlobalDisabledFlavors = ["qtyMango"];
 }
-
+ 
 // 🌐 宣告全域日期配置變數（備用本地名單）
 window.locationConfig = {
     lehua: { blacklist: { dates: ["2026-05-09", "2026-04-18", "2026-04-25"], ranges: [] } },
@@ -23,7 +23,7 @@ window.locationConfig = {
     },
     sanchongMorning: { whitelist: ["2026-03-28", "2026-04-25", "2026-05-09"] }
 };
-
+ 
 // 🎯 負責接收 Google 試算表傳回來的 JSONP 資料
 window.handleJsonpConfig = function (onlineConfig) {
     window.locationConfig = onlineConfig;
@@ -36,7 +36,7 @@ window.handleJsonpConfig = function (onlineConfig) {
         }
     }, 100);
 };
-
+ 
 document.addEventListener("DOMContentLoaded", function () {
     const orderForm = document.getElementById("orderForm");
     if (orderForm) {
@@ -46,13 +46,13 @@ document.addEventListener("DOMContentLoaded", function () {
     
     const initialSubmitBtn = document.querySelector("input[type='submit']");
     if (initialSubmitBtn) initialSubmitBtn.value = "前往確認";
-
+ 
     document.querySelectorAll("input[name='pickupLocation']").forEach(radio => {
         radio.dataset.clicked = "false";
     });
     const totalCountTextEl = document.getElementById("totalCountText");
     if (totalCountTextEl) totalCountTextEl.innerHTML = "";
-
+ 
     // 🚀 【JSONP 啟動器】
     function fetchOnlineLocationConfigViaJsonp() {
         const baseUrl = "https://script.google.com/macros/s/AKfycbzE7wP4x3S5k9BOpooS7VkiYMPYdPP2Wx9KDWaOnXZ5GLtWqE1OCHnBnjIy8jQQdWjK/exec";
@@ -63,16 +63,16 @@ document.addEventListener("DOMContentLoaded", function () {
         };
         document.body.appendChild(script);
     }
-
+ 
     fetchOnlineLocationConfigViaJsonp();
-
+ 
     // 🎯 【精準 Radio 卡片定位隱藏邏輯】
     window.updateAvailableLocations = function (selectedDateStr) {
         if (!window.locationConfig) return;
         
         const selectedDate = new Date(selectedDateStr);
         selectedDate.setHours(0,0,0,0);
-
+ 
         function formatDate防呆(str) {
             if (!str) return "";
             try {
@@ -86,9 +86,9 @@ document.addEventListener("DOMContentLoaded", function () {
                 return str.toString().trim();
             }
         }
-
+ 
         const cleanSelectedDateStr = formatDate防呆(selectedDateStr);
-
+ 
         // 各個 ID 對應到 HTML 中 Radio 的真實 value 中文字眼
         const matchValueNames = {
             lehua: "樂華店",
@@ -96,9 +96,9 @@ document.addEventListener("DOMContentLoaded", function () {
             sanchong: "三重取貨點",
             sanchongMorning: "三重取貨點（早上）"
         };
-
+ 
         const visibilityStatus = { lehua: true, shilin: true, sanchong: true, sanchongMorning: false };
-
+ 
         // 1. 計算線上最新的顯隱狀態
         Object.keys(matchValueNames).forEach(key => {
             if (key === "sanchongMorning") {
@@ -106,7 +106,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 const eventDateStr = document.getElementById("eventDate")?.value;
                 const rawWhiteList = window.locationConfig.sanchongMorning?.whitelist || [];
                 const whiteList = rawWhiteList.map(d => formatDate防呆(d));
-
+ 
                 if (
                     pickupDateStr && eventDateStr &&
                     formatDate防呆(pickupDateStr) === formatDate防呆(eventDateStr) &&
@@ -116,11 +116,11 @@ document.addEventListener("DOMContentLoaded", function () {
                 }
                 return;
             }
-
+ 
             const config = window.locationConfig[key];
             if (!config || !config.blacklist) return;
             const { blacklist } = config;
-
+ 
             if (blacklist.dates && blacklist.dates.length > 0) {
                 const cleanDates = blacklist.dates.map(d => formatDate防呆(d));
                 if (cleanDates.includes(cleanSelectedDateStr)) {
@@ -138,7 +138,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 }
             }
         });
-
+ 
         // 2. 核心控制：直接抓取網頁上所有取貨地點的 Radio 按鈕進行卡片控制
         const allRadioButtons = document.querySelectorAll("input[name='pickupLocation']");
         allRadioButtons.forEach(radio => {
@@ -162,7 +162,7 @@ document.addEventListener("DOMContentLoaded", function () {
             });
         });
     };
-
+ 
     // Initialize flatpickr for event date, pickup date, and pickup time
     const eventDatePicker = flatpickr("#eventDate", {
         disableMobile: "true", 
@@ -183,12 +183,12 @@ document.addEventListener("DOMContentLoaded", function () {
             window.updateAvailableLocations(dateStr);
         }
     });
-
+ 
     const pickupDatePicker = flatpickr("#pickupDate", {
         disableMobile: "true", 
         dateFormat: "Y-m-d"
     });
-
+ 
     flatpickr("#pickupTime", {
         disableMobile: "true", 
         enableTime: true,
@@ -222,7 +222,7 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         }
     });
-
+ 
     let eventDateInput = document.getElementById("eventDate");
     if (eventDateInput) {
         eventDateInput.addEventListener("change", function () {
@@ -254,7 +254,7 @@ document.addEventListener("DOMContentLoaded", function () {
             }, 1500);
         });
     }
-
+ 
     let pickupDateInput = document.getElementById("pickupDate");
     if (pickupDateInput) {
         pickupDateInput.addEventListener("change", function () {
@@ -278,14 +278,14 @@ document.addEventListener("DOMContentLoaded", function () {
             }, 500);
         });
     }
-
+ 
     let phoneNumberInput = document.getElementById("phoneNumber");
     if (phoneNumberInput) {
         phoneNumberInput.addEventListener("input", function () {
             this.value = this.value.replace(/\D/g, "");
         });
     }
-
+ 
     document.querySelectorAll(".pickup-option input[type='radio']").forEach(radio => {
         radio.addEventListener("click", function () {
             document.querySelectorAll("input[name='pickupLocation']").forEach(r => {
@@ -304,11 +304,11 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         });
     });
-
+ 
     document.getElementById("invoiceNumber")?.addEventListener("input", function () {
         this.value = this.value.replace(/\D/g, "");
     });
-
+ 
     document.querySelectorAll(".flavor-item input[type='text']").forEach(input => {
         input.addEventListener("input", function () {
             this.value = this.value.replace(/\D/g, "");
@@ -323,7 +323,7 @@ document.addEventListener("DOMContentLoaded", function () {
             calculateTotal();
         });
     });
-
+ 
     function getOrderDetails() {
         const flavorData = [
             { name: "多多", id: "qtyDuoDuo" }, { name: "葡萄", id: "qtyGrape" }, { name: "荔枝", id: "qtyLychee" },
@@ -351,7 +351,7 @@ document.addEventListener("DOMContentLoaded", function () {
             { id: "orderClass" }, { id: "eventDate" }, { id: "pickupDate" }, { id: "pickupTime" }
         ];
         let hasError = false;
-
+ 
         requiredFields.forEach(field => {
             let input = document.getElementById(field.id);
             if (!input || !input.value.trim()) {
@@ -361,7 +361,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 if (input) input.style.border = "";
             }
         });
-
+ 
         let pickupLocationElement = document.querySelector("input[name='pickupLocation']:checked");
         let pickupWrapper = document.querySelector(".pickup-options-wrapper");
         if (!pickupLocationElement) {
@@ -374,14 +374,14 @@ document.addEventListener("DOMContentLoaded", function () {
         } else {
             if (pickupWrapper) pickupWrapper.style.border = "";
         }
-
+ 
         if (hasError) {
             window.scrollTo({ top: 0, behavior: 'smooth' });
             return;
         }
-
+ 
         pickupLocationElement.dataset.clicked = "true";
-
+ 
         const customerName = document.getElementById("customerName").value.trim();
         const phoneNumber = document.getElementById("phoneNumber").value.trim();
         const orderSchool = document.getElementById("orderSchool").value.trim();
@@ -393,7 +393,7 @@ document.addEventListener("DOMContentLoaded", function () {
         const pickupLocation = pickupLocationElement.value;
         const pickupDate = document.getElementById("pickupDate").value.trim();
         const pickupTime = document.getElementById("pickupTime").value.trim();
-
+ 
         const pickupTimeInput = document.getElementById("pickupTime");
         if (!validatePickupTime(pickupLocation, pickupTime, true)) {
              alert("請確認您輸入的取貨時間是否正確喔！");
@@ -412,28 +412,28 @@ document.addEventListener("DOMContentLoaded", function () {
             document.getElementById("pickupDate").style.border = "2px solid red";
             return;
         }
-
+ 
         const { orderDetails, totalCount, totalPrice } = getOrderDetails();
         const calculatedCount = Math.ceil(totalCount / 1.1);
         const bonusCount = Math.floor(calculatedCount / 10);
         const adjustedPrice = totalPrice - bonusCount * 15;
-
+ 
         if (totalCount === 0) {
             alert(`請填寫欲訂購的口味及數量喔😊`);
             return;
         }
-
+ 
         if ((calculatedCount + bonusCount) !== totalCount) {
             const diff = (calculatedCount + bonusCount) - totalCount;
             alert(`若要購買 ${calculatedCount} 枝，贈送 ${bonusCount} 枝。請再挑選 ${diff} 枝。`);
             return;
         }
-
+ 
         if (totalCount > 164) {
             alert(`總枝數 ${totalCount} 枝超過上限 164 枝，請減少 ${totalCount - 164} 枝喔😊`);
             return;
         }
-
+ 
         const remainder = calculatedCount % 10;
         if (remainder !== 0) {
             const needed = 10 - remainder;
@@ -452,7 +452,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     </div>
                 `;
                 document.body.appendChild(upsellOverlay);
-
+ 
                 upsellOverlay.querySelector("#goNext").onclick = () => {
                     document.body.removeChild(upsellOverlay);
                     resolve(false); 
@@ -470,7 +470,7 @@ document.addEventListener("DOMContentLoaded", function () {
         submitBtn.disabled = true;
         const originalBtnText = submitBtn.value;
         submitBtn.value = "正在核對產能中...";
-
+ 
         try {
             const checkResponse = await fetch(gasUrl, {
                 method: "POST",
@@ -491,7 +491,7 @@ document.addEventListener("DOMContentLoaded", function () {
         }
         submitBtn.disabled = false;
         submitBtn.value = originalBtnText;
-
+ 
         let confirmationMessage = `請確認您的訂單資訊，若正確無誤請點選右下方"送出"：\n\n\n`;
         confirmationMessage += `📌 訂購人姓名：${customerName}\n\n`;
         confirmationMessage += `📞 聯絡電話：${phoneNumber}\n\n`;
@@ -533,7 +533,7 @@ document.addEventListener("DOMContentLoaded", function () {
         finalSubmitButton.onclick = () => {
             document.body.removeChild(confirmBox);
             document.body.removeChild(overlay);
-
+ 
             const formData = new FormData();
             formData.append("entry.153434121", customerName);
             formData.append("entry.1286553898", phoneNumber);
@@ -554,15 +554,15 @@ document.addEventListener("DOMContentLoaded", function () {
             formData.append("entry.1676199734", document.getElementById("qtyOrange").value || "0");
             formData.append("entry.1154026181", document.getElementById("qtyPeach").value || "0");
             formData.append("entry.236488691", document.getElementById("qtyMango").value || "0");
-
+ 
             fetch("https://docs.google.com/forms/u/0/d/e/1FAIpQLSe6tzVbIUYkpADid6OwhxLitHyK4GgzQJMRHvLdwnNZA60mZg/formResponse", {
                 method: "POST", mode: "no-cors", body: formData
             });
-
+ 
             const currentHour = new Date().getHours();
             const isServiceTime = currentHour >= 10 && currentHour < 22; 
             const isHighAmount = adjustedPrice >= 1000;
-
+ 
             let alertMessage = "";
             if (isServiceTime) {
                 if (!isHighAmount) {
@@ -577,7 +577,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     alertMessage = `非常感謝您的填寫，再麻煩您點選下方按鈕通知負責人員您已完成填單。服務人員將於服務時間內(10:00-22:00)與您確認訂單細節與付訂，尚未付訂前皆未完成訂購程序喔^^\n\n※請注意在與服務人員確認訂單與付訂前，此筆訂單尚未成立。`;
                 }
             }
-
+ 
             let successOverlay = document.createElement("div");
             successOverlay.style = "position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1999;";
             let successBox = document.createElement("div");
@@ -590,11 +590,11 @@ document.addEventListener("DOMContentLoaded", function () {
             let successText = document.createElement("p");
             successText.style = "font-size: 16px; white-space: pre-line; text-align: left; line-height: 1.6; color: #333;";
             successText.textContent = alertMessage;
-
+ 
             let goLineBtn = document.createElement("button");
             goLineBtn.textContent = "前往告知"; 
             goLineBtn.style = "margin-top: 20px; background: #ff6600; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-size: 16px; font-weight: bold; width: 100%; box-sizing: border-box;";
-
+ 
             goLineBtn.onclick = () => {
                 document.body.removeChild(successBox);
                 document.body.removeChild(successOverlay);
@@ -608,7 +608,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 window.promoValid = true;
                 updatePromoMessage();
                 calculateTotal();
-
+ 
                 const urlParams = new URLSearchParams(window.location.search);
                 const source = urlParams.get('v'); 
                 const lineLinks = {
@@ -622,13 +622,13 @@ document.addEventListener("DOMContentLoaded", function () {
                     window.scrollTo(0, 0); 
                 }
             };
-
+ 
             successBox.appendChild(successText);
             successBox.appendChild(goLineBtn);
             document.body.appendChild(successOverlay);
             document.body.appendChild(successBox);
         };
-
+ 
         buttonContainer.appendChild(cancelButton);
         buttonContainer.appendChild(finalSubmitButton);
         confirmBox.appendChild(messageText);
@@ -639,7 +639,7 @@ document.addEventListener("DOMContentLoaded", function () {
         document.body.appendChild(overlay);
         document.body.appendChild(confirmBox);
     });
-
+ 
     function calculateTotal() {
         let totalCount = 0;
         const flavorIds = [
@@ -651,25 +651,25 @@ document.addEventListener("DOMContentLoaded", function () {
             let qty = el ? (parseInt(el.value) || 0) : 0;
             totalCount += qty;
         });
-
+ 
         let calculatedCount = Math.ceil(totalCount / 1.1);
         let bonusCount = Math.floor(calculatedCount / 10);
         window.calculatedCount = calculatedCount;
-
+ 
         let isValid = (calculatedCount + bonusCount) === totalCount;
         let hasInput = totalCount > 0;
         let totalPrice = totalCount * 15 - bonusCount * 15; 
-
+ 
         let displayText = `<div class="total-summary">`;
         if (totalCount > 0) {
             displayText += `<div class="total-row">總枝數: ${totalCount} 枝。</div><br>`;
         }
         if (!isValid) {
-            let @suggestedBuy = calculatedCount;
-            let suggestedBonus = Math.floor(@suggestedBuy / 10);
-            let difference = (@suggestedBuy + suggestedBonus) - totalCount;
+            let suggestedBuy = calculatedCount;
+            let suggestedBonus = Math.floor(suggestedBuy / 10);
+            let difference = (suggestedBuy + suggestedBonus) - totalCount;
             displayText += `<div class="total-row error-text">
-                若要購買 ${@suggestedBuy} 枝，贈送 ${suggestedBonus} 枝。請再挑選 ${difference} 枝。
+                若要購買 ${suggestedBuy} 枝，贈送 ${suggestedBonus} 枝。請再挑選 ${difference} 枝。
             </div>`;
             const totalCountTextEl = document.getElementById("totalCountText");
             if (totalCountTextEl) totalCountTextEl.innerHTML = displayText;
@@ -677,7 +677,7 @@ document.addEventListener("DOMContentLoaded", function () {
             updatePromoMessage();
             return;
         }
-
+ 
         window.promoValid = true;
         if (hasInput) {
             displayText += `<div class="total-sub" style="color: red; font-weight: bold; margin: 0;">
@@ -695,7 +695,7 @@ document.addEventListener("DOMContentLoaded", function () {
     
     calculateTotal(); 
 });
-
+ 
 // 口味上下架管理
 document.querySelectorAll(".flavor-item input[type='text']").forEach(input => {
     input.addEventListener("input", function () {
@@ -708,12 +708,12 @@ document.querySelectorAll(".flavor-item input[type='text']").forEach(input => {
         }
     });
 });
-
+ 
 function parseLocalDate(dateStr) {
     const [year, month, day] = dateStr.split("-");
     return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
 }
-
+ 
 document.getElementById("showInvoiceInfo")?.addEventListener("change", function () {
     const invoiceSection = document.getElementById("invoiceSection");
     if (invoiceSection) {
@@ -726,14 +726,14 @@ document.getElementById("showInvoiceInfo")?.addEventListener("change", function 
         if (num) num.value = "";
     }
 });
-
+ 
 function updatePromoMessage() {
   const bar = document.getElementById("promoMsg");
   if (!bar) return;
-
+ 
   const paid  = Number(window.calculatedCount) || 0;
   const valid = window.promoValid !== false;
-
+ 
   if (paid === 0) {
     bar.classList.remove("show");
     bar.style.display = "none";
@@ -741,10 +741,10 @@ function updatePromoMessage() {
     document.body.style.removeProperty('--promoH');
     return;
   }
-
+ 
   bar.style.display = "";
   bar.classList.add("show");
-
+ 
   if (!valid) {
     bar.textContent = "請幫我填寫「贈送 1 枝」的口味喔 😊";
   } else {
@@ -754,14 +754,14 @@ function updatePromoMessage() {
       r === 9 ? "再 1 枝就送 1 枝 ✨" :
                 `再 ${10 - r} 枝就送 1 枝 🎁`;
   }
-
+ 
   requestAnimationFrame(() => {
     const h = bar.offsetHeight || 48;
     document.body.style.setProperty('--promoH', h + 'px');
     document.body.classList.add('promo-fixed-padding');
   });
 }
-
+ 
 window.addEventListener('resize', () => {
   const bar = document.getElementById("promoMsg");
   if (!bar || bar.style.display === 'none') return;
