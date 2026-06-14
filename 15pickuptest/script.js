@@ -3,7 +3,7 @@ if (typeof window.myGlobalDisabledFlavors === 'undefined') {
     window.myGlobalDisabledFlavors = ["qtyMango"];
 }
 
-// 🌐 宣告全域日期配置變數（給它預設定當作本地備用名單）
+// 🌐 宣告全域日期配置變數（給它預設定當作本地備用名單，連線成功後會被線上資料完美覆蓋）
 window.locationConfig = {
     lehua: { blacklist: { dates: ["2026-05-09", "2026-04-18", "2026-04-25"], ranges: [] } },
     shilin: { blacklist: { dates: ["2026-03-31", "2026-05-09"], ranges: [] } },
@@ -24,15 +24,15 @@ window.locationConfig = {
     sanchongMorning: { whitelist: ["2026-03-28", "2026-04-25", "2026-05-09"] }
 };
 
-// 🎯 【關鍵新功能】負責接收 Google 試算表傳回來的 JSONP 資料，並強制刷新網頁地點！
+// 🎯 負責接收 Google 試算表傳回來的 JSONP 資料，並強制同步刷新網頁
 window.handleJsonpConfig = function (onlineConfig) {
     window.locationConfig = onlineConfig;
     console.log("🎉 成功透過 JSONP 動態載入最新的線上日期限定配置！", window.locationConfig);
     
-    // 立即刷新地點限制顯示
-    const currentEventDate = document.getElementById("eventDate").value;
-    if (currentEventDate && typeof updateAvailableLocations === 'function') {
-        updateAvailableLocations(currentEventDate);
+    // 如果此時使用者已經在網頁上選好了活動日期，立刻幫他刷新門市限制
+    const currentEventDate = document.getElementById("eventDate")?.value;
+    if (currentEventDate && typeof window.updateAvailableLocations === 'function') {
+        window.updateAvailableLocations(currentEventDate);
     }
 };
 
@@ -51,12 +51,11 @@ document.addEventListener("DOMContentLoaded", function () {
     });
     document.getElementById("totalCountText").innerHTML = "";
 
-    // 🚀 【JSONP 啟動器】用最安全的方式繞過 CORS 網域封鎖
+    // 🚀 【JSONP 啟動器】運作良好，繼續保持
     function fetchOnlineLocationConfigViaJsonp() {
         const baseUrl = "https://script.google.com/macros/s/AKfycbxuvO5OjaPocqyCdR2gNPbO_yV0jcOp7QK1aEODgNvBKEOQa-bgmiVwpmoM2K0D0l2N/exec";
         const script = document.createElement("script");
         script.src = `${baseUrl}?_=${new Date().getTime()}`;
-        // 萬一載入失敗的備用安全機制
         script.onerror = function() {
             console.warn("線上日期設定檔連線失敗，系統將自動以程式內預設的備用配置運行。");
         };
@@ -65,6 +64,65 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // 立刻執行線上抓取設定
     fetchOnlineLocationConfigViaJsonp();
+
+    // 🎯 核心修正：將限制地點的邏輯綁定到 window 全域，確保日曆 onChange 時抓到的是最新線上 JSON 資料！
+    window.updateAvailableLocations = function (selectedDateStr) {
+        if (!window.locationConfig) return;
+        
+        const selectedDate = new Date(selectedDateStr);
+        const locations = {
+            lehua: document.getElementById("optionLehua"),
+            shilin: document.getElementById("optionShilin"),
+            sanchong: document.getElementById("optionSanchong"),
+            sanchongMorning: document.getElementById("optionSanchongMorning")
+        };
+        
+        Object.keys(locations).forEach(key => {
+            const el = locations[key];
+            if (!el) return;
+            
+            if (key === "sanchongMorning") {
+                const pickupDateStr = document.getElementById("pickupDate").value;
+                const eventDateStr = document.getElementById("eventDate").value;
+                const whiteList = window.locationConfig.sanchongMorning?.whitelist || [];
+                let shouldShow = false;
+                if (
+                    pickupDateStr &&
+                    eventDateStr &&
+                    pickupDateStr === eventDateStr &&
+                    whiteList.includes(pickupDateStr)
+                ) {
+                    shouldShow = true;
+                }
+                el.style.display = shouldShow ? "flex" : "none";
+                return;
+            }
+            
+            const config = window.locationConfig[key];
+            if (!config || !config.blacklist) return;
+            
+            const { blacklist } = config;
+            let shouldHide = false;
+            
+            // 檢查單日黑名單
+            if (blacklist.dates && blacklist.dates.includes(selectedDateStr)) {
+                shouldHide = true;
+            }
+            
+            // 檢查區間黑名單
+            if (!shouldHide && blacklist.ranges && blacklist.ranges.length > 0) {
+                for (let range of blacklist.ranges) {
+                    const start = new Date(range.start);
+                    const end = new Date(range.end);
+                    if (selectedDate >= start && selectedDate <= end) {
+                        shouldHide = true;
+                        break;
+                    }
+                }
+            }
+            el.style.display = shouldHide ? "none" : "flex";
+        });
+    };
 
     // Initialize flatpickr for event date, pickup date, and pickup time
     const eventDatePicker = flatpickr("#eventDate", {
@@ -82,7 +140,9 @@ document.addEventListener("DOMContentLoaded", function () {
             pickupDatePicker.set("minDate", minPickupDate);
             pickupDatePicker.set("maxDate", eventDate);
             pickupDatePicker.setDate(minPickupDate, true);
-            updateAvailableLocations(dateStr);
+            
+            // 呼叫全域更新函數
+            window.updateAvailableLocations(dateStr);
         }
     });
 
@@ -152,7 +212,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 pickupDateInput.setAttribute("min", `${y}-${m}-${d}`);
                 pickupDateInput.setAttribute("max", this.value);
             }
-            updateAvailableLocations(this.value);
+            window.updateAvailableLocations(this.value);
         }, 1500);
     });
 
@@ -170,7 +230,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 alert("請選擇活動日期前一日至活動當天的日期");
                 this.value = "";
             }
-            updateAvailableLocations(eventDateInput.value);
+            window.updateAvailableLocations(eventDateInput.value);
             let pickupTimeFlatpickr = document.querySelector("#pickupTime")._flatpickr;
             if (pickupTimeFlatpickr) {
                 pickupTimeFlatpickr.setDate(pickupTimeFlatpickr.input.value, true);
@@ -236,52 +296,6 @@ document.addEventListener("DOMContentLoaded", function () {
             return "三重取貨點（早上）取貨時間為 08:00 - 09:00喔！";
         }
         return "請選擇正確的取貨地點。";
-    }
-
-    window.updateAvailableLocations = function (selectedDateStr) {
-        const selectedDate = new Date(selectedDateStr);
-        const locations = {
-            lehua: document.getElementById("optionLehua"),
-            shilin: document.getElementById("optionShilin"),
-            sanchong: document.getElementById("optionSanchong"),
-            sanchongMorning: document.getElementById("optionSanchongMorning")
-        };
-        Object.keys(locations).forEach(key => {
-            const el = locations[key];
-            if (!el) return;
-            if (key === "sanchongMorning") {
-                const pickupDateStr = document.getElementById("pickupDate").value;
-                const eventDateStr = document.getElementById("eventDate").value;
-                const whiteList = window.locationConfig.sanchongMorning.whitelist;
-                let shouldShow = false;
-                if (
-                    pickupDateStr &&
-                    eventDateStr &&
-                    pickupDateStr === eventDateStr &&
-                    whiteList.includes(pickupDateStr)
-                ) {
-                    shouldShow = true;
-                }
-                el.style.display = shouldShow ? "flex" : "none";
-                return;
-            }
-            const { blacklist } = window.locationConfig[key];
-            let shouldHide = false;
-            if (blacklist.dates.includes(selectedDateStr)) {
-                shouldHide = true;
-            }
-            if (!shouldHide && blacklist.ranges.length > 0) {
-                for (let range of blacklist.ranges) {
-                    const start = new Date(range.start);
-                    const end = new Date(range.end);
-                    if (selectedDate >= start && selectedDate <= end) {
-                        shouldHide = true;
-                        break;
-                    }
-                }
-            }
-            el.style.display = shouldHide ? "none" : "flex";
-        });
     }
 
     let pickupTimeInput = document.getElementById("pickupTime");
@@ -688,6 +702,7 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 // 口味上下架管理
+var disabledFlavors = ["qtyMango"];
 document.querySelectorAll(".flavor-item input[type='text']").forEach(input => {
     input.addEventListener("input", function () {
         let flavorId = this.id;
