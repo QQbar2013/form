@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>表單已送出</title>
+<style>
+  :root{
+    --cream:#FBF6EC;
+    --paper:#FFFFFF;
+    --ink:#3A2E26;
+    --soft:#7C6F63;
+    --terra:#D9744B;
+    --terra-deep:#C05E37;
+    --leaf:#7FA66A;
+    --line-green:#06C755;
+    --rule:#EADFCC;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{
+    font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;
+    background:var(--cream);
+    color:var(--ink);
+    line-height:1.8;
+    min-height:100vh;
+    display:flex;
+    align-items:flex-start;
+    justify-content:center;
+    padding:32px 18px 56px;
+  }
+  .card{
+    width:100%;
+    max-width:560px;
+    background:var(--paper);
+    border-radius:24px;
+    border:1px solid var(--rule);
+    box-shadow:0 18px 50px -28px rgba(58,46,38,.4);
+    overflow:hidden;
+  }
+
+  /* hero */
+  .hero{
+    background:linear-gradient(135deg,#FCEFE2 0%,#FBF6EC 100%);
+    padding:38px 30px 30px;
+    text-align:center;
+    border-bottom:1px solid var(--rule);
+  }
+  .check{
+    width:62px;height:62px;border-radius:50%;
+    background:var(--leaf);
+    display:flex;align-items:center;justify-content:center;
+    margin:0 auto 18px;
+    box-shadow:0 8px 22px -8px rgba(127,166,106,.7);
+    animation:pop .5s cubic-bezier(.2,1.4,.5,1) both;
+  }
+  .check svg{width:30px;height:30px;stroke:#fff;stroke-width:3.5;fill:none;
+    stroke-linecap:round;stroke-linejoin:round;
+    stroke-dasharray:30;stroke-dashoffset:30;
+    animation:draw .5s .3s ease forwards;}
+  @keyframes pop{from{transform:scale(.4);opacity:0}}
+  @keyframes draw{to{stroke-dashoffset:0}}
+  h1{
+    font-size:23px;font-weight:800;letter-spacing:.5px;
+    line-height:1.5;color:var(--ink);
+  }
+
+  /* progress */
+  .steps{
+    list-style:none;
+    display:flex;
+    padding:26px 16px 8px;
+    background:var(--paper);
+  }
+  .step{flex:1;text-align:center;position:relative;}
+  .step .dot{
+    width:26px;height:26px;border-radius:50%;
+    background:#EDE3D4;color:var(--soft);
+    font-size:13px;font-weight:700;
+    display:flex;align-items:center;justify-content:center;
+    margin:0 auto 9px;position:relative;z-index:2;
+    border:2px solid var(--paper);
+  }
+  .step .label{font-size:11.5px;color:var(--soft);line-height:1.35;padding:0 2px;}
+  .step::before{
+    content:"";position:absolute;top:13px;left:-50%;
+    width:100%;height:3px;background:#EDE3D4;z-index:1;
+  }
+  .step:first-child::before{display:none;}
+  .step.done .dot{background:var(--leaf);color:#fff;}
+  .step.done::before{background:var(--leaf);}
+  .step.current .dot{
+    background:var(--terra);color:#fff;
+    box-shadow:0 0 0 4px rgba(217,116,75,.18);
+  }
+  .step.current::before{background:var(--leaf);}
+  .step.current .label{color:var(--terra-deep);font-weight:700;}
+
+  /* body */
+  .content{padding:18px 30px 32px;}
+  .notice{
+    background:#FCEFE2;
+    border-left:4px solid var(--terra);
+    border-radius:10px;
+    padding:13px 16px;
+    font-size:14.5px;font-weight:700;color:var(--terra-deep);
+    margin-bottom:20px;
+  }
+  .msg{font-size:15px;color:#4d4036;}
+  .msg .hl{color:var(--terra-deep);font-weight:700;}
+
+  .line-btn{
+    display:flex;align-items:center;justify-content:center;gap:10px;
+    width:100%;margin-top:26px;
+    background:var(--line-green);
+    color:#fff;font-size:17px;font-weight:800;
+    text-decoration:none;
+    padding:16px;border-radius:16px;
+    box-shadow:0 12px 26px -12px rgba(6,199,85,.8);
+    transition:transform .15s ease,box-shadow .15s ease;
+  }
+  .line-btn:hover{transform:translateY(-2px);box-shadow:0 16px 30px -12px rgba(6,199,85,.85);}
+  .line-btn:active{transform:translateY(0);}
+  .line-btn svg{width:24px;height:24px;fill:#fff;}
+  .hint{text-align:center;font-size:12.5px;color:var(--soft);margin-top:14px;}
+
+  @media(max-width:430px){
+    .hero{padding:32px 22px 26px;}
+    h1{font-size:20px;}
+    .content{padding:16px 22px 28px;}
+    .step .label{font-size:10.5px;}
+  }
+  @media(prefers-reduced-motion:reduce){
+    .check,.check svg{animation:none;}
+    .check svg{stroke-dashoffset:0;}
+  }
+</style>
+</head>
+<body>
+  <main class="card">
+    <div class="hero">
+      <div class="check">
+        <svg viewBox="0 0 24 24"><polyline points="4 12 10 18 20 6"/></svg>
+      </div>
+      <h1>表單已送出，請向人員確認😊</h1>
+    </div>
+
+    <ol class="steps">
+      <li class="step done"><div class="dot">1</div><div class="label">詢問訂購<br>及出貨方式</div></li>
+      <li class="step current"><div class="dot">2</div><div class="label">送出表單</div></li>
+      <li class="step"><div class="dot">3</div><div class="label">確認訂單</div></li>
+      <li class="step"><div class="dot">4</div><div class="label">訂購完成</div></li>
+    </ol>
+
+    <div class="content">
+      <div class="notice">※與服務人員確認訂單前，此筆訂單尚未成立喔。</div>
+      <p class="msg" id="message"></p>
+
+      <a class="line-btn" href="https://lin.ee/yuKF8z7" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24"><path d="M12 2C6.5 2 2 5.6 2 10c0 4 3.6 7.3 8.5 7.9.3.07.78.22.9.5.1.26.07.66.03.92l-.14.87c-.04.26-.2 1.02.9.56s5.9-3.48 8.05-5.96C21.6 13.1 22 11.6 22 10c0-4.4-4.5-8-10-8z"/></svg>
+        我已完成填單，通知服務人員
+      </a>
+      <p class="hint">點擊後將開啟 LINE 與服務人員聯繫</p>
+    </div>
+  </main>
+
+<script>
+  (function(){
+    // 鎖定台灣時間 (UTC+8)，不受使用者裝置時區影響
+    var h = (new Date().getUTCHours() + 8) % 24;
+    var open = h >= 10 && h < 22;   // 10:00–22:00
+    var msg = document.getElementById('message');
+    if(open){
+      msg.innerHTML =
+        '非常感謝您的填寫，再麻煩您點選下方按鈕通知負責人員您已完成填單，'+
+        '服務人員將於 <span class="hl">30–50 分鐘內</span> 與您確認訂單細節，'+
+        '尚未確認前皆未完成訂購程序喔 ^^';
+    }else{
+      msg.innerHTML =
+        '非常感謝您的填寫，再麻煩您點選下方按鈕通知負責人員您已完成填單。'+
+        '服務人員將於 <span class="hl">服務時間內（10:00–22:00）</span> 與您確認訂單細節，'+
+        '尚未確認前皆未完成訂購程序喔 ^^';
+    }
+  })();
+</script>
+</body>
+</html>
