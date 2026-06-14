@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", function () {
-    // 🎯 關鍵新增：強制關閉瀏覽器內建的「請填寫這欄」氣泡提示，全面啟用我們的自訂紅框功能！
+    // 🎯 強制關閉瀏覽器內建的「請填寫這欄」氣泡提示，全面啟用我們的自訂紅框功能！
     const orderForm = document.getElementById("orderForm");
     if (orderForm) {
         orderForm.setAttribute("novalidate", "true");
@@ -736,7 +736,8 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 // 口味上下架管理對照
-const disabledFlavors = ["qtyMango"];
+// 🎯 關鍵防禦性修復：將 const 改為 var，徹底根治瀏覽器快取或 HTML 重複載入導致的 Identifier declared 報錯！
+var disabledFlavors = ["qtyMango"];
 document.querySelectorAll(".flavor-item input[type='text']").forEach(input => {
     input.addEventListener("input", function () {
         let flavorId = this.id;
