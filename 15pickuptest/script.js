@@ -56,14 +56,32 @@ document.addEventListener("DOMContentLoaded", function () {
     const totalCountTextEl = document.getElementById("totalCountText");
     if (totalCountTextEl) totalCountTextEl.innerHTML = "";
 
-    // 🚀 【JSONP 啟動器】
-    function fetchOnlineLocationConfigViaJsonp() {
-        const baseUrl = "https://script.google.com/macros/s/AKfycbzE7wP4x3S5k9BOpooS7VkiYMPYdPP2Wx9KDWaOnXZ5GLtWqE1OCHnBnjIy8jQQdWjK/exec";
+    // 🚀 【JSONP 啟動器（含失敗自動重試）】
+    function fetchOnlineLocationConfigViaJsonp(retryCount) {
+        retryCount = retryCount || 0;
+        const maxRetries = 2;             // 最多再重試 2 次
+        const retryDelays = [1500, 3000]; // 第 1 次失敗等 1.5 秒、第 2 次等 3 秒
+
+        const baseUrl = "https://script.google.com/macros/s/AKfycbxuvO5OjaPocqyCdR2gNPbO_yV0jcOp7QK1aEODgNvBKEOQa-bgmiVwpmoM2K0D0l2N/exec";
         const script = document.createElement("script");
         script.src = `${baseUrl}?_=${new Date().getTime()}`;
-        script.onerror = function() {
-            console.warn("線上日期設定檔連線失敗，系統將自動以程式內預設的備用配置運行。");
+
+        // 載入成功後把這個暫時用的 script 標籤移除，保持乾淨
+        script.onload = function () {
+            if (script.parentNode) script.parentNode.removeChild(script);
         };
+
+        script.onerror = function () {
+            if (script.parentNode) script.parentNode.removeChild(script);
+            if (retryCount < maxRetries) {
+                const delay = retryDelays[retryCount];
+                console.warn(`線上日期設定檔連線失敗，${delay / 1000} 秒後自動重試（第 ${retryCount + 1} 次）…`);
+                setTimeout(() => fetchOnlineLocationConfigViaJsonp(retryCount + 1), delay);
+            } else {
+                console.warn("線上日期設定檔多次連線失敗，系統將以程式內預設的備用配置運行。");
+            }
+        };
+
         document.body.appendChild(script);
     }
 
