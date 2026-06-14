@@ -66,7 +66,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     fetchOnlineLocationConfigViaJsonp();
 
-    // 🎯 【升級：防字眼重疊錯殺的地毯式搜索邏輯】
+    // 🎯 【精準 Radio 卡片定位隱藏邏輯】
     window.updateAvailableLocations = function (selectedDateStr) {
         if (!window.locationConfig) return;
         
@@ -89,20 +89,18 @@ document.addEventListener("DOMContentLoaded", function () {
 
         const cleanSelectedDateStr = formatDate防呆(selectedDateStr);
 
-        // 🎯 關鍵修正：將名字長的「sanchongMorning」放在最前面優先核對，防止字眼重疊誤殺！
-        const matchKeysOrder = ["sanchongMorning", "lehua", "shilin", "sanchong"];
-        
-        const matchKeywords = {
-            sanchongMorning: "三重取貨點（早上）",
+        // 各個 ID 對應到 HTML 中 Radio 的真實 value 中文字眼
+        const matchValueNames = {
             lehua: "樂華店",
             shilin: "士林店",
-            sanchong: "三重取貨點"
+            sanchong: "三重取貨點",
+            sanchongMorning: "三重取貨點（早上）"
         };
 
         const visibilityStatus = { lehua: true, shilin: true, sanchong: true, sanchongMorning: false };
 
-        // 1. 計算出線上黑白名單各門市的應當顯隱狀態
-        matchKeysOrder.forEach(key => {
+        // 1. 計算線上最新的顯隱狀態
+        Object.keys(matchValueNames).forEach(key => {
             if (key === "sanchongMorning") {
                 const pickupDateStr = document.getElementById("pickupDate")?.value;
                 const eventDateStr = document.getElementById("eventDate")?.value;
@@ -141,32 +139,27 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         });
 
-        // 2. 依照排好序的權重進行網頁標籤掃描
-        const wrapperContainers = document.querySelectorAll(".pickup-option, div, label");
-        wrapperContainers.forEach(container => {
-            const text = container.textContent || "";
+        // 2. 核心控制：直接抓取網頁上所有取貨地點的 Radio 按鈕進行卡片控制
+        const allRadioButtons = document.querySelectorAll("input[name='pickupLocation']");
+        allRadioButtons.forEach(radio => {
+            const radioValue = radio.value; // 例如："樂華店"
             
-            // 按照順序比對，一旦匹配成功過，就標記處理，避免短關鍵字二次誤殺
-            for (let key of matchKeysOrder) {
-                const keyword = matchKeywords[key];
-                
-                if (text.includes(keyword) && container.children.length <= 4) {
-                    // 特殊防呆：如果目前在抓「短的三重」，但文字裡其實含有「早上」，直接跳過，讓早上的專屬邏輯去處理它！
-                    if (key === "sanchong" && text.includes("早上")) {
-                        continue;
-                    }
-
-                    container.style.display = visibilityStatus[key] ? "flex" : "none";
+            Object.keys(matchValueNames).forEach(key => {
+                if (radioValue === matchValueNames[key]) {
+                    // 向上尋找最接近的白底卡片容器（通常是 .pickup-option 或者其父級 div）
+                    const cardContainer = radio.closest(".pickup-option") || radio.parentElement?.parentElement;
                     
-                    if (!visibilityStatus[key]) {
-                        const radio = container.querySelector("input[type='radio']");
-                        if (radio && radio.checked) {
+                    if (cardContainer) {
+                        // 根據最新的狀態，直接對整張卡片進行顯示或物理隱藏！
+                        cardContainer.style.display = visibilityStatus[key] ? "flex" : "none";
+                        
+                        // 防呆：如果原本勾選的門市被隱藏了，自動取消勾選
+                        if (!visibilityStatus[key] && radio.checked) {
                             radio.checked = false;
                         }
                     }
-                    break; // 匹配成功，跳出此容器的 keyword 迴圈
                 }
-            }
+            });
         });
     };
 
@@ -672,11 +665,11 @@ document.addEventListener("DOMContentLoaded", function () {
             displayText += `<div class="total-row">總枝數: ${totalCount} 枝。</div><br>`;
         }
         if (!isValid) {
-            let suggestedBuy = calculatedCount;
-            let suggestedBonus = Math.floor(suggestedBuy / 10);
-            let difference = (suggestedBuy + suggestedBonus) - totalCount;
+            let @suggestedBuy = calculatedCount;
+            let suggestedBonus = Math.floor(@suggestedBuy / 10);
+            let difference = (@suggestedBuy + suggestedBonus) - totalCount;
             displayText += `<div class="total-row error-text">
-                若要購買 ${suggestedBuy} 枝，贈送 ${suggestedBonus} 枝。請再挑選 ${difference} 枝。
+                若要購買 ${@suggestedBuy} 枝，贈送 ${suggestedBonus} 枝。請再挑選 ${difference} 枝。
             </div>`;
             const totalCountTextEl = document.getElementById("totalCountText");
             if (totalCountTextEl) totalCountTextEl.innerHTML = displayText;
