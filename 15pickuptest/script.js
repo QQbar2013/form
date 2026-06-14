@@ -3,7 +3,7 @@ if (typeof window.myGlobalDisabledFlavors === 'undefined') {
     window.myGlobalDisabledFlavors = ["qtyMango"];
 }
 
-// 🌐 宣告全域日期配置變數（給它預設定當作本地備用名單，連線成功後會被線上資料完美覆蓋）
+// 🌐 宣告全域日期配置變數（備用本地名單）
 window.locationConfig = {
     lehua: { blacklist: { dates: ["2026-05-09", "2026-04-18", "2026-04-25"], ranges: [] } },
     shilin: { blacklist: { dates: ["2026-03-31", "2026-05-09"], ranges: [] } },
@@ -24,16 +24,17 @@ window.locationConfig = {
     sanchongMorning: { whitelist: ["2026-03-28", "2026-04-25", "2026-05-09"] }
 };
 
-// 🎯 負責接收 Google 試算表傳回來的 JSONP 資料，並強制同步刷新網頁
+// 🎯 負責接收 Google 試算表傳回來的 JSONP 資料
 window.handleJsonpConfig = function (onlineConfig) {
     window.locationConfig = onlineConfig;
     console.log("🎉 成功透過 JSONP 動態載入最新的線上日期限定配置！", window.locationConfig);
     
-    // 如果此時使用者已經在網頁上選好了活動日期，立刻幫他刷新門市限制
-    const currentEventDate = document.getElementById("eventDate")?.value;
-    if (currentEventDate && typeof window.updateAvailableLocations === 'function') {
-        window.updateAvailableLocations(currentEventDate);
-    }
+    setTimeout(() => {
+        const currentEventDate = document.getElementById("eventDate")?.value;
+        if (currentEventDate && typeof window.updateAvailableLocations === 'function') {
+            window.updateAvailableLocations(currentEventDate);
+        }
+    }, 100);
 };
 
 document.addEventListener("DOMContentLoaded", function () {
@@ -49,11 +50,12 @@ document.addEventListener("DOMContentLoaded", function () {
     document.querySelectorAll("input[name='pickupLocation']").forEach(radio => {
         radio.dataset.clicked = "false";
     });
-    document.getElementById("totalCountText").innerHTML = "";
+    const totalCountTextEl = document.getElementById("totalCountText");
+    if (totalCountTextEl) totalCountTextEl.innerHTML = "";
 
-    // 🚀 【JSONP 啟動器】運作良好，繼續保持
+    // 🚀 【JSONP 啟動器】
     function fetchOnlineLocationConfigViaJsonp() {
-        const baseUrl = "https://script.google.com/macros/s/AKfycbxuvO5OjaPocqyCdR2gNPbO_yV0jcOp7QK1aEODgNvBKEOQa-bgmiVwpmoM2K0D0l2N/exec";
+        const baseUrl = "https://script.google.com/macros/s/AKfycbzE7wP4x3S5k9BOpooS7VkiYMPYdPP2Wx9KDWaOnXZ5GLtWqE1OCHnBnjIy8jQQdWjK/exec";
         const script = document.createElement("script");
         script.src = `${baseUrl}?_=${new Date().getTime()}`;
         script.onerror = function() {
@@ -62,65 +64,109 @@ document.addEventListener("DOMContentLoaded", function () {
         document.body.appendChild(script);
     }
 
-    // 立刻執行線上抓取設定
     fetchOnlineLocationConfigViaJsonp();
 
-    // 🎯 核心修正：將限制地點的邏輯綁定到 window 全域，確保日曆 onChange 時抓到的是最新線上 JSON 資料！
+    // 🎯 【升級：防字眼重疊錯殺的地毯式搜索邏輯】
     window.updateAvailableLocations = function (selectedDateStr) {
         if (!window.locationConfig) return;
         
         const selectedDate = new Date(selectedDateStr);
-        const locations = {
-            lehua: document.getElementById("optionLehua"),
-            shilin: document.getElementById("optionShilin"),
-            sanchong: document.getElementById("optionSanchong"),
-            sanchongMorning: document.getElementById("optionSanchongMorning")
-        };
+        selectedDate.setHours(0,0,0,0);
+
+        function formatDate防呆(str) {
+            if (!str) return "";
+            try {
+                const d = new Date(str);
+                if (isNaN(d.getTime())) return str.toString().trim();
+                let y = d.getFullYear();
+                let m = String(d.getMonth() + 1).padStart(2, '0');
+                let day = String(d.getDate()).padStart(2, '0');
+                return `${y}-${m}-${day}`;
+            } catch(e) {
+                return str.toString().trim();
+            }
+        }
+
+        const cleanSelectedDateStr = formatDate防呆(selectedDateStr);
+
+        // 🎯 關鍵修正：將名字長的「sanchongMorning」放在最前面優先核對，防止字眼重疊誤殺！
+        const matchKeysOrder = ["sanchongMorning", "lehua", "shilin", "sanchong"];
         
-        Object.keys(locations).forEach(key => {
-            const el = locations[key];
-            if (!el) return;
-            
+        const matchKeywords = {
+            sanchongMorning: "三重取貨點（早上）",
+            lehua: "樂華店",
+            shilin: "士林店",
+            sanchong: "三重取貨點"
+        };
+
+        const visibilityStatus = { lehua: true, shilin: true, sanchong: true, sanchongMorning: false };
+
+        // 1. 計算出線上黑白名單各門市的應當顯隱狀態
+        matchKeysOrder.forEach(key => {
             if (key === "sanchongMorning") {
-                const pickupDateStr = document.getElementById("pickupDate").value;
-                const eventDateStr = document.getElementById("eventDate").value;
-                const whiteList = window.locationConfig.sanchongMorning?.whitelist || [];
-                let shouldShow = false;
+                const pickupDateStr = document.getElementById("pickupDate")?.value;
+                const eventDateStr = document.getElementById("eventDate")?.value;
+                const rawWhiteList = window.locationConfig.sanchongMorning?.whitelist || [];
+                const whiteList = rawWhiteList.map(d => formatDate防呆(d));
+
                 if (
-                    pickupDateStr &&
-                    eventDateStr &&
-                    pickupDateStr === eventDateStr &&
-                    whiteList.includes(pickupDateStr)
+                    pickupDateStr && eventDateStr &&
+                    formatDate防呆(pickupDateStr) === formatDate防呆(eventDateStr) &&
+                    whiteList.includes(formatDate防呆(pickupDateStr))
                 ) {
-                    shouldShow = true;
+                    visibilityStatus.sanchongMorning = true;
                 }
-                el.style.display = shouldShow ? "flex" : "none";
                 return;
             }
-            
+
             const config = window.locationConfig[key];
             if (!config || !config.blacklist) return;
-            
             const { blacklist } = config;
-            let shouldHide = false;
-            
-            // 檢查單日黑名單
-            if (blacklist.dates && blacklist.dates.includes(selectedDateStr)) {
-                shouldHide = true;
+
+            if (blacklist.dates && blacklist.dates.length > 0) {
+                const cleanDates = blacklist.dates.map(d => formatDate防呆(d));
+                if (cleanDates.includes(cleanSelectedDateStr)) {
+                    visibilityStatus[key] = false;
+                }
             }
-            
-            // 檢查區間黑名單
-            if (!shouldHide && blacklist.ranges && blacklist.ranges.length > 0) {
+            if (visibilityStatus[key] && blacklist.ranges && blacklist.ranges.length > 0) {
                 for (let range of blacklist.ranges) {
-                    const start = new Date(range.start);
-                    const end = new Date(range.end);
+                    const start = new Date(range.start); start.setHours(0,0,0,0);
+                    const end = new Date(range.end); end.setHours(0,0,0,0);
                     if (selectedDate >= start && selectedDate <= end) {
-                        shouldHide = true;
+                        visibilityStatus[key] = false;
                         break;
                     }
                 }
             }
-            el.style.display = shouldHide ? "none" : "flex";
+        });
+
+        // 2. 依照排好序的權重進行網頁標籤掃描
+        const wrapperContainers = document.querySelectorAll(".pickup-option, div, label");
+        wrapperContainers.forEach(container => {
+            const text = container.textContent || "";
+            
+            // 按照順序比對，一旦匹配成功過，就標記處理，避免短關鍵字二次誤殺
+            for (let key of matchKeysOrder) {
+                const keyword = matchKeywords[key];
+                
+                if (text.includes(keyword) && container.children.length <= 4) {
+                    // 特殊防呆：如果目前在抓「短的三重」，但文字裡其實含有「早上」，直接跳過，讓早上的專屬邏輯去處理它！
+                    if (key === "sanchong" && text.includes("早上")) {
+                        continue;
+                    }
+
+                    container.style.display = visibilityStatus[key] ? "flex" : "none";
+                    
+                    if (!visibilityStatus[key]) {
+                        const radio = container.querySelector("input[type='radio']");
+                        if (radio && radio.checked) {
+                            radio.checked = false;
+                        }
+                    }
+                    break; // 匹配成功，跳出此容器的 keyword 迴圈
+                }
+            }
         });
     };
 
@@ -141,7 +187,6 @@ document.addEventListener("DOMContentLoaded", function () {
             pickupDatePicker.set("maxDate", eventDate);
             pickupDatePicker.setDate(minPickupDate, true);
             
-            // 呼叫全域更新函數
             window.updateAvailableLocations(dateStr);
         }
     });
@@ -185,68 +230,68 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     });
 
-    // Restrict event date and pickup date input range
     let eventDateInput = document.getElementById("eventDate");
-    eventDateInput.addEventListener("change", function () {
-        setTimeout(() => {
-            if (!this.value) return;
-            let eventDate = parseLocalDate(this.value);
-            eventDate.setHours(0, 0, 0, 0);
-            let today = new Date();
-            today.setHours(0, 0, 0, 0);
-            let maxDate = new Date();
-            maxDate.setDate(today.getDate() + 180);
-            if (eventDate < today || eventDate > maxDate) {
-                alert("請選擇今天到 180 天內的日期");
-                this.value = "";
-                return;
-            }
-            let minPickupDate = new Date(eventDate);
-            minPickupDate.setDate(eventDate.getDate() - 1);
-            let pickupDateInput = document.getElementById("pickupDate");
-            if (!isNaN(minPickupDate.getTime())) {
-                let y = minPickupDate.getFullYear();
-                let m = String(minPickupDate.getMonth() + 1).padStart(2, '0');
-                let d = String(minPickupDate.getDate()).padStart(2, '0');
-                
-                pickupDateInput.setAttribute("min", `${y}-${m}-${d}`);
-                pickupDateInput.setAttribute("max", this.value);
-            }
-            window.updateAvailableLocations(this.value);
-        }, 1500);
-    });
+    if (eventDateInput) {
+        eventDateInput.addEventListener("change", function () {
+            setTimeout(() => {
+                if (!this.value) return;
+                let eventDate = parseLocalDate(this.value);
+                eventDate.setHours(0, 0, 0, 0);
+                let today = new Date();
+                today.setHours(0, 0, 0, 0);
+                let maxDate = new Date();
+                maxDate.setDate(today.getDate() + 180);
+                if (eventDate < today || eventDate > maxDate) {
+                    alert("請選擇今天到 180 天內的日期");
+                    this.value = "";
+                    return;
+                }
+                let minPickupDate = new Date(eventDate);
+                minPickupDate.setDate(eventDate.getDate() - 1);
+                let pickupDateInput = document.getElementById("pickupDate");
+                if (pickupDateInput && !isNaN(minPickupDate.getTime())) {
+                    let y = minPickupDate.getFullYear();
+                    let m = String(minPickupDate.getMonth() + 1).padStart(2, '0');
+                    let d = String(minPickupDate.getDate()).padStart(2, '0');
+                    
+                    pickupDateInput.setAttribute("min", `${y}-${m}-${d}`);
+                    pickupDateInput.setAttribute("max", this.value);
+                }
+                window.updateAvailableLocations(this.value);
+            }, 1500);
+        });
+    }
 
     let pickupDateInput = document.getElementById("pickupDate");
-    pickupDateInput.addEventListener("change", function () {
-        setTimeout(() => {
-            if (!this.value) return;
-            let selectedDate = parseLocalDate(this.value);
-            selectedDate.setHours(0, 0, 0, 0);
-            let eventDate = new Date(eventDateInput.value);
-            eventDate.setHours(0, 0, 0, 0);
-            let minPickupDate = new Date(eventDate);
-            minPickupDate.setDate(eventDate.getDate() - 1);
-            if (selectedDate < minPickupDate || selectedDate > eventDate) {
-                alert("請選擇活動日期前一日至活動當天的日期");
-                this.value = "";
-            }
-            window.updateAvailableLocations(eventDateInput.value);
-            let pickupTimeFlatpickr = document.querySelector("#pickupTime")._flatpickr;
-            if (pickupTimeFlatpickr) {
-                pickupTimeFlatpickr.setDate(pickupTimeFlatpickr.input.value, true);
-            }
-        }, 500);
-    });
-
-    let pickupTimeFlatpickr = document.querySelector("#pickupTime")._flatpickr;
-    if (pickupTimeFlatpickr) {
-        pickupTimeFlatpickr.setDate(pickupTimeFlatpickr.input.value, true);
+    if (pickupDateInput) {
+        pickupDateInput.addEventListener("change", function () {
+            setTimeout(() => {
+                if (!this.value) return;
+                let selectedDate = parseLocalDate(this.value);
+                selectedDate.setHours(0, 0, 0, 0);
+                let eventDate = new Date(eventDateInput.value);
+                eventDate.setHours(0, 0, 0, 0);
+                let minPickupDate = new Date(eventDate);
+                minPickupDate.setDate(eventDate.getDate() - 1);
+                if (selectedDate < minPickupDate || selectedDate > eventDate) {
+                    alert("請選擇活動日期前一日至活動當天的日期");
+                    this.value = "";
+                }
+                window.updateAvailableLocations(eventDateInput.value);
+                let pickupTimeFlatpickr = document.querySelector("#pickupTime")?._flatpickr;
+                if (pickupTimeFlatpickr) {
+                    pickupTimeFlatpickr.setDate(pickupTimeFlatpickr.input.value, true);
+                }
+            }, 500);
+        });
     }
 
     let phoneNumberInput = document.getElementById("phoneNumber");
-    phoneNumberInput.addEventListener("input", function () {
-        this.value = this.value.replace(/\D/g, "");
-    });
+    if (phoneNumberInput) {
+        phoneNumberInput.addEventListener("input", function () {
+            this.value = this.value.replace(/\D/g, "");
+        });
+    }
 
     document.querySelectorAll(".pickup-option input[type='radio']").forEach(radio => {
         radio.addEventListener("click", function () {
@@ -255,8 +300,8 @@ document.addEventListener("DOMContentLoaded", function () {
             });
             this.dataset.clicked = "true";
             const pickupTimeInput = document.getElementById("pickupTime");
-            const selectedTime = pickupTimeInput.value;
-            if (selectedTime) {
+            const selectedTime = pickupTimeInput?.value;
+            if (pickupTimeInput && selectedTime) {
                 const isValid = validatePickupTime(this.value, selectedTime, true);
                 if (!isValid) {
                     alert(getPickupNotification(this.value));
@@ -267,48 +312,7 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     });
 
-    function validatePickupTime(location, time, checkOnly = false, inputElement = null) {
-        let isValid = true;
-        if (location === "樂華店" && (time < "16:40" || time > "22:00")) {
-            isValid = false;
-        } else if (location === "士林店" && (time < "18:00" || time > "22:00")) {
-            isValid = false;
-        } else if (location === "三重取貨點" && (time < "14:00" || time > "17:30")) {
-            isValid = false;
-        } else if (location === "三重取貨點（早上）") {
-            if (time < "08:00" || time > "09:00") isValid = false;
-        }
-        if (!isValid && !checkOnly) {
-            alert(getPickupNotification(location));
-            if (inputElement) inputElement.value = "";
-        }
-        return isValid;
-    }
-
-    function getPickupNotification(location) {
-        if (location === "樂華店") {
-            return "樂華店取貨時間為 16:40 - 22:00喔！";
-        } else if (location === "士林店") {
-            return "士林店取貨時間為 18:00 - 22:00喔！";
-        } else if (location === "三重取貨點") {
-            return "三重取貨點取貨時間為 14:00 - 17:30喔！";
-        } else if (location === "三重取貨點（早上）") {
-            return "三重取貨點（早上）取貨時間為 08:00 - 09:00喔！";
-        }
-        return "請選擇正確的取貨地點。";
-    }
-
-    let pickupTimeInput = document.getElementById("pickupTime");
-    pickupTimeInput.setAttribute("step", "60");
-    pickupTimeInput.addEventListener("blur", function () {
-        const selectedTime = this.value;
-        const selectedLocation = document.querySelector(".pickup-option input[type='radio']:checked");
-        if (!selectedLocation) return;
-        const isValid = validatePickupTime(selectedLocation.value, selectedTime, false, this);
-        this.dataset.valid = isValid ? "true" : "false";
-    });
-
-    document.getElementById("invoiceNumber").addEventListener("input", function () {
+    document.getElementById("invoiceNumber")?.addEventListener("input", function () {
         this.value = this.value.replace(/\D/g, "");
     });
 
@@ -329,16 +333,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
     function getOrderDetails() {
         const flavorData = [
-            { name: "多多", id: "qtyDuoDuo" },
-            { name: "葡萄", id: "qtyGrape" },
-            { name: "荔枝", id: "qtyLychee" },
-            { name: "百香果", id: "qtyPassionFruit" },
-            { name: "草莓", id: "qtyStrawberry" },
-            { name: "蘋果", id: "qtyApple" },
-            { name: "鳳梨", id: "qtyPineapple" },
-            { name: "柳橙", id: "qtyOrange" },
-            { name: "水蜜桃", id: "qtyPeach" },
-            { name: "芒果", id: "qtyMango" }
+            { name: "多多", id: "qtyDuoDuo" }, { name: "葡萄", id: "qtyGrape" }, { name: "荔枝", id: "qtyLychee" },
+            { name: "百香果", id: "qtyPassionFruit" }, { name: "草莓", id: "qtyStrawberry" }, { name: "蘋果", id: "qtyApple" },
+            { name: "鳳梨", id: "qtyPineapple" }, { name: "柳橙", id: "qtyOrange" }, { name: "水蜜桃", id: "qtyPeach" }, { name: "芒果", id: "qtyMango" }
         ];
         let orderDetails = "";
         let totalCount = 0;
@@ -356,7 +353,6 @@ document.addEventListener("DOMContentLoaded", function () {
     
     document.getElementById("orderForm").addEventListener("submit", async function (event) {
         event.preventDefault();
-        
         let requiredFields = [
             { id: "customerName" }, { id: "phoneNumber" }, { id: "orderSchool" }, 
             { id: "orderClass" }, { id: "eventDate" }, { id: "pickupDate" }, { id: "pickupTime" }
@@ -408,8 +404,10 @@ document.addEventListener("DOMContentLoaded", function () {
         const pickupTimeInput = document.getElementById("pickupTime");
         if (!validatePickupTime(pickupLocation, pickupTime, true)) {
              alert("請確認您輸入的取貨時間是否正確喔！");
-             pickupTimeInput.style.border = "2px solid red";
-             pickupTimeInput.focus();
+             if (pickupTimeInput) {
+                 pickupTimeInput.style.border = "2px solid red";
+                 pickupTimeInput.focus();
+             }
              return;
         }
         const pickupDateObj = parseLocalDate(pickupDate);
@@ -514,7 +512,7 @@ document.addEventListener("DOMContentLoaded", function () {
         confirmationMessage += `⏰ 取貨時間：${pickupTime}\n\n`;
         confirmationMessage += `--\n`;
         confirmationMessage += `🛒 訂購內容：\n${orderDetails}\n\n`;
-        confirmationMessage += `🔢 總枝數：${totalCount} 枝，共 ${adjustedPrice} 元。\n\n`;
+        confirmationMessage += `🛒 總枝數：${totalCount} 枝，共 ${adjustedPrice} 元。\n\n`;
         confirmationMessage += ` ⤷ 訂購 ${calculatedCount} 枝 + 贈送 ${bonusCount} 枝。\n`;
         
         let confirmBox = document.createElement("div");
@@ -528,7 +526,6 @@ document.addEventListener("DOMContentLoaded", function () {
         messageText.style = "font-size: 16px; white-space: pre-line;";
         messageText.textContent = confirmationMessage;
         let buttonContainer = document.createElement("div");
-        buttonContainer.style = "display: flex; justify-content: space-between; margin-top: 20px;";
         let cancelButton = document.createElement("button");
         cancelButton.textContent = "返回";
         cancelButton.style = "background: #ccc; color: #000; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;";
@@ -611,6 +608,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 
                 document.getElementById("orderForm").reset();
                 document.querySelectorAll("input[name='pickupLocation']").forEach(radio => {
+                    radio.checked = false;
                     radio.dataset.clicked = "false";
                 });
                 window.calculatedCount = 0;
@@ -641,6 +639,7 @@ document.addEventListener("DOMContentLoaded", function () {
         buttonContainer.appendChild(cancelButton);
         buttonContainer.appendChild(finalSubmitButton);
         confirmBox.appendChild(messageText);
+        buttonContainer.style = "display: flex; justify-content: space-between; margin-top: 20px;";
         confirmBox.appendChild(buttonContainer);
         const overlay = document.createElement("div");
         overlay.style = "position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.3); z-index: 999;";
@@ -655,7 +654,8 @@ document.addEventListener("DOMContentLoaded", function () {
             "qtyApple", "qtyPineapple", "qtyOrange", "qtyPeach", "qtyMango"
         ];
         flavorIds.forEach(id => {
-            let qty = parseInt(document.getElementById(id).value) || 0;
+            const el = document.getElementById(id);
+            let qty = el ? (parseInt(el.value) || 0) : 0;
             totalCount += qty;
         });
 
@@ -678,7 +678,8 @@ document.addEventListener("DOMContentLoaded", function () {
             displayText += `<div class="total-row error-text">
                 若要購買 ${suggestedBuy} 枝，贈送 ${suggestedBonus} 枝。請再挑選 ${difference} 枝。
             </div>`;
-            document.getElementById("totalCountText").innerHTML = displayText;
+            const totalCountTextEl = document.getElementById("totalCountText");
+            if (totalCountTextEl) totalCountTextEl.innerHTML = displayText;
             window.promoValid = false;
             updatePromoMessage();
             return;
@@ -694,7 +695,8 @@ document.addEventListener("DOMContentLoaded", function () {
             displayText += `<div class="total-row">總金額: ${totalPrice} 元。</div>`;
         }
         displayText += `</div>`;
-        document.getElementById("totalCountText").innerHTML = displayText;
+        const totalCountTextEl = document.getElementById("totalCountText");
+        if (totalCountTextEl) totalCountTextEl.innerHTML = displayText;
         updatePromoMessage();
     }
     
@@ -702,7 +704,6 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 // 口味上下架管理
-var disabledFlavors = ["qtyMango"];
 document.querySelectorAll(".flavor-item input[type='text']").forEach(input => {
     input.addEventListener("input", function () {
         let flavorId = this.id;
@@ -715,22 +716,21 @@ document.querySelectorAll(".flavor-item input[type='text']").forEach(input => {
     });
 });
 
-["optionLehua", "optionShilin", "optionSanchong", "optionSanchongMorning"].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.style.display = "none";
-});
-
 function parseLocalDate(dateStr) {
     const [year, month, day] = dateStr.split("-");
     return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
 }
 
-document.getElementById("showInvoiceInfo").addEventListener("change", function () {
+document.getElementById("showInvoiceInfo")?.addEventListener("change", function () {
     const invoiceSection = document.getElementById("invoiceSection");
-    invoiceSection.style.display = this.checked ? "flex" : "none";
+    if (invoiceSection) {
+        invoiceSection.style.display = this.checked ? "flex" : "none";
+    }
     if (!this.checked) {
-        document.getElementById("invoiceTitle").value = "";
-        document.getElementById("invoiceNumber").value = "";
+        const title = document.getElementById("invoiceTitle");
+        const num = document.getElementById("invoiceNumber");
+        if (title) title.value = "";
+        if (num) num.value = "";
     }
 });
 
