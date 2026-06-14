@@ -1,3 +1,8 @@
+// 🎯 將口味限制移到最頂端，並改名為全球唯一變數，徹底根治「Identifier has already been declared」的快取怨念！
+if (typeof window.myGlobalDisabledFlavors === 'undefined') {
+    window.myGlobalDisabledFlavors = ["qtyMango"];
+}
+
 document.addEventListener("DOMContentLoaded", function () {
     // 🎯 強制關閉瀏覽器內建的「請填寫這欄」氣泡提示，全面啟用我們的自訂紅框功能！
     const orderForm = document.getElementById("orderForm");
@@ -58,15 +63,14 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // 🚀 從線上檔案讀取最新日期限定，並自動覆蓋上面黑白名單
     async function fetchOnlineLocationConfig() {
-        const baseUrl = "https://script.google.com/macros/s/AKfycbxuvO5OjaPocqyCdR2gNPbO_yV0jcOp7QK1aEODgNvBKEOQa-bgmiVwpmoM2K0D0l2N/exec";
+        const baseUrl = "https://script.google.com/macros/s/AKfycbuvO5OjaPocqyCdR2gNPbO_yV0jcOp7QK1aEODgNvBKEOQa-bgmiVwpmoM2K0D0l2N/exec";
         const configUrl = `${baseUrl}?_=${new Date().getTime()}`;
         
         try {
             const response = await fetch(configUrl);
             if (response.ok) {
-                // 先用 text() 讀取 GAS 吐回來的文字，再用 JSON.parse 解析
-                const htmlText = await response.text();
-                const onlineConfig = JSON.parse(htmlText);
+                // 🎯 配合 GAS 改回標準 JSON 解析法
+                const onlineConfig = await response.json();
                 
                 locationConfig = onlineConfig; // 成功讀取，覆蓋本地設定
                 console.log("成功動態載入最新的線上日期限定配置！", locationConfig);
@@ -379,7 +383,7 @@ document.addEventListener("DOMContentLoaded", function () {
         ];
         let hasError = false;
 
-        // 2. 檢查輸入框（只上紅框，不再跳出氣泡與 alert 彈窗）
+        // 2. 檢查輸入框（只上紅框）
         requiredFields.forEach(field => {
             let input = document.getElementById(field.id);
             if (!input || !input.value.trim()) {
@@ -500,9 +504,7 @@ document.addEventListener("DOMContentLoaded", function () {
         }
         
         // 產能限制後端核對
-        const gasUrl = "https://script.google.com/macros/s/AKfycbzE7wP4x3S5k9BOpooS7VkiYMPYdPP2Wx9KDWaOnXZ5GLtWqE1OCHnBnjIy8jQQdWjK/exec";
         const submitBtn = event.submitter || document.querySelector("input[type='submit']");
-        
         submitBtn.disabled = true;
         const originalBtnText = submitBtn.value;
         submitBtn.value = "正在核對產能中...";
@@ -596,8 +598,6 @@ document.addEventListener("DOMContentLoaded", function () {
             formData.append("entry.1676199734", document.getElementById("qtyOrange").value || "0");
             formData.append("entry.1154026181", document.getElementById("qtyPeach").value || "0");
             formData.append("entry.236488691", document.getElementById("qtyMango").value || "0");
-
-            // 🛑 7個統計欄位已遵照指示在此處徹底移除，完全不輸出至 Google 表單。
 
             fetch("https://docs.google.com/forms/u/0/d/e/1FAIpQLSe6tzVbIUYkpADid6OwhxLitHyK4GgzQJMRHvLdwnNZA60mZg/formResponse", {
                 method: "POST", mode: "no-cors", body: formData
@@ -730,13 +730,12 @@ document.addEventListener("DOMContentLoaded", function () {
         displayText += `</div>`;
         document.getElementById("totalCountText").innerHTML = displayText;
         updatePromoMessage();
-    } // 🎯 修正處：這裡原本遺失的結尾大括號已完美補齊！
+    }
     
     calculateTotal(); 
 });
 
 // 口味上下架管理對照
-// 🎯 關鍵防禦性修復：將 const 改為 var，徹底根治瀏覽器快取或 HTML 重複載入導致的 Identifier declared 報錯！
 var disabledFlavors = ["qtyMango"];
 document.querySelectorAll(".flavor-item input[type='text']").forEach(input => {
     input.addEventListener("input", function () {
