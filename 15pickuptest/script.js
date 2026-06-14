@@ -49,7 +49,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     document.querySelectorAll("input[name='pickupLocation']").forEach(radio => {
         radio.dataset.clicked = "false";
-        // ✅ 初始狀態：尚未選日期，先把每張取貨地點卡片隱藏起來
+        // 初始狀態：尚未選日期，先把每張取貨地點卡片隱藏起來
         const cardContainer = radio.closest(".pickup-option") || radio.parentElement?.parentElement;
         if (cardContainer) cardContainer.style.display = "none";
     });
@@ -58,7 +58,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // 🚀 【JSONP 啟動器】
     function fetchOnlineLocationConfigViaJsonp() {
-        const baseUrl = "https://script.google.com/macros/s/AKfycbxuvO5OjaPocqyCdR2gNPbO_yV0jcOp7QK1aEODgNvBKEOQa-bgmiVwpmoM2K0D0l2N/exec";
+        const baseUrl = "https://script.google.com/macros/s/AKfycbuvO5OjaPocqyCdR2gNPbO_yV0jcOp7QK1aEODgNvBKEOQa-bgmiVwpmoM2K0D0l2N/exec";
         const script = document.createElement("script");
         script.src = `${baseUrl}?_=${new Date().getTime()}`;
         script.onerror = function() {
@@ -69,7 +69,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     fetchOnlineLocationConfigViaJsonp();
 
-    // 🎯 【全部隱藏取貨地點】小工具：把每張卡片都藏起來，並取消已勾選的
+    // 🎯 【全部隱藏取貨地點】小工具
     function hideAllPickupLocations() {
         document.querySelectorAll("input[name='pickupLocation']").forEach(radio => {
             const cardContainer = radio.closest(".pickup-option") || radio.parentElement?.parentElement;
@@ -162,18 +162,16 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         });
 
-        // 2. 核心控制：直接抓取網頁上所有取貨地點的 Radio 按鈕進行卡片控制
+        // 2. 核心控制：直接對整張卡片進行顯示或物理隱藏！
         const allRadioButtons = document.querySelectorAll("input[name='pickupLocation']");
         allRadioButtons.forEach(radio => {
-            const radioValue = radio.value; // 例如："樂華店"
+            const radioValue = radio.value;
             
             Object.keys(matchValueNames).forEach(key => {
                 if (radioValue === matchValueNames[key]) {
-                    // 向上尋找最接近的白底卡片容器（通常是 .pickup-option 或者其父級 div）
                     const cardContainer = radio.closest(".pickup-option") || radio.parentElement?.parentElement;
                     
                     if (cardContainer) {
-                        // 根據最新的狀態，直接對整張卡片進行顯示或物理隱藏！
                         cardContainer.style.display = visibilityStatus[key] ? "flex" : "none";
                         
                         // 防呆：如果原本勾選的門市被隱藏了，自動取消勾選
@@ -582,7 +580,6 @@ document.addEventListener("DOMContentLoaded", function () {
                 method: "POST", mode: "no-cors", body: formData
             });
 
-            // 清空表單狀態
             document.getElementById("orderForm").reset();
             document.querySelectorAll("input[name='pickupLocation']").forEach(radio => {
                 radio.checked = false;
@@ -593,8 +590,6 @@ document.addEventListener("DOMContentLoaded", function () {
             updatePromoMessage();
             calculateTotal();
 
-            // ✅ 依「網址 v 參數」+「總金額是否 ≥ 1000」決定跳轉的成功頁
-            // 金額 ≥ 1000 → DEP 開頭；金額 < 1000 → NR 開頭
             const isHighAmount = adjustedPrice >= 1000;
             const urlParams = new URLSearchParams(window.location.search);
             const source = urlParams.get('v');
@@ -605,7 +600,6 @@ document.addEventListener("DOMContentLoaded", function () {
                 const prefix = isHighAmount ? "DEP" : "NR";
                 window.location.href = `${baseSuccessUrl}${prefix}${source}.html`;
             } else {
-                // 沒有 v 參數或不認得 → 停在原頁、回到頂部
                 window.scrollTo(0, 0);
             }
         };
