@@ -58,7 +58,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // 🚀 從線上檔案讀取最新日期限定，並自動覆蓋上面黑白名單
     async function fetchOnlineLocationConfig() {
-        const baseUrl = "https://script.google.com/macros/s/AKfycbzrLQkHOTN8GDimfdDczLeAy0Lhpadi4FK4IEHBXYz4-qn5v4Djj5IzW3ftuxlCiWJX/exec";
+        const baseUrl = "https://script.google.com/macros/s/AKfycbxuvO5OjaPocqyCdR2gNPbO_yV0jcOp7QK1aEODgNvBKEOQa-bgmiVwpmoM2K0D0l2N/exec";
         const configUrl = `${baseUrl}?_=${new Date().getTime()}`;
         
         try {
