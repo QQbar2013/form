@@ -58,7 +58,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // 🚀 【JSONP 啟動器】
     function fetchOnlineLocationConfigViaJsonp() {
-        const baseUrl = "https://script.google.com/macros/s/AKfycbzE7wP4x3S5k9BOpooS7VkiYMPYdPP2Wx9KDWaOnXZ5GLtWqE1OCHnBnjIy8jQQdWjK/exec";
+        const baseUrl = "https://script.google.com/macros/s/AKfycbxuvO5OjaPocqyCdR2gNPbO_yV0jcOp7QK1aEODgNvBKEOQa-bgmiVwpmoM2K0D0l2N/exec";
         const script = document.createElement("script");
         script.src = `${baseUrl}?_=${new Date().getTime()}`;
         script.onerror = function() {
