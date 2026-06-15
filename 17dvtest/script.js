@@ -1,6 +1,20 @@
+// 🎯 收集各口味數量（英文 id 作為 key，與 GAS flavorRowMap 對應）
+function getFlavorMap() {
+    const ids = [
+        "qtyDuoDuo", "qtyGrape", "qtyLychee", "qtyPassionFruit", "qtyStrawberry",
+        "qtyApple", "qtyPineapple", "qtyOrange", "qtyPeach", "qtyMango"
+    ];
+    const flavors = {};
+    ids.forEach(id => {
+        const v = parseInt(document.getElementById(id)?.value, 10) || 0;
+        if (v > 0) flavors[id] = v;
+    });
+    return flavors;
+}
+
 document.addEventListener("DOMContentLoaded", function () {
     console.log("DOM fully loaded, initializing form...");
-    
+
     // 🎯 強制關閉瀏覽器內建的氣泡提示，全面啟用我們的自訂紅框功能！
     const orderForm = document.getElementById("orderForm");
     if (orderForm) {
@@ -13,7 +27,7 @@ document.addEventListener("DOMContentLoaded", function () {
     // 確認表單元素存在
     const totalCountText = document.getElementById("totalCountText");
     const eventDateInput = document.getElementById("eventDate");
-    
+
     if (!orderForm || !totalCountText || !eventDateInput) {
         console.error("Required elements not found:", {
             orderForm: !!orderForm,
@@ -22,7 +36,7 @@ document.addEventListener("DOMContentLoaded", function () {
         });
         return;
     }
-    
+
     // 清空表單
     orderForm.reset();
     totalCountText.innerHTML = `
@@ -30,14 +44,14 @@ document.addEventListener("DOMContentLoaded", function () {
             <div class="total-row">總枝數: <strong>0</strong> 枝。</div>
         </div>
     `;
-    
+
     // 初始化 flatpickr：到貨日期
     const eventDatePicker = flatpickr("#eventDate", {
         dateFormat: "Y-m-d",
         minDate: "today", // 限制為今天或以後
         maxDate: new Date().fp_incr(180)
     });
-    
+
     // Restrict event date input range
     eventDateInput.addEventListener("change", function () {
         setTimeout(() => {
@@ -55,7 +69,7 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         }, 1500);
     });
-    
+
     // 限制聯絡電話只能輸入數字
     const phoneNumberInput = document.getElementById("phoneNumber");
     if (phoneNumberInput) {
@@ -65,7 +79,7 @@ document.addEventListener("DOMContentLoaded", function () {
             console.log("Phone number input:", this.value);
         });
     }
-    
+
     // 限制統一編號只能輸入數字
     const invoiceNumberInput = document.getElementById("invoiceNumber");
     if (invoiceNumberInput) {
@@ -74,7 +88,7 @@ document.addEventListener("DOMContentLoaded", function () {
             console.log("Invoice number input:", this.value);
         });
     }
-    
+
     // 限制所有口味輸入框只能輸入數字
     const flavorInputs = document.querySelectorAll(".flavor-item input[type='text']");
     if (flavorInputs.length === 0) {
@@ -88,7 +102,7 @@ document.addEventListener("DOMContentLoaded", function () {
             });
         });
     }
-    
+
     // 控制發票區塊顯示與隱藏
     const showInvoiceInfo = document.getElementById("showInvoiceInfo");
     const invoiceSection = document.getElementById("invoiceSection");
@@ -101,7 +115,7 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         });
     }
-    
+
     // 🔹 計算總計
     function calculateTotal() {
         let totalCount = 0;
@@ -109,7 +123,7 @@ document.addEventListener("DOMContentLoaded", function () {
             "qtyDuoDuo", "qtyGrape", "qtyLychee", "qtyPassionFruit", "qtyStrawberry",
             "qtyApple", "qtyPineapple", "qtyOrange", "qtyPeach", "qtyMango"
         ];
-        
+
         flavorIds.forEach(id => {
             const input = document.getElementById(id);
             if (input) {
@@ -117,13 +131,13 @@ document.addEventListener("DOMContentLoaded", function () {
                 totalCount += qty;
             }
         });
-        
+
         let isValid = totalCount % 10 === 0 && totalCount > 0;
         let displayText = `<div class="total-summary" id="totalSummaryBox">`;
         const boxes = totalCount / 10;
         const boxesText = Number.isInteger(boxes) ? boxes : boxes.toFixed(1);
         displayText += `<div class="total-row">總枝數: <strong>${totalCount}</strong> 枝，共 <strong>${boxesText}</strong> 盒。</div>`;
-        
+
         if (totalCount > 0) {
             let qStickPrice = totalCount * 17; // 單價 17 元
             let shippingFee = 0;
@@ -137,7 +151,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 shippingFee = 0;
             }
             let totalPrice = qStickPrice + shippingFee;
-            
+
             if (isValid) {
                 displayText += `<div class="total-sub">⤷ Q棒價格為 <strong>${qStickPrice}</strong> 元。</div>`;
                 displayText += `<div class="total-sub">⤷ 運費價格為 <strong>${shippingFee}</strong> 元。</div>`;
@@ -149,25 +163,25 @@ document.addEventListener("DOMContentLoaded", function () {
         displayText += `</div>`;
         totalCountText.innerHTML = displayText;
     }
-    
+
     // 🎯 取得訂購內容（資料源頭已手動補入全形空格對齊）
     function getOrderDetails() {
         const flavorData = [
-            { name: "多　多", id: "qtyDuoDuo" }, 
-            { name: "葡　萄", id: "qtyGrape" }, 
+            { name: "多　多", id: "qtyDuoDuo" },
+            { name: "葡　萄", id: "qtyGrape" },
             { name: "荔　枝", id: "qtyLychee" },
-            { name: "百香果", id: "qtyPassionFruit" }, 
-            { name: "草　莓", id: "qtyStrawberry" }, 
+            { name: "百香果", id: "qtyPassionFruit" },
+            { name: "草　莓", id: "qtyStrawberry" },
             { name: "蘋　果", id: "qtyApple" },
-            { name: "鳳　梨", id: "qtyPineapple" }, 
-            { name: "柳　橙", id: "qtyOrange" }, 
-            { name: "水蜜桃", id: "qtyPeach" }, 
+            { name: "鳳　梨", id: "qtyPineapple" },
+            { name: "柳　橙", id: "qtyOrange" },
+            { name: "水蜜桃", id: "qtyPeach" },
             { name: "芒　果", id: "qtyMango" }
         ];
         let orderDetails = "";
         let totalCount = 0;
         let qStickPrice = 0;
-        
+
         flavorData.forEach(flavor => {
             let quantity = parseInt(document.getElementById(flavor.id)?.value) || 0;
             if (quantity > 0) {
@@ -177,7 +191,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 qStickPrice += quantity * 17;
             }
         });
-        
+
         let shippingFee = 0;
         if (totalCount >= 10 && totalCount <= 30) {
             shippingFee = 160;
@@ -189,7 +203,7 @@ document.addEventListener("DOMContentLoaded", function () {
             shippingFee = 0;
         }
         let totalPrice = qStickPrice + shippingFee;
-        
+
         return { orderDetails, totalCount, qStickPrice, shippingFee, totalPrice };
     }
 
@@ -201,7 +215,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
         const thankYouOverlay = document.createElement("div");
         thankYouOverlay.style = "position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.3); z-index: 9999;";
-        
+
         const thankYouBox = document.createElement("div");
         thankYouBox.style = `
             position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
@@ -209,19 +223,19 @@ document.addEventListener("DOMContentLoaded", function () {
             box-shadow: 0 4px 10px rgba(0,0,0,0.2); width: 90%; max-width: 400px;
             z-index: 10000; text-align: center;
         `;
-        
+
         const messageText = document.createElement("p");
         messageText.style = "font-size: 16px; white-space: pre-line; text-align: left;";
         messageText.textContent = thankYouMessage;
-        
+
         const closeButton = document.createElement("button");
         closeButton.textContent = "確認";
         closeButton.style = "background: #ff6600; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; margin-top: 15px;";
-        
+
         const closeHandler = () => {
             document.body.removeChild(thankYouBox);
             document.body.removeChild(thankYouOverlay);
-            window.location.reload(); 
+            window.location.reload();
         };
 
         closeButton.onclick = closeHandler;
@@ -234,10 +248,10 @@ document.addEventListener("DOMContentLoaded", function () {
     // 表單提交事件
     orderForm.addEventListener("submit", async function (event) {
         event.preventDefault();
-        
+
         const submitBtnOnPage = event.submitter || orderForm.querySelector("button[type='submit']");
         const originalBtnText = submitBtnOnPage.textContent || submitBtnOnPage.value;
-        
+
         const resetSubmitBtn = () => {
             submitBtnOnPage.disabled = false;
             if (submitBtnOnPage.tagName === "BUTTON") {
@@ -256,7 +270,7 @@ document.addEventListener("DOMContentLoaded", function () {
             { id: "deliveryTime" },
             { id: "packingMethod" }
         ];
-        
+
         let hasMissingField = false;
 
         requiredFields.forEach(field => {
@@ -268,27 +282,27 @@ document.addEventListener("DOMContentLoaded", function () {
                 if (input) input.style.border = "";
             }
         });
-        
+
         // 🎯 2. 如果基本必填欄位有缺：亮紅框，並且立刻滑順捲動回最頂端
         if (hasMissingField) {
             window.scrollTo({ top: 0, behavior: 'smooth' });
             resetSubmitBtn();
             return;
         }
-        
+
         // 🎯 3. 數量與 10 的倍數驗證
         const { orderDetails, totalCount, qStickPrice, shippingFee, totalPrice } = getOrderDetails();
-        
+
         // 🎯 4. 如果必填都填了，但純粹是數量不對：精準攔截拒絕送出，但是「完全不往上捲動」！
         if (totalCount % 10 !== 0 || totalCount === 0) {
             resetSubmitBtn();
             return;
         }
-        
+
         // 5. 到貨日期合法性安全防線
         const eventDate = document.getElementById("eventDate").value.trim();
         const today = new Date();
-        today.setHours(0, 0, 0, 0); 
+        today.setHours(0, 0, 0, 0);
         const selectedDate = new Date(eventDate);
         if (selectedDate < today) {
             document.getElementById("eventDate").style.border = "2px solid red";
@@ -310,10 +324,15 @@ document.addEventListener("DOMContentLoaded", function () {
         try {
             const res = await fetch(gasUrl, {
                 method: "POST",
-                body: JSON.stringify({ eventDate, totalCount, orderType: "delivery" })
+                body: JSON.stringify({
+                    eventDate,
+                    totalCount,
+                    orderType: "delivery",
+                    flavors: getFlavorMap()
+                })
             });
             const result = await res.json();
-            
+
             if (result.status === "error") {
                 alert(result.message);
                 resetSubmitBtn();
@@ -327,7 +346,7 @@ document.addEventListener("DOMContentLoaded", function () {
         }
 
         resetSubmitBtn();
-        
+
         // 7. 生成確認視窗
         const customerName = document.getElementById("customerName").value.trim();
         const phoneNumber = document.getElementById("phoneNumber").value.trim();
@@ -336,7 +355,7 @@ document.addEventListener("DOMContentLoaded", function () {
         const invoiceNumber = document.getElementById("invoiceNumber").value.trim();
         const deliveryTime = document.getElementById("deliveryTime").value.trim();
         const packingMethod = document.getElementById("packingMethod").value.trim();
-        
+
         let confirmationMessage = `請確認您的訂單資訊，若正確無誤請點選右下方"送出"：\n\n\n`;
         confirmationMessage += `📌 收件人姓名：${customerName}\n\n`;
         confirmationMessage += `📞 收件人電話：${phoneNumber}\n\n`;
@@ -353,7 +372,7 @@ document.addEventListener("DOMContentLoaded", function () {
         confirmationMessage += `⤷ Q棒價格為 ${qStickPrice} 元\n`;
         confirmationMessage += `⤷ 運費價格為 ${shippingFee} 元\n\n`;
         confirmationMessage += `總金額：${totalPrice} 元。\n`;
-        
+
         let confirmBox = document.createElement("div");
         confirmBox.style = `
             position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
@@ -369,7 +388,7 @@ document.addEventListener("DOMContentLoaded", function () {
         let cancelButton = document.createElement("button");
         cancelButton.textContent = "返回";
         cancelButton.style = "background: #ccc; color: #000; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;";
-        
+
         const overlay = document.createElement("div");
         overlay.style = "position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.3); z-index: 9999;";
 
@@ -381,13 +400,13 @@ document.addEventListener("DOMContentLoaded", function () {
         let submitButton = document.createElement("button");
         submitButton.textContent = "送出";
         submitButton.style = "background: #ff6600; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;";
-        
+
         submitButton.onclick = () => {
             submitButton.disabled = true;
             submitButton.textContent = "處理中...";
             document.body.removeChild(confirmBox);
             document.body.removeChild(overlay);
-            
+
             const formData = new FormData();
             formData.append("entry.707832955", customerName);
             formData.append("entry.148881326", phoneNumber);
@@ -397,7 +416,7 @@ document.addEventListener("DOMContentLoaded", function () {
             formData.append("entry.1853241713", eventDate);
             formData.append("entry.942601137", deliveryTime);
             formData.append("entry.1598893216", packingMethod);
-            
+
             // 10 種口味資料傳送
             formData.append("entry.1820487257", document.getElementById("qtyDuoDuo").value || "0");
             formData.append("entry.2120858558", document.getElementById("qtyGrape").value || "0");
@@ -409,19 +428,19 @@ document.addEventListener("DOMContentLoaded", function () {
             formData.append("entry.65717679", document.getElementById("qtyOrange").value || "0");
             formData.append("entry.852692599", document.getElementById("qtyPeach").value || "0");
             formData.append("entry.1399719448", document.getElementById("qtyMango").value || "0");
-            
+
             // 總額與運費傳送
             formData.append("entry.1400692215", totalCount.toString());
             formData.append("entry.1473298831", qStickPrice.toString());
             formData.append("entry.1548748978", shippingFee.toString());
             formData.append("entry.1440063522", totalPrice.toString());
-            
+
             fetch("https://docs.google.com/forms/d/1uUBwQDayaTo_ISVloVYS5l_H07lbSivdbMoZlbXDCdM/formResponse", {
                 method: "POST",
                 mode: "no-cors",
                 body: formData
             });
-            
+
             orderForm.reset();
             calculateTotal();
 
@@ -441,7 +460,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 window.requestAnimationFrame(() => showThankYouModal());
             }
         };
-        
+
         buttonContainer.appendChild(cancelButton);
         buttonContainer.appendChild(submitButton);
         confirmBox.appendChild(messageText);
@@ -449,9 +468,9 @@ document.addEventListener("DOMContentLoaded", function () {
         document.body.appendChild(overlay);
         document.body.appendChild(confirmBox);
     });
-    
+
     calculateTotal();
-    
+
     function parseLocalDate(dateStr) {
         const [year, month, day] = dateStr.split("-");
         return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
