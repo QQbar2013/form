@@ -1,6 +1,6 @@
 // 🎯 口味限制全球唯一變數，防止重複宣告報錯
 if (typeof window.myGlobalDisabledFlavors === 'undefined') {
-    window.myGlobalDisabledFlavors = ["qtyMango"];
+    window.myGlobalDisabledFlavors = [];
 }
 
 // 🌐 宣告全域日期配置變數（備用本地名單）
@@ -28,7 +28,7 @@ window.locationConfig = {
 window.handleJsonpConfig = function (onlineConfig) {
     window.locationConfig = onlineConfig;
     console.log("🎉 成功透過 JSONP 動態載入最新的線上日期限定配置！", window.locationConfig);
-    
+
     setTimeout(() => {
         const currentEventDate = document.getElementById("eventDate")?.value;
         if (currentEventDate && typeof window.updateAvailableLocations === 'function') {
@@ -37,13 +37,27 @@ window.handleJsonpConfig = function (onlineConfig) {
     }, 100);
 };
 
+// 🎯 收集各口味數量（英文 id 作為 key，與 GAS flavorRowMap 對應）
+function getFlavorMap() {
+    const ids = [
+        "qtyDuoDuo", "qtyGrape", "qtyLychee", "qtyPassionFruit", "qtyStrawberry",
+        "qtyApple", "qtyPineapple", "qtyOrange", "qtyPeach", "qtyMango"
+    ];
+    const flavors = {};
+    ids.forEach(id => {
+        const v = parseInt(document.getElementById(id)?.value, 10) || 0;
+        if (v > 0) flavors[id] = v;
+    });
+    return flavors;
+}
+
 document.addEventListener("DOMContentLoaded", function () {
     const orderForm = document.getElementById("orderForm");
     if (orderForm) {
         orderForm.setAttribute("novalidate", "true");
         orderForm.reset();
     }
-    
+
     const initialSubmitBtn = document.querySelector("input[type='submit']");
     if (initialSubmitBtn) initialSubmitBtn.value = "前往確認";
 
@@ -112,7 +126,7 @@ document.addEventListener("DOMContentLoaded", function () {
         }
 
         const selectedDate = new Date(selectedDateStr);
-        selectedDate.setHours(0,0,0,0);
+        selectedDate.setHours(0, 0, 0, 0);
 
         function formatDate防呆(str) {
             if (!str) return "";
@@ -123,7 +137,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 let m = String(d.getMonth() + 1).padStart(2, '0');
                 let day = String(d.getDate()).padStart(2, '0');
                 return `${y}-${m}-${day}`;
-            } catch(e) {
+            } catch (e) {
                 return str.toString().trim();
             }
         }
@@ -170,8 +184,8 @@ document.addEventListener("DOMContentLoaded", function () {
             }
             if (visibilityStatus[key] && blacklist.ranges && blacklist.ranges.length > 0) {
                 for (let range of blacklist.ranges) {
-                    const start = new Date(range.start); start.setHours(0,0,0,0);
-                    const end = new Date(range.end); end.setHours(0,0,0,0);
+                    const start = new Date(range.start); start.setHours(0, 0, 0, 0);
+                    const end = new Date(range.end); end.setHours(0, 0, 0, 0);
                     if (selectedDate >= start && selectedDate <= end) {
                         visibilityStatus[key] = false;
                         break;
@@ -184,16 +198,16 @@ document.addEventListener("DOMContentLoaded", function () {
         const allRadioButtons = document.querySelectorAll("input[name='pickupLocation']");
         allRadioButtons.forEach(radio => {
             const radioValue = radio.value; // 例如："樂華店"
-            
+
             Object.keys(matchValueNames).forEach(key => {
                 if (radioValue === matchValueNames[key]) {
                     // 向上尋找最接近的白底卡片容器（通常是 .pickup-option 或者其父級 div）
                     const cardContainer = radio.closest(".pickup-option") || radio.parentElement?.parentElement;
-                    
+
                     if (cardContainer) {
                         // 根據最新的狀態，直接對整張卡片進行顯示或物理隱藏！
                         cardContainer.style.display = visibilityStatus[key] ? "flex" : "none";
-                        
+
                         // 防呆：如果原本勾選的門市被隱藏了，自動取消勾選
                         if (!visibilityStatus[key] && radio.checked) {
                             radio.checked = false;
@@ -206,32 +220,32 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // Initialize flatpickr for event date, pickup date, and pickup time
     const eventDatePicker = flatpickr("#eventDate", {
-        disableMobile: "true", 
+        disableMobile: "true",
         dateFormat: "Y-m-d",
         minDate: "today",
         maxDate: new Date().fp_incr(180),
         onChange: function (selectedDates, dateStr, instance) {
             if (!dateStr || selectedDates.length === 0) return;
-            
-            const eventDate = selectedDates[0]; 
+
+            const eventDate = selectedDates[0];
             const minPickupDate = new Date(eventDate);
             minPickupDate.setDate(eventDate.getDate() - 1);
-            
+
             pickupDatePicker.set("minDate", minPickupDate);
             pickupDatePicker.set("maxDate", eventDate);
             pickupDatePicker.setDate(minPickupDate, true);
-            
+
             window.updateAvailableLocations(dateStr);
         }
     });
 
     const pickupDatePicker = flatpickr("#pickupDate", {
-        disableMobile: "true", 
+        disableMobile: "true",
         dateFormat: "Y-m-d"
     });
 
     flatpickr("#pickupTime", {
-        disableMobile: "true", 
+        disableMobile: "true",
         enableTime: true,
         noCalendar: true,
         dateFormat: "H:i",
@@ -287,7 +301,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     let y = minPickupDate.getFullYear();
                     let m = String(minPickupDate.getMonth() + 1).padStart(2, '0');
                     let d = String(minPickupDate.getDate()).padStart(2, '0');
-                    
+
                     pickupDateInput.setAttribute("min", `${y}-${m}-${d}`);
                     pickupDateInput.setAttribute("max", this.value);
                 }
@@ -379,16 +393,16 @@ document.addEventListener("DOMContentLoaded", function () {
             if (quantity > 0) {
                 orderDetails += `${flavor.name}：${quantity} 枝\n`;
                 totalCount += quantity;
-                totalPrice += quantity * 15; 
+                totalPrice += quantity * 15;
             }
         });
         return { orderDetails, totalCount, totalPrice };
     }
-    
+
     document.getElementById("orderForm").addEventListener("submit", async function (event) {
         event.preventDefault();
         let requiredFields = [
-            { id: "customerName" }, { id: "phoneNumber" }, { id: "orderSchool" }, 
+            { id: "customerName" }, { id: "phoneNumber" }, { id: "orderSchool" },
             { id: "orderClass" }, { id: "eventDate" }, { id: "pickupDate" }, { id: "pickupTime" }
         ];
         let hasError = false;
@@ -437,12 +451,12 @@ document.addEventListener("DOMContentLoaded", function () {
 
         const pickupTimeInput = document.getElementById("pickupTime");
         if (!validatePickupTime(pickupLocation, pickupTime, true)) {
-             alert("請確認您輸入的取貨時間是否正確喔！");
-             if (pickupTimeInput) {
-                 pickupTimeInput.style.border = "2px solid red";
-                 pickupTimeInput.focus();
-             }
-             return;
+            alert("請確認您輸入的取貨時間是否正確喔！");
+            if (pickupTimeInput) {
+                pickupTimeInput.style.border = "2px solid red";
+                pickupTimeInput.focus();
+            }
+            return;
         }
         const pickupDateObj = parseLocalDate(pickupDate);
         const eventDateObj = parseLocalDate(eventDate);
@@ -482,7 +496,7 @@ document.addEventListener("DOMContentLoaded", function () {
             const stayToBuyMore = await new Promise((resolve) => {
                 const upsellOverlay = document.createElement("div");
                 upsellOverlay.style = "position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; display: flex; align-items: center; justify-content: center;";
-                
+
                 upsellOverlay.innerHTML = `
                     <div style="background: white; padding: 25px; border-radius: 12px; width: 85%; max-width: 400px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
                         <h3 style="margin-top: 0; color: #ff6600;">✨ 差一點點就多送一枝！</h3>
@@ -497,16 +511,16 @@ document.addEventListener("DOMContentLoaded", function () {
 
                 upsellOverlay.querySelector("#goNext").onclick = () => {
                     document.body.removeChild(upsellOverlay);
-                    resolve(false); 
+                    resolve(false);
                 };
                 upsellOverlay.querySelector("#backToOrder").onclick = () => {
                     document.body.removeChild(upsellOverlay);
-                    resolve(true); 
+                    resolve(true);
                 };
             });
-            if (stayToBuyMore) return; 
+            if (stayToBuyMore) return;
         }
-        
+
         const gasUrl = "https://script.google.com/macros/s/AKfycbzE7wP4x3S5k9BOpooS7VkiYMPYdPP2Wx9KDWaOnXZ5GLtWqE1OCHnBnjIy8jQQdWjK/exec";
         const submitBtn = event.submitter || document.querySelector("input[type='submit']");
         submitBtn.disabled = true;
@@ -516,14 +530,19 @@ document.addEventListener("DOMContentLoaded", function () {
         try {
             const checkResponse = await fetch(gasUrl, {
                 method: "POST",
-                body: JSON.stringify({ eventDate: eventDate, totalCount: totalCount, orderType: "mold" })
+                body: JSON.stringify({
+                    eventDate: eventDate,
+                    totalCount: totalCount,
+                    orderType: "mold",
+                    flavors: getFlavorMap()
+                })
             });
             const checkResult = await checkResponse.json();
             if (checkResult.status === "error") {
                 alert(checkResult.message);
                 submitBtn.disabled = false;
                 submitBtn.value = originalBtnText;
-                return; 
+                return;
             }
         } catch (error) {
             alert("系統連線異常，請稍後再試。");
@@ -549,7 +568,7 @@ document.addEventListener("DOMContentLoaded", function () {
         confirmationMessage += `🛒 訂購內容：\n${orderDetails}\n\n`;
         confirmationMessage += `🛒 總枝數：${totalCount} 枝，共 ${adjustedPrice} 元。\n\n`;
         confirmationMessage += ` ⤷ 訂購 ${calculatedCount} 枝 + 贈送 ${bonusCount} 枝。\n`;
-        
+
         let confirmBox = document.createElement("div");
         confirmBox.style = `
             position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
@@ -571,7 +590,7 @@ document.addEventListener("DOMContentLoaded", function () {
         let finalSubmitButton = document.createElement("button");
         finalSubmitButton.textContent = "送出";
         finalSubmitButton.style = "background: #ff6600; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;";
-        
+
         finalSubmitButton.onclick = () => {
             document.body.removeChild(confirmBox);
             document.body.removeChild(overlay);
@@ -658,7 +677,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
         let isValid = (calculatedCount + bonusCount) === totalCount;
         let hasInput = totalCount > 0;
-        let totalPrice = totalCount * 15 - bonusCount * 15; 
+        let totalPrice = totalCount * 15 - bonusCount * 15;
 
         let displayText = `<div class="total-summary">`;
         if (totalCount > 0) {
@@ -692,8 +711,8 @@ document.addEventListener("DOMContentLoaded", function () {
         if (totalCountTextEl) totalCountTextEl.innerHTML = displayText;
         updatePromoMessage();
     }
-    
-    calculateTotal(); 
+
+    calculateTotal();
 });
 
 // 口味上下架管理
@@ -728,53 +747,53 @@ document.getElementById("showInvoiceInfo")?.addEventListener("change", function 
 });
 
 function updatePromoMessage() {
-  const bar = document.getElementById("promoMsg");
-  if (!bar) return;
+    const bar = document.getElementById("promoMsg");
+    if (!bar) return;
 
-  const paid  = Number(window.calculatedCount) || 0;
-  const valid = window.promoValid !== false;
+    const paid = Number(window.calculatedCount) || 0;
+    const valid = window.promoValid !== false;
 
-  if (paid === 0) {
-    bar.classList.remove("show");
-    bar.style.display = "none";
-    document.body.classList.remove("promo-fixed-padding");
-    document.body.style.removeProperty('--promoH');
-    return;
-  }
+    if (paid === 0) {
+        bar.classList.remove("show");
+        bar.style.display = "none";
+        document.body.classList.remove("promo-fixed-padding");
+        document.body.style.removeProperty('--promoH');
+        return;
+    }
 
-  bar.style.display = "";
-  bar.classList.add("show");
+    bar.style.display = "";
+    bar.classList.add("show");
 
-  if (!valid) {
-    bar.textContent = "請幫我填寫「贈送 1 枝」的口味喔 😊";
-  } else {
-    const r = paid % 10;
-    bar.textContent =
-      r === 0 ? "🎉 太棒了，這是完美的買十送一組合🍡💛" :
-      r === 9 ? "再 1 枝就送 1 枝 ✨" :
+    if (!valid) {
+        bar.textContent = "請幫我填寫「贈送 1 枝」的口味喔 😊";
+    } else {
+        const r = paid % 10;
+        bar.textContent =
+            r === 0 ? "🎉 太棒了，這是完美的買十送一組合🍡💛" :
+            r === 9 ? "再 1 枝就送 1 枝 ✨" :
                 `再 ${10 - r} 枝就送 1 枝 🎁`;
-  }
+    }
 
-  requestAnimationFrame(() => {
-    const h = bar.offsetHeight || 48;
-    document.body.style.setProperty('--promoH', h + 'px');
-    document.body.classList.add('promo-fixed-padding');
-  });
+    requestAnimationFrame(() => {
+        const h = bar.offsetHeight || 48;
+        document.body.style.setProperty('--promoH', h + 'px');
+        document.body.classList.add('promo-fixed-padding');
+    });
 }
 
 window.addEventListener('resize', () => {
-  const bar = document.getElementById("promoMsg");
-  if (!bar || bar.style.display === 'none') return;
-  const h = bar.offsetHeight || 48;
-  document.body.style.setProperty('--promoH', h + 'px');
+    const bar = document.getElementById("promoMsg");
+    if (!bar || bar.style.display === 'none') return;
+    const h = bar.offsetHeight || 48;
+    document.body.style.setProperty('--promoH', h + 'px');
 });
 
 // 🎯 各取貨地點的可取貨時間範圍
 const pickupTimeRules = {
-    "樂華店":            { start: "16:40", end: "22:00" },
-    "士林店":            { start: "18:00", end: "22:00" },
-    "三重取貨點":         { start: "14:00", end: "17:30" },
-    "三重取貨點（早上）":  { start: "08:00", end: "09:00" }
+    "樂華店": { start: "16:40", end: "22:00" },
+    "士林店": { start: "18:00", end: "22:00" },
+    "三重取貨點": { start: "14:00", end: "17:30" },
+    "三重取貨點（早上）": { start: "08:00", end: "09:00" }
 };
 
 // 將 "HH:mm" 轉成當天的分鐘數，方便比較大小
