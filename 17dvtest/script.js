@@ -408,34 +408,34 @@ document.addEventListener("DOMContentLoaded", function () {
             document.body.removeChild(overlay);
 
             const formData = new FormData();
-            formData.append("entry.707832955", customerName);
-            formData.append("entry.148881326", phoneNumber);
-            formData.append("entry.1115123397", orderUnit);
-            formData.append("entry.1649301154", invoiceTitle);
-            formData.append("entry.523433656", invoiceNumber);
-            formData.append("entry.1853241713", eventDate);
-            formData.append("entry.942601137", deliveryTime);
-            formData.append("entry.1598893216", packingMethod);
+            formData.append("entry.2060121763", customerName);
+            formData.append("entry.1920937747", phoneNumber);
+            formData.append("entry.1416224354", orderUnit);
+            formData.append("entry.1954611417", invoiceTitle);
+            formData.append("entry.975658504", invoiceNumber);
+            formData.append("entry.1708233500", eventDate);
+            formData.append("entry.1237214910", deliveryTime);
+            formData.append("entry.901872460", packingMethod);
 
             // 10 種口味資料傳送
-            formData.append("entry.1820487257", document.getElementById("qtyDuoDuo").value || "0");
-            formData.append("entry.2120858558", document.getElementById("qtyGrape").value || "0");
-            formData.append("entry.1136794131", document.getElementById("qtyLychee").value || "0");
-            formData.append("entry.1439982112", document.getElementById("qtyPassionFruit").value || "0");
-            formData.append("entry.1813285675", document.getElementById("qtyStrawberry").value || "0");
-            formData.append("entry.2077815988", document.getElementById("qtyApple").value || "0");
-            formData.append("entry.820054306", document.getElementById("qtyPineapple").value || "0");
-            formData.append("entry.65717679", document.getElementById("qtyOrange").value || "0");
-            formData.append("entry.852692599", document.getElementById("qtyPeach").value || "0");
-            formData.append("entry.1399719448", document.getElementById("qtyMango").value || "0");
+            formData.append("entry.1278800672", document.getElementById("qtyDuoDuo").value || "0");
+            formData.append("entry.102995102", document.getElementById("qtyGrape").value || "0");
+            formData.append("entry.327904499", document.getElementById("qtyLychee").value || "0");
+            formData.append("entry.1506309778", document.getElementById("qtyPassionFruit").value || "0");
+            formData.append("entry.165934484", document.getElementById("qtyStrawberry").value || "0");
+            formData.append("entry.924057125", document.getElementById("qtyApple").value || "0");
+            formData.append("entry.1659487221", document.getElementById("qtyPineapple").value || "0");
+            formData.append("entry.1824798891", document.getElementById("qtyOrange").value || "0");
+            formData.append("entry.1018990036", document.getElementById("qtyPeach").value || "0");
+            formData.append("entry.2051550962", document.getElementById("qtyMango").value || "0");
 
             // 總額與運費傳送
-            formData.append("entry.1400692215", totalCount.toString());
-            formData.append("entry.1473298831", qStickPrice.toString());
-            formData.append("entry.1548748978", shippingFee.toString());
-            formData.append("entry.1440063522", totalPrice.toString());
+            formData.append("entry.2007999021", totalCount.toString());
+            formData.append("entry.740186001", qStickPrice.toString());
+            formData.append("entry.2008804380", shippingFee.toString());
+            formData.append("entry.264561249", totalPrice.toString());
 
-            fetch("https://docs.google.com/forms/d/1uUBwQDayaTo_ISVloVYS5l_H07lbSivdbMoZlbXDCdM/formResponse", {
+            fetch("https://docs.google.com/forms/d/e/1FAIpQLSfni542i4MO8YHiyMmbAp8auTNg4Nufsl2RwU77KCG8Ik4tjw/formResponse", {
                 method: "POST",
                 mode: "no-cors",
                 body: formData
