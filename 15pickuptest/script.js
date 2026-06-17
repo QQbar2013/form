@@ -595,30 +595,31 @@ document.addEventListener("DOMContentLoaded", function () {
             document.body.removeChild(overlay);
 
             const formData = new FormData();
-            formData.append("entry.153434121", customerName);
-            formData.append("entry.1286553898", phoneNumber);
-            formData.append("entry.29286919", orderUnit);
-            formData.append("entry.1406293128", invoiceTitle);
-            formData.append("entry.307667347", invoiceNumber);
-            formData.append("entry.2132577574", eventDate);
-            formData.append("entry.969880587", pickupLocation);
-            formData.append("entry.355577760", pickupDate);
-            formData.append("entry.1822166015", pickupTime);
-            formData.append("entry.316562737", document.getElementById("qtyDuoDuo").value || "0");
-            formData.append("entry.2045995529", document.getElementById("qtyGrape").value || "0");
-            formData.append("entry.632518397", document.getElementById("qtyLychee").value || "0");
-            formData.append("entry.1388020976", document.getElementById("qtyPassionFruit").value || "0");
-            formData.append("entry.1942859558", document.getElementById("qtyStrawberry").value || "0");
-            formData.append("entry.761436590", document.getElementById("qtyApple").value || "0");
-            formData.append("entry.454770086", document.getElementById("qtyPineapple").value || "0");
-            formData.append("entry.1676199734", document.getElementById("qtyOrange").value || "0");
-            formData.append("entry.1154026181", document.getElementById("qtyPeach").value || "0");
-            formData.append("entry.236488691", document.getElementById("qtyMango").value || "0");
+            formData.append("entry.81239836", customerName);
+            formData.append("entry.1416157379", phoneNumber);
+            formData.append("entry.1025003389", orderUnit);
+            formData.append("entry.466185296", invoiceTitle);
+            formData.append("entry.130292631", invoiceNumber);
+            formData.append("entry.986842072", eventDate);
+            formData.append("entry.623556672", pickupLocation);
+            formData.append("entry.1087301355", pickupDate);
+            formData.append("entry.392904427", pickupTime);
+            formData.append("entry.1464986341", document.getElementById("qtyDuoDuo").value || "0");
+            formData.append("entry.1379523760", document.getElementById("qtyGrape").value || "0");
+            formData.append("entry.1921139293", document.getElementById("qtyLychee").value || "0");
+            formData.append("entry.2095163395", document.getElementById("qtyPassionFruit").value || "0");
+            formData.append("entry.1453269351", document.getElementById("qtyStrawberry").value || "0");
+            formData.append("entry.8702968", document.getElementById("qtyApple").value || "0");
+            formData.append("entry.966346636", document.getElementById("qtyPineapple").value || "0");
+            formData.append("entry.641811555", document.getElementById("qtyOrange").value || "0");
+            formData.append("entry.220818810", document.getElementById("qtyPeach").value || "0");
+            formData.append("entry.995091122", document.getElementById("qtyMango").value || "0");
 
-            fetch("https://docs.google.com/forms/d/e/1FAIpQLSdk_frc_u5KRZviAmw27RegCTJwqckl50uFwbKoaxJ1Zef1VQ/formResponse", {
+            fetch("https://docs.google.com/forms/d/e/1FAIpQLSfPPhdVADqqCp_LSx5tlI_QOLrlRDfNJpKLjKId9WFkk3zU2Q/formResponse", {
                 method: "POST", mode: "no-cors", body: formData
             });
 
+            
             // 清空表單狀態
             document.getElementById("orderForm").reset();
             document.querySelectorAll("input[name='pickupLocation']").forEach(radio => {
