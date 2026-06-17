@@ -616,7 +616,7 @@ document.addEventListener("DOMContentLoaded", function () {
             formData.append("entry.1154026181", document.getElementById("qtyPeach").value || "0");
             formData.append("entry.236488691", document.getElementById("qtyMango").value || "0");
 
-            fetch("https://docs.google.com/forms/u/0/d/e/1FAIpQLSe6tzVbIUYkpADid6OwhxLitHyK4GgzQJMRHvLdwnNZA60mZg/formResponse", {
+            fetch("https://docs.google.com/forms/d/e/1FAIpQLSdk_frc_u5KRZviAmw27RegCTJwqckl50uFwbKoaxJ1Zef1VQ/formResponse", {
                 method: "POST", mode: "no-cors", body: formData
             });
 
