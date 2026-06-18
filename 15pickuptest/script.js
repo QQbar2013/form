@@ -594,7 +594,7 @@ document.addEventListener("DOMContentLoaded", function () {
             document.body.removeChild(confirmBox);
             document.body.removeChild(overlay);
 
-            const formData = new FormData();
+            const formData = new URLSearchParams();
             formData.append("entry.81239836", customerName);
             formData.append("entry.1416157379", phoneNumber);
             formData.append("entry.1025003389", orderUnit);
@@ -616,7 +616,9 @@ document.addEventListener("DOMContentLoaded", function () {
             formData.append("entry.995091122", document.getElementById("qtyMango").value || "0");
 
             fetch("https://docs.google.com/forms/d/e/1FAIpQLSfPPhdVADqqCp_LSx5tlI_QOLrlRDfNJpKLjKId9WFkk3zU2Q/formResponse", {
-                method: "POST", mode: "no-cors", body: formData
+                method: "POST",
+                mode: "no-cors",
+                body: formData
             });
 
             
