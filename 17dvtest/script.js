@@ -407,7 +407,7 @@ document.addEventListener("DOMContentLoaded", function () {
             document.body.removeChild(confirmBox);
             document.body.removeChild(overlay);
 
-            const formData = new FormData();
+            const formData = new URLSearchParams();
             formData.append("entry.2060121763", customerName);
             formData.append("entry.1920937747", phoneNumber);
             formData.append("entry.1416224354", orderUnit);
@@ -435,7 +435,7 @@ document.addEventListener("DOMContentLoaded", function () {
             formData.append("entry.2008804380", shippingFee.toString());
             formData.append("entry.264561249", totalPrice.toString());
 
-            fetch("https://docs.google.com/forms/d/e/1FAIpQLSfni542i4MO8YHiyMmbAp8auTNg4Nufsl2RwU77KCG8Ik4tjw/formResponse", {
+            fetch("https://docs.google.com/forms/d/e/1FAIpQLSfPPhdVADqqCp_LSx5tlI_QOLrlRDfNJpKLjKId9WFkk3zU2Q/formResponse", {
                 method: "POST",
                 mode: "no-cors",
                 body: formData
