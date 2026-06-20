@@ -435,7 +435,7 @@ document.addEventListener("DOMContentLoaded", function () {
             formData.append("entry.2008804380", shippingFee.toString());
             formData.append("entry.264561249", totalPrice.toString());
 
-            fetch("https://docs.google.com/forms/d/e/1FAIpQLSfPPhdVADqqCp_LSx5tlI_QOLrlRDfNJpKLjKId9WFkk3zU2Q/formResponse", {
+            fetch("https://docs.google.com/forms/d/e/1FAIpQLSfni542i4MO8YHiyMmbAp8auTNg4Nufsl2RwU77KCG8Ik4tjw/formResponse", {
                 method: "POST",
                 mode: "no-cors",
                 body: formData
