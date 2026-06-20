@@ -615,7 +615,7 @@ document.addEventListener("DOMContentLoaded", function () {
             formData.append("entry.641811555", document.getElementById("qtyOrange").value || "0");
             formData.append("entry.220818810", document.getElementById("qtyPeach").value || "0");
             formData.append("entry.995091122", document.getElementById("qtyMango").value || "0");
-
+            console.log(formData.toString());
             fetch("https://docs.google.com/forms/d/e/1FAIpQLSfPPhdVADqqCp_LSx5tlI_QOLrlRDfNJpKLjKId9WFkk3zU2Q/formResponse", {
                 method: "POST",
                 mode: "no-cors",
