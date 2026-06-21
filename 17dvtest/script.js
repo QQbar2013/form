@@ -406,12 +406,11 @@ submitButton.onclick = async () => {
     const submitGasUrl = "https://script.google.com/macros/s/AKfycbwyuQJ1wmUCsSvnVZZO9420jgeGLAhPUWk9vgdx2yafx_GYneCXhqP8Pqe7xw7ROSM4vQ/exec";  // ← 換成步驟二複製的網址
 
     submitButton.disabled = true;
+    submitButton.textContent = "送出中...";
+    submitButton.style.background = "#ccc";      // 反灰
+    submitButton.style.cursor = "not-allowed";
+    cancelButton.disabled = true;                // 順便鎖住「返回」避免誤觸
 
-    submitButton.textContent = "處理中...";
-
-    document.body.removeChild(confirmBox);
-
-    document.body.removeChild(overlay);
 
     const payload = {
 
