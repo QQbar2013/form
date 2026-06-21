@@ -483,7 +483,8 @@ submitButton.onclick = async () => {
     }
 
     // 送單成功 → 重置 → 進成功頁
-
+    document.body.removeChild(confirmBox);
+    document.body.removeChild(overlay);
     orderForm.reset();
 
     calculateTotal();
