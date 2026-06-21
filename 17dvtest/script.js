@@ -401,65 +401,119 @@ document.addEventListener("DOMContentLoaded", function () {
         submitButton.textContent = "送出";
         submitButton.style = "background: #ff6600; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;";
 
-        submitButton.onclick = () => {
-            submitButton.disabled = true;
-            submitButton.textContent = "處理中...";
-            document.body.removeChild(confirmBox);
-            document.body.removeChild(overlay);
+submitButton.onclick = async () => {
 
-            const formData = new URLSearchParams();
-            formData.append("entry.2060121763", customerName);
-            formData.append("entry.1920937747", phoneNumber);
-            formData.append("entry.1416224354", orderUnit);
-            formData.append("entry.1954611417", invoiceTitle);
-            formData.append("entry.975658504", invoiceNumber);
-            formData.append("entry.1708233500", eventDate);
-            formData.append("entry.1237214910", deliveryTime);
-            formData.append("entry.901872460", packingMethod);
+    const submitGasUrl = "https://script.google.com/macros/s/AKfycbwyuQJ1wmUCsSvnVZZO9420jgeGLAhPUWk9vgdx2yafx_GYneCXhqP8Pqe7xw7ROSM4vQ/exec";  // ← 換成步驟二複製的網址
 
-            // 10 種口味資料傳送
-            formData.append("entry.1278800672", document.getElementById("qtyDuoDuo").value || "0");
-            formData.append("entry.102995102", document.getElementById("qtyGrape").value || "0");
-            formData.append("entry.327904499", document.getElementById("qtyLychee").value || "0");
-            formData.append("entry.1506309778", document.getElementById("qtyPassionFruit").value || "0");
-            formData.append("entry.165934484", document.getElementById("qtyStrawberry").value || "0");
-            formData.append("entry.924057125", document.getElementById("qtyApple").value || "0");
-            formData.append("entry.1659487221", document.getElementById("qtyPineapple").value || "0");
-            formData.append("entry.1824798891", document.getElementById("qtyOrange").value || "0");
-            formData.append("entry.1018990036", document.getElementById("qtyPeach").value || "0");
-            formData.append("entry.2051550962", document.getElementById("qtyMango").value || "0");
+    submitButton.disabled = true;
 
-            // 總額與運費傳送
-            formData.append("entry.2007999021", totalCount.toString());
-            formData.append("entry.740186001", qStickPrice.toString());
-            formData.append("entry.2008804380", shippingFee.toString());
-            formData.append("entry.264561249", totalPrice.toString());
+    submitButton.textContent = "處理中...";
 
-            fetch("https://docs.google.com/forms/d/e/1FAIpQLSfni542i4MO8YHiyMmbAp8auTNg4Nufsl2RwU77KCG8Ik4tjw/formResponse", {
-                method: "POST",
-                mode: "no-cors",
-                body: formData
-            });
+    document.body.removeChild(confirmBox);
 
-            orderForm.reset();
-            calculateTotal();
+    document.body.removeChild(overlay);
 
-            // 抓取網址後綴並跳轉
-            const urlParams = new URLSearchParams(window.location.search);
-            const source = urlParams.get('v');
+    const payload = {
 
-            const lineLinks = {
-                "lH4m8Q5v": "https://qqbar2013.github.io/form/success/dvlH4m8Q5v.html",
-                "sL9x7P2k": "https://qqbar2013.github.io/form/success/dvsL9x7P2k.html",
-                "mL3w6R9j": "https://qqbar2013.github.io/form/success/dvmL3w6R9j.html"
-            };
+        customerName, phoneNumber, orderUnit,
 
-            if (source && lineLinks[source]) {
-                window.location.href = lineLinks[source];
-            } else {
-                window.requestAnimationFrame(() => showThankYouModal());
-            }
-        };
+        invoiceTitle, invoiceNumber, eventDate,
+
+        deliveryTime, packingMethod,
+
+        qtyDuoDuo:       document.getElementById("qtyDuoDuo").value || "0",
+
+        qtyGrape:        document.getElementById("qtyGrape").value || "0",
+
+        qtyLychee:       document.getElementById("qtyLychee").value || "0",
+
+        qtyPassionFruit: document.getElementById("qtyPassionFruit").value || "0",
+
+        qtyStrawberry:   document.getElementById("qtyStrawberry").value || "0",
+
+        qtyApple:        document.getElementById("qtyApple").value || "0",
+
+        qtyPineapple:    document.getElementById("qtyPineapple").value || "0",
+
+        qtyOrange:       document.getElementById("qtyOrange").value || "0",
+
+        qtyPeach:        document.getElementById("qtyPeach").value || "0",
+
+        qtyMango:        document.getElementById("qtyMango").value || "0",
+
+        totalCount, qStickPrice, shippingFee, totalPrice
+
+    };
+
+    let ok = false;
+
+    try {
+
+        const res = await fetch(submitGasUrl, {
+
+            method: "POST",
+
+            body: JSON.stringify(payload)
+
+        });
+
+        const result = await res.json();
+
+        ok = (result.status === "ok");
+
+    } catch (err) {
+
+        console.error("Submit failed:", err);
+
+        ok = false;
+
+    }
+
+    if (!ok) {
+
+        // 送單失敗 → 跳失敗頁,並把當下填單頁網址帶過去(對應九種組合)
+
+        const backUrl = encodeURIComponent(window.location.href);
+
+        window.location.href =
+
+            "https://qqbar2013.github.io/form/SubmitFailed/failed.html?back=" + backUrl;
+
+        return;
+
+    }
+
+    // 送單成功 → 重置 → 進成功頁
+
+    orderForm.reset();
+
+    calculateTotal();
+
+    const urlParams = new URLSearchParams(window.location.search);
+
+    const source = urlParams.get('v');
+
+    const lineLinks = {
+
+        "lH4m8Q5v": "https://qqbar2013.github.io/form/success/dvlH4m8Q5v.html",
+
+        "sL9x7P2k": "https://qqbar2013.github.io/form/success/dvsL9x7P2k.html",
+
+        "mL3w6R9j": "https://qqbar2013.github.io/form/success/dvmL3w6R9j.html"
+
+    };
+
+    if (source && lineLinks[source]) {
+
+        window.location.href = lineLinks[source];
+
+    } else {
+
+        window.requestAnimationFrame(() => showThankYouModal());
+
+    }
+
+};
 
         buttonContainer.appendChild(cancelButton);
         buttonContainer.appendChild(submitButton);
