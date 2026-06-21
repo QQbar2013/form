@@ -590,65 +590,81 @@ document.addEventListener("DOMContentLoaded", function () {
         finalSubmitButton.textContent = "送出";
         finalSubmitButton.style = "background: #ff6600; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;";
 
-        finalSubmitButton.onclick = () => {
-            document.body.removeChild(confirmBox);
-            document.body.removeChild(overlay);
+finalSubmitButton.onclick = async () => {
+    const submitGasUrl = "https://script.google.com/macros/s/AKfycbwR1x_5btF3cd8rrZIDW-aD9_nFSRWPLFJC8yQS9IiCQP5KkxW2w2_WODkF1NI-u2kbPA/exec";
 
-            const formData = new URLSearchParams();
-            formData.append("entry.81239836", customerName);
-            formData.append("entry.1416157379", phoneNumber);
-            formData.append("entry.1025003389", orderUnit);
-            formData.append("entry.466185296", invoiceTitle);
-            formData.append("entry.130292631", invoiceNumber);
-            formData.append("entry.986842072", eventDate);
-            formData.append("entry.623556672", pickupLocation);
-            formData.append("entry.1087301355", pickupDate);
-            formData.append("entry.392904427", pickupTime);
-            formData.append("entry.1464986341", document.getElementById("qtyDuoDuo").value || "0");
-            formData.append("entry.1379523760", document.getElementById("qtyGrape").value || "0");
-            formData.append("entry.1921139293", document.getElementById("qtyLychee").value || "0");
-            formData.append("entry.2095163395", document.getElementById("qtyPassionFruit").value || "0");
-            formData.append("entry.1453269351", document.getElementById("qtyStrawberry").value || "0");
-            formData.append("entry.8702968", document.getElementById("qtyApple").value || "0");
-            formData.append("entry.966346636", document.getElementById("qtyPineapple").value || "0");
-            formData.append("entry.641811555", document.getElementById("qtyOrange").value || "0");
-            formData.append("entry.220818810", document.getElementById("qtyPeach").value || "0");
-            formData.append("entry.995091122", document.getElementById("qtyMango").value || "0");
+    // 按鈕反灰、鎖住,視窗留著
+    finalSubmitButton.disabled = true;
+    finalSubmitButton.textContent = "送出中...";
+    finalSubmitButton.style.background = "#ccc";
+    finalSubmitButton.style.cursor = "not-allowed";
+    cancelButton.disabled = true;
 
-            fetch("https://docs.google.com/forms/d/e/1FAIpQLSfPPhdVADqqCp_LSx5tlI_QOLrlRDfNJpKLjKId9WFkk3zU2Q/formResponse", {
-                method: "POST",
-                mode: "no-cors",
-                body: formData
-            });
+    const payload = {
+        customerName, phoneNumber, orderUnit,
+        invoiceTitle, invoiceNumber, eventDate,
+        pickupLocation, pickupDate, pickupTime,
+        qtyDuoDuo:       document.getElementById("qtyDuoDuo").value || "0",
+        qtyGrape:        document.getElementById("qtyGrape").value || "0",
+        qtyLychee:       document.getElementById("qtyLychee").value || "0",
+        qtyPassionFruit: document.getElementById("qtyPassionFruit").value || "0",
+        qtyStrawberry:   document.getElementById("qtyStrawberry").value || "0",
+        qtyApple:        document.getElementById("qtyApple").value || "0",
+        qtyPineapple:    document.getElementById("qtyPineapple").value || "0",
+        qtyOrange:       document.getElementById("qtyOrange").value || "0",
+        qtyPeach:        document.getElementById("qtyPeach").value || "0",
+        qtyMango:        document.getElementById("qtyMango").value || "0"
+    };
 
-            
-            // 清空表單狀態
-            document.getElementById("orderForm").reset();
-            document.querySelectorAll("input[name='pickupLocation']").forEach(radio => {
-                radio.checked = false;
-                radio.dataset.clicked = "false";
-            });
-            window.calculatedCount = 0;
-            window.promoValid = true;
-            updatePromoMessage();
-            calculateTotal();
+    let ok = false;
+    try {
+        const res = await fetch(submitGasUrl, {
+            method: "POST",
+            body: JSON.stringify(payload)
+        });
+        const result = await res.json();
+        ok = (result.status === "ok");
+    } catch (err) {
+        console.error("Submit failed:", err);
+        ok = false;
+    }
 
-            // ✅ 依「網址 v 參數」+「總金額是否 ≥ 1000」決定跳轉的成功頁
-            // 金額 ≥ 1000 → DEP 開頭；金額 < 1000 → NR 開頭
-            const isHighAmount = adjustedPrice >= 1000;
-            const urlParams = new URLSearchParams(window.location.search);
-            const source = urlParams.get('v');
-            const baseSuccessUrl = "https://qqbar2013.github.io/form/success/";
-            const validSources = ["lH4m8Q5v", "sL9x7P2k", "mL3w6R9j"];
+    if (!ok) {
+        // 送單失敗 → 跳失敗頁,帶當下網址
+        const backUrl = encodeURIComponent(window.location.href);
+        window.location.href =
+            "https://qqbar2013.github.io/form/SubmitFailed/failed.html?back=" + backUrl;
+        return;
+    }
 
-            if (source && validSources.includes(source)) {
-                const prefix = isHighAmount ? "DEP" : "NR";
-                window.location.href = `${baseSuccessUrl}${prefix}${source}.html`;
-            } else {
-                // 沒有 v 參數或不認得 → 停在原頁、回到頂部
-                window.scrollTo(0, 0);
-            }
-        };
+    // 送單成功 → 關閉視窗 → 清空表單
+    document.body.removeChild(confirmBox);
+    document.body.removeChild(overlay);
+
+    document.getElementById("orderForm").reset();
+    document.querySelectorAll("input[name='pickupLocation']").forEach(radio => {
+        radio.checked = false;
+        radio.dataset.clicked = "false";
+    });
+    window.calculatedCount = 0;
+    window.promoValid = true;
+    updatePromoMessage();
+    calculateTotal();
+
+    // 成功跳轉:維持原本 DEP/NR + v 參數邏輯
+    const isHighAmount = adjustedPrice >= 1000;
+    const urlParams = new URLSearchParams(window.location.search);
+    const source = urlParams.get('v');
+    const baseSuccessUrl = "https://qqbar2013.github.io/form/success/";
+    const validSources = ["lH4m8Q5v", "sL9x7P2k", "mL3w6R9j"];
+
+    if (source && validSources.includes(source)) {
+        const prefix = isHighAmount ? "DEP" : "NR";
+        window.location.href = `${baseSuccessUrl}${prefix}${source}.html`;
+    } else {
+        window.scrollTo(0, 0);
+    }
+};
 
         buttonContainer.appendChild(cancelButton);
         buttonContainer.appendChild(finalSubmitButton);
