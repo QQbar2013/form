@@ -784,10 +784,8 @@ document.getElementById("showInvoiceInfo")?.addEventListener("change", function 
 function updatePromoMessage() {
     const bar = document.getElementById("promoMsg");
     if (!bar) return;
-
     const paid = Number(window.calculatedCount) || 0;
     const valid = window.promoValid !== false;
-
     if (paid === 0) {
         bar.classList.remove("show");
         bar.style.display = "none";
@@ -796,9 +794,36 @@ function updatePromoMessage() {
         return;
     }
 
+    // 🎯 依當週模具剩餘量判斷:若再湊一組會超過剩餘,就完全隱藏橫幅
+    if (valid) {
+        const eventDateVal = document.getElementById("eventDate")?.value;
+        if (eventDateVal) {
+            const d = parseLocalDate(eventDateVal);
+            d.setDate(d.getDate() + (6 - d.getDay()));
+            const y = d.getFullYear();
+            const m = String(d.getMonth() + 1).padStart(2, '0');
+            const dd = String(d.getDate()).padStart(2, '0');
+            const weekKey = `${y}-${m}-${dd}`;
+
+            const moldRemaining = window.locationConfig?.weekStock?.mold?.[weekKey];
+            // 模具版沒有 164 上限;查無資料就不限制
+            const totalCount = paid + Math.floor(paid / 10);
+            const r0 = paid % 10;
+            const needed0 = 10 - r0;
+            const totalAfterUpsell = totalCount + needed0 + 1;
+
+            if (typeof moldRemaining === "number" && r0 !== 0 && totalAfterUpsell > moldRemaining) {
+                bar.classList.remove("show");
+                bar.style.display = "none";
+                document.body.classList.remove("promo-fixed-padding");
+                document.body.style.removeProperty('--promoH');
+                return;
+            }
+        }
+    }
+
     bar.style.display = "";
     bar.classList.add("show");
-
     if (!valid) {
         bar.textContent = "請幫我填寫「贈送 1 枝」的口味喔 😊";
     } else {
@@ -808,13 +833,13 @@ function updatePromoMessage() {
             r === 9 ? "再 1 枝就送 1 枝 ✨" :
                 `再 ${10 - r} 枝就送 1 枝 🎁`;
     }
-
     requestAnimationFrame(() => {
         const h = bar.offsetHeight || 48;
         document.body.style.setProperty('--promoH', h + 'px');
         document.body.classList.add('promo-fixed-padding');
     });
 }
+
 
 window.addEventListener('resize', () => {
     const bar = document.getElementById("promoMsg");
