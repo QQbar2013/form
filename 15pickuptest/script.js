@@ -489,9 +489,29 @@ document.addEventListener("DOMContentLoaded", function () {
             return;
         }
 
+// 換算當週週六,查該週打包版剩餘量(含贈品總數)
+        function getSaturdayOfWeek(dateStr) {
+            const d = parseLocalDate(dateStr);
+            d.setDate(d.getDate() + (6 - d.getDay()));
+            const y = d.getFullYear();
+            const m = String(d.getMonth() + 1).padStart(2, '0');
+            const dd = String(d.getDate()).padStart(2, '0');
+            return `${y}-${m}-${dd}`;
+        }
+        const weekKey = getSaturdayOfWeek(eventDate);
+        const packRemaining = window.locationConfig?.weekStock?.pack?.[weekKey];
+
+        // 實際上限 = 打包可訂量 與 164 取小;查無剩餘資料時就用 164
+        const effectiveCap = (typeof packRemaining === "number")
+            ? Math.min(packRemaining, 164)
+            : 164;
+
         const remainder = calculatedCount % 10;
-        if (remainder !== 0) {
-            const needed = 10 - remainder;
+        const needed = 10 - remainder;
+        const totalAfterUpsell = totalCount + needed + 1;   // 湊滿後的含贈品總枝數
+        const wouldExceed = (totalAfterUpsell > effectiveCap);
+
+        if (remainder !== 0 && !wouldExceed) {
             const stayToBuyMore = await new Promise((resolve) => {
                 const upsellOverlay = document.createElement("div");
                 upsellOverlay.style = "position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; display: flex; align-items: center; justify-content: center;";
