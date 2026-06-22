@@ -799,6 +799,40 @@ function updatePromoMessage() {
         return;
     }
 
+    // 🎯 依當週打包剩餘量(與 164 取小)判斷:若再湊一組會超過上限,就完全隱藏橫幅
+    if (valid) {
+        const eventDateVal = document.getElementById("eventDate")?.value;
+        if (eventDateVal) {
+            // 內嵌一份週六換算(外層讀不到 submit 裡的同名函式)
+            const d = parseLocalDate(eventDateVal);
+            d.setDate(d.getDate() + (6 - d.getDay()));
+            const y = d.getFullYear();
+            const m = String(d.getMonth() + 1).padStart(2, '0');
+            const dd = String(d.getDate()).padStart(2, '0');
+            const weekKey = `${y}-${m}-${dd}`;
+
+            const packRemaining = window.locationConfig?.weekStock?.pack?.[weekKey];
+            const effectiveCap = (typeof packRemaining === "number")
+                ? Math.min(packRemaining, 164)
+                : 164;
+
+            // 目前總枝數(含贈品)
+            const totalCount = paid + Math.floor(paid / 10);
+            const r0 = paid % 10;
+            const needed0 = 10 - r0;
+            const totalAfterUpsell = totalCount + needed0 + 1;
+
+            // 再湊一組會超過上限 → 隱藏橫幅,不再喊「再幾枝送一枝」
+            if (r0 !== 0 && totalAfterUpsell > effectiveCap) {
+                bar.classList.remove("show");
+                bar.style.display = "none";
+                document.body.classList.remove("promo-fixed-padding");
+                document.body.style.removeProperty('--promoH');
+                return;
+            }
+        }
+    }
+
     bar.style.display = "";
     bar.classList.add("show");
 
@@ -818,7 +852,6 @@ function updatePromoMessage() {
         document.body.classList.add('promo-fixed-padding');
     });
 }
-
 window.addEventListener('resize', () => {
     const bar = document.getElementById("promoMsg");
     if (!bar || bar.style.display === 'none') return;
