@@ -241,10 +241,22 @@ input[type="submit"]:hover {
     }
 }
 /* 🔹 讓桌機版變成雙欄 */
+/* 🔹 讓桌機版變成雙欄 */
 @media (min-width: 768px) {
     .flavor-container {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
         gap: 20px;
     }
+    /* 桌機維持原本左右排列順序 */
+    .f-duoduo     { order: 1; }
+    .f-apple      { order: 2; }
+    .f-grape      { order: 3; }
+    .f-pineapple  { order: 4; }
+    .f-lychee     { order: 5; }
+    .f-orange     { order: 6; }
+    .f-passion    { order: 7; }
+    .f-peach      { order: 8; }
+    .f-strawberry { order: 9; }
+    .f-mango      { order: 10; }
 }
