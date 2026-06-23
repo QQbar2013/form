@@ -553,7 +553,8 @@ document.addEventListener("DOMContentLoaded", function () {
                     eventDate: eventDate,
                     totalCount: totalCount,
                     orderType: "packing",
-                    flavors: getFlavorMap()
+                    flavors: getFlavorMap(),
+                    pickupLocation: pickupLocation
                 })
             });
             const checkResult = await checkResponse.json();
