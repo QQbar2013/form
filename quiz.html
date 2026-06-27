@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>便秘機轉評估問卷 3.5</title>
+<style>
+  :root{
+    --ink:#1c2b27;
+    --paper:#f6f3ec;
+    --paper-2:#efe9dc;
+    --line:#d8cfba;
+    --moss:#3a6b54;
+    --moss-deep:#26513e;
+    --clay:#c2683f;
+    --clay-soft:#e8b89f;
+    --amber:#c9962f;
+    --rose:#a64458;
+    --slate:#4a6670;
+    --shadow:rgba(40,55,45,.10);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",system-ui,sans-serif;
+    line-height:1.7;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:760px;margin:0 auto;padding:0 20px 100px}
+
+  /* ---- masthead ---- */
+  header.top{
+    padding:52px 0 30px;
+    text-align:center;
+    position:relative;
+  }
+  .kicker{
+    font-size:12px;letter-spacing:.32em;text-transform:uppercase;
+    color:var(--moss);font-weight:700;margin-bottom:14px;
+  }
+  h1.title{
+    font-family:"Noto Serif TC",Georgia,serif;
+    font-weight:900;
+    font-size:clamp(30px,6vw,46px);
+    line-height:1.15;letter-spacing:-.01em;
+    color:var(--moss-deep);
+  }
+  h1.title .ver{
+    display:inline-block;font-size:.42em;vertical-align:super;
+    color:var(--clay);font-weight:700;margin-left:6px;letter-spacing:.05em;
+  }
+  .sub{
+    margin-top:14px;color:var(--slate);font-size:15px;max-width:480px;
+    margin-left:auto;margin-right:auto;
+  }
+  .seal{
+    width:46px;height:46px;margin:0 auto 22px;
+    border:2px solid var(--moss);border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-family:"Noto Serif TC",serif;font-weight:900;font-size:20px;color:var(--moss-deep);
+  }
+
+  /* ---- generic card ---- */
+  .card{
+    background:#fffdf8;border:1px solid var(--line);border-radius:14px;
+    box-shadow:0 1px 0 var(--shadow);margin-bottom:22px;overflow:hidden;
+  }
+  .card-head{
+    padding:18px 22px;border-bottom:1px solid var(--line);
+    display:flex;align-items:baseline;gap:12px;
+  }
+  .card-head .idx{
+    font-family:"Noto Serif TC",serif;font-weight:900;font-size:20px;
+    color:var(--clay);min-width:30px;
+  }
+  .card-head h2{font-size:17px;font-weight:700;color:var(--ink)}
+  .card-head .tag{
+    margin-left:auto;font-size:11px;letter-spacing:.08em;
+    background:var(--moss);color:#fff;padding:3px 9px;border-radius:20px;font-weight:600;
+    white-space:nowrap;
+  }
+  .card-body{padding:18px 22px 22px}
+
+  /* ---- red flag stage ---- */
+  .redflag{
+    background:linear-gradient(180deg,#fcf2ee,#fbeae3);
+    border:1.5px solid var(--clay-soft);
+  }
+  .redflag .card-head{border-bottom-color:var(--clay-soft)}
+  .redflag .card-head .idx{color:var(--rose)}
+  .redflag-intro{font-size:14px;color:#6e3a2c;margin-bottom:16px;font-weight:500}
+  .rf-item{
+    display:flex;gap:12px;align-items:flex-start;padding:11px 0;
+    border-bottom:1px dashed var(--clay-soft);cursor:pointer;font-size:14.5px;
+  }
+  .rf-item:last-child{border-bottom:none}
+  .rf-item input{margin-top:4px;width:18px;height:18px;accent-color:var(--rose);cursor:pointer;flex-shrink:0}
+  .rf-banner{
+    display:none;margin-top:16px;padding:14px 16px;border-radius:10px;
+    background:var(--rose);color:#fff;font-size:14px;font-weight:600;line-height:1.6;
+  }
+  .rf-banner.show{display:block}
+
+  /* ---- questions ---- */
+  .qtext{font-size:16px;font-weight:600;margin-bottom:4px}
+  .opt{
+    display:block;border:1.5px solid var(--line);border-radius:10px;
+    padding:12px 14px;margin-bottom:9px;cursor:pointer;transition:.15s;
+    font-size:14.5px;position:relative;
+  }
+  .opt:hover{border-color:var(--moss);background:var(--paper-2)}
+  .opt.sel{border-color:var(--moss);background:#eaf2ed;box-shadow:inset 0 0 0 1px var(--moss)}
+  .opt .letter{
+    font-family:"Noto Serif TC",serif;font-weight:900;color:var(--moss-deep);
+    margin-right:8px;
+  }
+  .opt input{display:none}
+
+  .conf{
+    margin-top:14px;padding-top:14px;border-top:1px dashed var(--line);
+    display:none;
+  }
+  .conf.show{display:block}
+  .conf-label{font-size:12.5px;color:var(--slate);margin-bottom:9px;font-weight:600;letter-spacing:.02em}
+  .conf-opts{display:flex;gap:8px;flex-wrap:wrap}
+  .conf-btn{
+    flex:1;min-width:90px;border:1.5px solid var(--line);background:#fff;
+    border-radius:8px;padding:9px 6px;font-size:13px;cursor:pointer;
+    color:var(--ink);font-family:inherit;transition:.15s;text-align:center;
+  }
+  .conf-btn:hover{border-color:var(--amber)}
+  .conf-btn.sel{background:var(--amber);color:#fff;border-color:var(--amber);font-weight:600}
+
+  /* ---- meds ---- */
+  .med-item{
+    display:flex;gap:12px;align-items:flex-start;padding:10px 0;
+    border-bottom:1px dashed var(--line);cursor:pointer;font-size:14.5px;
+  }
+  .med-item:last-child{border-bottom:none}
+  .med-item input{margin-top:4px;width:18px;height:18px;accent-color:var(--slate);cursor:pointer;flex-shrink:0}
+
+  /* ---- submit ---- */
+  .submit{
+    width:100%;background:var(--moss-deep);color:#fff;border:none;
+    border-radius:12px;padding:18px;font-size:17px;font-weight:700;
+    cursor:pointer;font-family:inherit;letter-spacing:.04em;transition:.15s;
+    margin-top:8px;
+  }
+  .submit:hover{background:var(--moss)}
+  .submit:disabled{background:#b8bcb3;cursor:not-allowed}
+  .progress-note{text-align:center;font-size:13px;color:var(--slate);margin-top:12px}
+
+  /* ---- result ---- */
+  #result{display:none;margin-top:10px}
+  #result.show{display:block;animation:rise .5s ease}
+  @keyframes rise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+
+  .result-alert{
+    background:var(--rose);color:#fff;border-radius:14px;padding:20px 22px;
+    margin-bottom:22px;font-size:14.5px;line-height:1.65;display:none;
+  }
+  .result-alert.show{display:block}
+  .result-alert strong{display:block;font-size:16px;margin-bottom:6px}
+
+  .med-alert{
+    background:#fbf3e1;border:1.5px solid var(--amber);border-radius:14px;
+    padding:18px 22px;margin-bottom:22px;font-size:14px;line-height:1.65;
+    color:#6b5012;display:none;
+  }
+  .med-alert.show{display:block}
+  .med-alert strong{display:block;color:var(--amber);font-size:15px;margin-bottom:6px}
+
+  .verdict{
+    background:#fffdf8;border:1px solid var(--line);border-radius:16px;
+    padding:26px 24px;margin-bottom:20px;
+  }
+  .verdict .eyebrow{font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--moss);font-weight:700;margin-bottom:8px}
+  .verdict h3{
+    font-family:"Noto Serif TC",serif;font-weight:900;font-size:26px;
+    color:var(--moss-deep);line-height:1.25;margin-bottom:4px;
+  }
+  .verdict .conf-readout{font-size:13px;color:var(--slate);margin-bottom:4px}
+  .trigger-note{
+    display:inline-block;margin:10px 0 0;font-size:12.5px;background:#eaf2ed;
+    color:var(--moss-deep);padding:5px 11px;border-radius:20px;font-weight:600;
+  }
+  .verdict-section{margin-top:18px}
+  .verdict-section h4{
+    font-size:13px;letter-spacing:.04em;color:var(--clay);font-weight:700;
+    margin-bottom:5px;display:flex;align-items:center;gap:7px;
+  }
+  .verdict-section p{font-size:14.5px;color:#33433d}
+
+  .breakdown{
+    background:var(--paper-2);border-radius:14px;padding:20px 22px;margin-bottom:20px;
+  }
+  .breakdown h4{font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:var(--slate);margin-bottom:14px;font-weight:700}
+  .bar-row{display:flex;align-items:center;gap:12px;margin-bottom:11px;font-size:13px}
+  .bar-row .blab{width:130px;flex-shrink:0;font-weight:600}
+  .bar-track{flex:1;height:14px;background:#e2dccb;border-radius:8px;overflow:hidden}
+  .bar-fill{height:100%;border-radius:8px;transition:width .7s cubic-bezier(.2,.8,.2,1)}
+  .bar-row .bval{width:30px;text-align:right;color:var(--slate);font-variant-numeric:tabular-nums}
+
+  .mixed-note{
+    font-size:13.5px;color:var(--slate);background:#fff;border:1px dashed var(--line);
+    border-radius:10px;padding:12px 14px;margin-top:6px;
+  }
+
+  .disclaimer{
+    font-size:12.5px;color:var(--slate);line-height:1.6;text-align:center;
+    border-top:1px solid var(--line);padding-top:20px;margin-top:6px;
+  }
+  .restart{
+    display:block;margin:24px auto 0;background:none;border:1.5px solid var(--line);
+    color:var(--slate);padding:11px 26px;border-radius:24px;font-size:14px;
+    cursor:pointer;font-family:inherit;transition:.15s;
+  }
+  .restart:hover{border-color:var(--moss);color:var(--moss-deep)}
+
+  .err-flash{animation:shake .4s}
+  @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div class="seal">腸</div>
+    <div class="kicker">Constipation Mechanism Screening</div>
+    <h1 class="title">便秘機轉與腸道狀態評估<span class="ver">3.5</span></h1>
+    <p class="sub">辨別你偏向哪一型便秘——蠕動遲緩、出口梗阻、壓力痙攣，還是腸道菌相失衡。本工具僅供衛教自我認識，不能取代醫師診斷。</p>
+  </header>
+
+  <!-- STAGE 1: RED FLAGS -->
+  <div class="card redflag">
+    <div class="card-head">
+      <span class="idx">⚑</span>
+      <h2>第一階段　安全紅旗篩檢</h2>
+    </div>
+    <div class="card-body">
+      <p class="redflag-intro">以下任何一項只要符合，代表可能存在需要優先排除的器質性問題。請勾選符合的項目——你仍可完成問卷，但結果頁會優先提醒你就醫。</p>
+      <div id="redflags"></div>
+      <div class="rf-banner" id="rfBanner">
+        ⚠ 你勾選了紅旗症狀。這些症狀需要由胃腸肝膽科醫師親自檢查，排除大腸癌等器質性疾病。任何自我分型在此之前都應暫緩——請儘速就醫。
+      </div>
+    </div>
+  </div>
+
+  <!-- STAGE 2: QUESTIONS -->
+  <div id="questions"></div>
+
+  <!-- STAGE: MEDS -->
+  <div class="card">
+    <div class="card-head">
+      <span class="idx">7</span>
+      <h2>用藥史篩查</h2>
+      <span class="tag">不計入分型</span>
+    </div>
+    <div class="card-body">
+      <p class="redflag-intro" style="color:var(--slate)">你是否長期、頻繁服用以下藥物？（可複選）這些不影響分型結果，但會獨立提示你便秘可能與藥物有關。</p>
+      <div id="meds"></div>
+    </div>
+  </div>
+
+  <button class="submit" id="submitBtn">看我的便秘類型</button>
+  <p class="progress-note" id="progressNote">尚未作答</p>
+
+  <!-- RESULT -->
+  <div id="result">
+    <div class="result-alert" id="resultAlert"></div>
+    <div class="med-alert" id="medAlert"></div>
+    <div class="verdict" id="verdict"></div>
+    <div class="breakdown" id="breakdown"></div>
+    <p class="disclaimer">
+      本評估為衛教用途的傾向辨別工具，不能取代專業醫療診斷。若症狀持續、惡化，或你對結果有疑慮，請至胃腸科就醫評估。低 FODMAP 飲食屬 4–6 週短期排除測試，需在醫師或營養師指導下進行，不宜長期自行限制。
+    </p>
+    <button class="restart" id="restartBtn">重新填寫</button>
+  </div>
+
+</div>
+
+<script>
+const RED_FLAGS = [
+  "過去幾個月內，大便形狀突然無故變細且持續如此。",
+  "肉眼可見的血便（鮮紅或暗紅），或解黑便（像柏油）。",
+  "過去半年內，體重在沒有刻意減肥下不明原因減輕超過 10%。",
+  "經常在半夜因為肚子痛、甚至痛醒。",
+  "伴隨嚴重貧血、臉色蒼白或莫名疲倦。",
+  "50 歲以上「新發生」的頑固便秘。",
+  "一等親（父母、兄弟姊妹）有大腸癌或消化道癌病史。"
+];
+
+const MEDS = [
+  "軟便劑、刺激性瀉藥（番瀉葉、蘆薈素、便秘丸等）",
+  "止痛藥（尤其鴉片類或強效止痛藥）",
+  "鈣片、鐵劑",
+  "胃藥（含鋁或鈣的制酸劑）",
+  "抗憂鬱藥、降血壓藥（如鈣離子通道阻斷劑）"
+];
+
+const QUESTIONS = [
+  {
+    title:"便意模式", trigger:true,
+    opts:{
+      A:"很少有便意，即使 3～5 天沒排便，也不覺得肚子脹或特別想上廁所。",
+      B:"每天都有便意，而且大便已經到肛門口，但就是怎麼用力都出不來。",
+      C:"平常有便意，但常因工作、外出或習慣忍住，之後便意就突然消失。",
+      D:"便意非常不規律，有時好幾天沒便意，有時突然肚子絞痛就急著拉肚子。"
+    }
+  },
+  {
+    title:"排便時的身體感受", trigger:true,
+    opts:{
+      A:"幾乎沒有腹痛，也很少放屁，只是腸胃像完全停住了一樣。",
+      B:"每次都要用盡全力，甚至需改變姿勢、用手扶著或按壓會陰附近才排得出。",
+      C:"肚子一直緊繃、一直想放屁，但放完屁也沒有比較舒服。",
+      D:"常伴隨腹痛、腹瀉便秘交替，且吃完飯 1～2 小時內肚子就脹得像氣球。"
+    }
+  },
+  {
+    title:"排便後的感受", trigger:false,
+    opts:{
+      A:"沒什麼特別感覺，單純覺得「有交代就好」。",
+      B:"嚴重「殘便感」，總覺得還卡著一坨沒乾淨，剛站起來又想再坐回去。",
+      C:"雖然有排便，但整個腹部還是鼓鼓脹脹的。",
+      D:"解便或排氣之後，原本的腹痛或嚴重脹氣會明顯稍微緩解。"
+    }
+  },
+  {
+    title:"對「高纖與發酵食物」的反應", trigger:true,
+    opts:{
+      A:"吃蔬菜或高纖食物時，排便會稍微順暢一點。",
+      B:"糞便有變多或變軟，但依然卡在肛門口很難擠出來。",
+      C:"肚子稍微變脹，但便秘本身沒有太大改善。",
+      D:"吃大量蔬菜、地瓜、燕麥、洋蔥、大蒜等後，腹脹、放屁明顯增加，便秘甚至更嚴重。"
+    }
+  },
+  {
+    title:"對「益生菌或發酵食品」的反應", trigger:true,
+    opts:{
+      A:"吃益生菌後，排便頻率有改善。",
+      B:"吃益生菌對排便幫助不大，還是要在馬桶上用力很久。",
+      C:"吃益生菌初期有一點點用，但遇到壓力大時又失效了。",
+      D:"吃益生菌、優格或康普茶後，數小時到一兩天內，脹氣、放屁或腹痛反而更明顯。"
+    }
+  },
+  {
+    title:"生活型態與日常觀察", trigger:false,
+    opts:{
+      A:"平時活動量少、飲水不足，而改善這些習慣後排便通常也會跟著改善。",
+      B:"其實水和蔬菜吃得不少，平時有運動，也有定時上廁所的習慣。",
+      C:"工作壓力大、熬夜或情緒不好時，便秘症狀就會明顯加重。",
+      D:"長期容易腹脹、常打嗝放屁，且曾因胃藥、抗生素或腸胃問題困擾多年。"
+    }
+  }
+];
+
+const TYPE_META = {
+  A:{name:"腸道蠕動遲緩傾向", color:"#3a6b54",
+     mech:"腸道平滑肌的傳導與蠕動速度變慢，糞便在腸道停留太久，水分被吸乾。",
+     home:"每日飲水達 2000 mL 以上，飲食加入優質油脂（酪梨油、橄欖油）潤腸；建立規律有氧運動（快走）物理性刺激腸胃。",
+     care:"若長期毫無便意且多日不上，可至胃腸科檢查「腸道傳輸時間」。"},
+  B:{name:"出口梗阻傾向", color:"#4a6670",
+     mech:"糞便已推進到直腸準備排出，但排便時骨盆底肌或肛門括約肌無法放鬆、甚至錯誤收縮，卡在門口。",
+     home:"避免在馬桶上過度用力乾瞪眼（易引發痔瘡與黏膜受損）。雙腳墊一張約 20 cm 小板凳，身體前傾成 35 度角，幫助直化直腸角度。",
+     care:"此型單靠吃藥、喝水效果有限。建議至大腸直腸外科或胃腸科評估，必要時透過「生物回饋治療」重新訓練肌肉協調性。"},
+  C:{name:"習慣與壓力痙攣傾向", color:"#c2683f",
+     mech:"自律神經失調導致大腸區域性過度收縮（痙攣），使糞便像被柵欄卡住一樣難以推進。",
+     home:"看到便意絕對不能憋。避免一次吃太多粗纖維（牛蒡、竹筍等），可適量選水溶性膳食纖維（秋葵、木耳、燕麥）。",
+     care:"若便秘與壓力、焦慮高度綁定，除胃腸科外，調整作息、冥想或尋求身心科協助放鬆自律神經，便秘通常也會緩解。"},
+  D:{name:"腸躁症／腸道菌相失衡傾向", color:"#a64458",
+     mech:"腸道神經高度敏感，或腸道菌叢（含小腸）異常發酵，分解食物時產生過多氣體，進而抑制腸道蠕動。",
+     home:"暫時停止盲目補充常規益生菌、優格與高發酵性高纖食物。建議在專業指導下進行為期 4～6 週的短期「低 FODMAP 飲食」排除測試。",
+     care:"建議至胃腸科或功能醫學門診，由醫師評估是否需做「乳果糖呼氣測試（LBT）」以排除小腸細菌過度生長（SIBO）。"}
+};
+
+const state = { answers:{}, conf:{}, redflags:new Set(), meds:new Set() };
+
+// ---- build red flags ----
+const rfWrap = document.getElementById("redflags");
+RED_FLAGS.forEach((t,i)=>{
+  const el = document.createElement("label");
+  el.className="rf-item";
+  el.innerHTML = `<input type="checkbox" data-rf="${i}"><span>${t}</span>`;
+  rfWrap.appendChild(el);
+});
+rfWrap.addEventListener("change",e=>{
+  const i = e.target.dataset.rf;
+  if(e.target.checked) state.redflags.add(i); else state.redflags.delete(i);
+  document.getElementById("rfBanner").classList.toggle("show", state.redflags.size>0);
+});
+
+// ---- build meds ----
+const medWrap = document.getElementById("meds");
+MEDS.forEach((t,i)=>{
+  const el = document.createElement("label");
+  el.className="med-item";
+  el.innerHTML = `<input type="checkbox" data-med="${i}"><span>${t}</span>`;
+  medWrap.appendChild(el);
+});
+medWrap.addEventListener("change",e=>{
+  const i=e.target.dataset.med;
+  if(e.target.checked) state.meds.add(i); else state.meds.delete(i);
+});
+
+// ---- build questions ----
+const qWrap = document.getElementById("questions");
+QUESTIONS.forEach((q,qi)=>{
+  const card = document.createElement("div");
+  card.className="card";
+  let optsHTML = "";
+  ["A","B","C","D"].forEach(L=>{
+    optsHTML += `<label class="opt" data-q="${qi}" data-opt="${L}">
+      <span class="letter">${L}</span>${q.opts[L]}</label>`;
+  });
+  card.innerHTML = `
+    <div class="card-head">
+      <span class="idx">${qi+1}</span>
+      <h2>${q.title}</h2>
+      ${q.trigger?'<span class="tag">特徵核心題</span>':''}
+    </div>
+    <div class="card-body">
+      ${optsHTML}
+      <div class="conf" data-conf="${qi}">
+        <div class="conf-label">這題的符合程度</div>
+        <div class="conf-opts">
+          <button class="conf-btn" data-q="${qi}" data-c="3">非常符合</button>
+          <button class="conf-btn" data-q="${qi}" data-c="2">大致符合</button>
+          <button class="conf-btn" data-q="${qi}" data-c="1">有一點像</button>
+        </div>
+      </div>
+    </div>`;
+  qWrap.appendChild(card);
+});
+
+qWrap.addEventListener("click",e=>{
+  const opt = e.target.closest(".opt");
+  if(opt){
+    const qi=opt.dataset.q, L=opt.dataset.opt;
+    state.answers[qi]=L;
+    qWrap.querySelectorAll(`.opt[data-q="${qi}"]`).forEach(o=>o.classList.remove("sel"));
+    opt.classList.add("sel");
+    qWrap.querySelector(`.conf[data-conf="${qi}"]`).classList.add("show");
+    updateProgress();
+    return;
+  }
+  const cb = e.target.closest(".conf-btn");
+  if(cb){
+    const qi=cb.dataset.q, c=cb.dataset.c;
+    state.conf[qi]=parseInt(c);
+    qWrap.querySelectorAll(`.conf-btn[data-q="${qi}"]`).forEach(b=>b.classList.remove("sel"));
+    cb.classList.add("sel");
+    updateProgress();
+  }
+});
+
+function answeredCount(){
+  let n=0;
+  for(let i=0;i<6;i++) if(state.answers[i] && state.conf[i]) n++;
+  return n;
+}
+function updateProgress(){
+  const n=answeredCount();
+  const note=document.getElementById("progressNote");
+  note.textContent = n===6 ? "六題都完成了，可以看結果" : `已完成 ${n} / 6 題（選項＋符合度都要選）`;
+}
+
+// ---- scoring ----
+function score(){
+  const totals={A:0,B:0,C:0,D:0};
+  for(let i=0;i<6;i++){
+    const L=state.answers[i], c=state.conf[i];
+    if(L&&c) totals[L]+=c;
+  }
+
+  // trigger logic
+  const triggers=[];
+  // D trigger: Q4 or Q5 == D with conf 3
+  if((state.answers[3]==="D"&&state.conf[3]===3)||(state.answers[4]==="D"&&state.conf[4]===3)){
+    triggers.push({type:"D",reason:"高纖或益生菌反應題選了 D 且非常符合——這是菌相失衡／腸躁最具特異性的訊號，直接列為高度懷疑方向。"});
+  }
+  // B trigger: Q1 & Q2 both B, conf>=2
+  if(state.answers[0]==="B"&&state.answers[1]==="B"&&state.conf[0]>=2&&state.conf[1]>=2){
+    triggers.push({type:"B",reason:"便意模式與排便感受兩題同時指向 B——大便到了門口卻出不來，是出口梗阻的典型組合。"});
+  }
+
+  // primary + mixed
+  const entries=Object.entries(totals).sort((a,b)=>b[1]-a[1]);
+  let primary=entries[0][0];
+  // trigger overrides primary if a trigger exists
+  const triggerType = triggers.length ? triggers[0].type : null;
+  if(triggerType) primary=triggerType;
+
+  const max=entries[0][1], second=entries[1][1];
+  const mixed = (max-second)<=2 && entries[1][1]>0 && !triggerType;
+  const secondType = entries[1][0];
+
+  return {totals,primary,triggers,mixed,secondType,max};
+}
+
+document.getElementById("submitBtn").addEventListener("click",()=>{
+  if(answeredCount()<6){
+    const note=document.getElementById("progressNote");
+    note.textContent="請先把六題的選項與符合度都選完，再看結果。";
+    note.classList.remove("err-flash");void note.offsetWidth;note.classList.add("err-flash");
+    return;
+  }
+  render(score());
+});
+
+function render(r){
+  // red flag alert
+  const ra=document.getElementById("resultAlert");
+  if(state.redflags.size>0){
+    ra.innerHTML="<strong>⚑ 請優先就醫，分型結果僅供參考</strong>你勾選了紅旗症狀。在排除大腸癌等器質性疾病之前，任何便秘分型都不該作為處理依據。請儘速至胃腸肝膽科檢查。下方分型仍會顯示，但它的優先順序在就醫之後。";
+    ra.classList.add("show");
+  } else ra.classList.remove("show");
+
+  // med alert
+  const ma=document.getElementById("medAlert");
+  if(state.meds.size>0){
+    ma.innerHTML="<strong>用藥因子提醒</strong>你勾選了會影響腸道的藥物。這類藥本身就會改變腸道蠕動或糞便質地——例如刺激性瀉藥長期使用會讓大腸變無力、鈣／鐵劑會使大便乾硬。建議在調整生活前，先與處方醫師討論能否調整藥物，或逐步減少瀉劑依賴。你的便秘機轉可能與藥物有關，不一定屬於下方分型。";
+    ma.classList.add("show");
+  } else ma.classList.remove("show");
+
+  // verdict
+  const meta=TYPE_META[r.primary];
+  const v=document.getElementById("verdict");
+  let triggerHTML="";
+  if(r.triggers.length){
+    triggerHTML=`<div class="trigger-note">⚡ 特徵題觸發：${r.triggers[0].reason}</div>`;
+  }
+  let mixedHTML="";
+  if(r.mixed){
+    const sm=TYPE_META[r.secondType];
+    mixedHTML=`<div class="mixed-note">你的最高兩型分數接近，屬於 <b>混合型</b>：除了「${meta.name}」，也帶有「${sm.name}」的特徵。臨床上混合型其實是常態，可兩個方向的居家調整一起嘗試，並以就醫評估為準。</div>`;
+  }
+  v.innerHTML=`
+    <div class="eyebrow">你的主要傾向</div>
+    <h3 style="color:${meta.color}">${meta.name}</h3>
+    <div class="conf-readout">加權得分：${r.max} 分${r.triggers.length?'（由特徵題觸發判定）':''}</div>
+    ${triggerHTML}
+    ${mixedHTML}
+    <div class="verdict-section">
+      <h4>身體機轉</h4><p>${meta.mech}</p>
+    </div>
+    <div class="verdict-section">
+      <h4>居家生活調整</h4><p>${meta.home}</p>
+    </div>
+    <div class="verdict-section">
+      <h4>就醫方向</h4><p>${meta.care}</p>
+    </div>`;
+
+  // breakdown bars
+  const bd=document.getElementById("breakdown");
+  const labels={A:"A 蠕動遲緩",B:"B 出口梗阻",C:"C 壓力痙攣",D:"D 菌相失衡"};
+  const maxScore=Math.max(...Object.values(r.totals),1);
+  let bars="<h4>四型加權分數分布</h4>";
+  ["A","B","C","D"].forEach(L=>{
+    const pct=(r.totals[L]/maxScore)*100;
+    bars+=`<div class="bar-row">
+      <span class="blab" style="color:${TYPE_META[L].color}">${labels[L]}</span>
+      <span class="bar-track"><span class="bar-fill" style="width:0%;background:${TYPE_META[L].color}" data-w="${pct}"></span></span>
+      <span class="bval">${r.totals[L]}</span>
+    </div>`;
+  });
+  bd.innerHTML=bars;
+
+  document.getElementById("result").classList.add("show");
+  setTimeout(()=>{
+    document.querySelectorAll(".bar-fill").forEach(f=>f.style.width=f.dataset.w+"%");
+  },60);
+  document.getElementById("result").scrollIntoView({behavior:"smooth"});
+}
+
+document.getElementById("restartBtn").addEventListener("click",()=>{
+  location.reload();
+});
+
+updateProgress();
+</script>
+</body>
+</html>
