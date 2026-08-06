@@ -550,7 +550,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     eventDate: eventDate,
                     totalCount: totalCount,
                     orderType: "mold",
-                    flavors: getFlavorMap),
+                    flavors: getFlavorMap(),
                     pickupLocation: pickupLocation
 
                 })
