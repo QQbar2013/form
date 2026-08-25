@@ -380,15 +380,16 @@ input[type="submit"]:disabled:hover {
 
 /* 🔹 口味分配提示文字（未分配完畢時提醒色） */
 #flavorInstruction {
+    font-weight: bold;
     transition: color 0.2s ease-in-out;
 }
 
 #flavorInstruction.allocation-pending {
-    color: #ff6600;
+    color: #ff0000;
 }
 
 #flavorInstruction.allocation-complete {
-    color: #2e8b30;
+    color: #000000;
 }
 
 /* 🔹 響應式設計（當螢幕小於 768px 時，維持單行顯示） */

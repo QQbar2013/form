@@ -109,7 +109,7 @@ document.addEventListener("DOMContentLoaded", function () {
         }
         const calculatedCount = Math.ceil(totalSticks / 1.1);
         const bonusCount = Math.floor(calculatedCount / 10);
-        totalQtyBreakdownEl.textContent = `${totalSticks}枝，實收${calculatedCount}枝，贈送${bonusCount}枝。`;
+        totalQtyBreakdownEl.textContent = `總數${totalSticks}枝，實收${calculatedCount}枝、贈送${bonusCount}枝。`;
     }
 
     if (totalQtySelect) {
@@ -450,9 +450,10 @@ document.addEventListener("DOMContentLoaded", function () {
         let totalCount = 0;
         let totalPrice = 0;
         flavorData.forEach(flavor => {
-            let quantity = getFlavorStickValue(flavor.id);
+            let boxes = parseInt(document.getElementById(flavor.id)?.value, 10) || 0;
+            let quantity = boxes * BOX_TO_STICK_RATIO;
             if (quantity > 0) {
-                orderDetails += `${flavor.name}：${quantity} 枝\n`;
+                orderDetails += `${flavor.name}：${boxes}盒，共${quantity}枝\n`;
                 totalCount += quantity;
                 totalPrice += quantity * 15;
             }
