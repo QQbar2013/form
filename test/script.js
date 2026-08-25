@@ -551,59 +551,6 @@ document.addEventListener("DOMContentLoaded", function () {
             return;
         }
 
-        if ((calculatedCount + bonusCount) !== totalCount) {
-            const diff = (calculatedCount + bonusCount) - totalCount;
-            alert(`若要購買 ${calculatedCount} 枝，贈送 ${bonusCount} 枝。請再挑選 ${diff} 枝。`);
-            return;
-        }
-
-        // 換算當週週六,查該週模具版剩餘量(含贈品總數)
-        function getSaturdayOfWeek(dateStr) {
-            const d = parseLocalDate(dateStr);
-            d.setDate(d.getDate() + (6 - d.getDay()));
-            const y = d.getFullYear();
-            const m = String(d.getMonth() + 1).padStart(2, '0');
-            const dd = String(d.getDate()).padStart(2, '0');
-            return `${y}-${m}-${dd}`;
-        }
-        const weekKey = getSaturdayOfWeek(eventDate);
-        const remainingThisWeek = window.locationConfig?.weekStock?.mold?.[weekKey];
-
-        const remainder = calculatedCount % 10;
-        const needed = 10 - remainder;
-        const totalAfterUpsell = totalCount + needed + 1;   // 湊滿後的含贈品總枝數
-        const stockKnown = (typeof remainingThisWeek === "number");
-        const wouldExceed = stockKnown && (totalAfterUpsell > remainingThisWeek);
-
-        if (remainder !== 0 && !wouldExceed) {
-            const stayToBuyMore = await new Promise((resolve) => {
-                const upsellOverlay = document.createElement("div");
-                upsellOverlay.style = "position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; display: flex; align-items: center; justify-content: center;";
-
-                upsellOverlay.innerHTML = `
-                    <div style="background: white; padding: 25px; border-radius: 12px; width: 85%; max-width: 400px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
-                        <h3 style="margin-top: 0; color: #ff6600;">✨ 差一點點就多送一枝！</h3>
-                        <p style="font-size: 16px; line-height: 1.6;">再 <b style="color:red; font-size: 20px;">${needed}</b> 枝就再<b>加送 1 枝</b>喔！</p>
-                        <div style="display: flex; gap: 10px; margin-top: 20px;">
-                            <button id="goNext" style="flex: 1; padding: 12px; border: 1px solid #ccc; background: #f9f9f9; border-radius: 6px; cursor: pointer; line-height: 1.4;">不需更改<br>前往確認頁</button>
-                            <button id="backToOrder" style="flex: 1; padding: 12px; border: none; background: #ff6600; color: white; border-radius: 6px; cursor: pointer; font-weight: bold; line-height: 1.4;">馬上去選<br>${needed + 1} 枝</button>
-                        </div>
-                    </div>
-                `;
-                document.body.appendChild(upsellOverlay);
-
-                upsellOverlay.querySelector("#goNext").onclick = () => {
-                    document.body.removeChild(upsellOverlay);
-                    resolve(false);
-                };
-                upsellOverlay.querySelector("#backToOrder").onclick = () => {
-                    document.body.removeChild(upsellOverlay);
-                    resolve(true);
-                };
-            });
-            if (stayToBuyMore) return;
-        }
-
         const gasUrl = "https://script.google.com/macros/s/AKfycbzE7wP4x3S5k9BOpooS7VkiYMPYdPP2Wx9KDWaOnXZ5GLtWqE1OCHnBnjIy8jQQdWjK/exec";
         const submitBtn = event.submitter || document.querySelector("input[type='submit']");
         submitBtn.disabled = true;
@@ -733,14 +680,12 @@ finalSubmitButton.onclick = async () => {
         radio.dataset.clicked = "false";
     });
     window.calculatedCount = 0;
-    window.promoValid = true;
     window.selectedTotalSticks = 0;
     window.selectedTotalBoxes = 0;
     const totalQtySelectEl = document.getElementById("totalQtySelect");
     if (totalQtySelectEl) totalQtySelectEl.value = "";
     const totalQtyBreakdownResetEl = document.getElementById("totalQtyBreakdown");
     if (totalQtyBreakdownResetEl) totalQtyBreakdownResetEl.textContent = "請先選擇左側「預計總量」";
-    updatePromoMessage();
     calculateTotal();
 
     // 成功跳轉:維持原本 DEP/NR + v 參數邏輯
@@ -817,44 +762,25 @@ finalSubmitButton.onclick = async () => {
         let bonusCount = Math.floor(calculatedCount / 10);
         window.calculatedCount = calculatedCount;
 
-        let isValid = (calculatedCount + bonusCount) === totalCount;
-        let hasInput = totalCount > 0;
         let totalPrice = totalCount * 15 - bonusCount * 15;
 
         const fullyAllocated = updateFlavorAllocationText();
+        const totalCountTextEl = document.getElementById("totalCountText");
 
-        let displayText = `<div class="total-summary">`;
-        if (totalCount > 0) {
-            displayText += `<div class="total-row">總枝數: ${totalCount} 枝。</div><br>`;
-        }
-        if (!isValid) {
-            let suggestedBuy = calculatedCount;
-            let suggestedBonus = Math.floor(suggestedBuy / 10);
-            let difference = (suggestedBuy + suggestedBonus) - totalCount;
-            displayText += `<div class="total-row error-text">
-                若要購買 ${suggestedBuy} 枝，贈送 ${suggestedBonus} 枝。請再挑選 ${difference} 枝。
-            </div>`;
-            const totalCountTextEl = document.getElementById("totalCountText");
-            if (totalCountTextEl) totalCountTextEl.innerHTML = displayText;
-            window.promoValid = false;
-            updatePromoMessage();
+        // 🎯 盒數還沒選擇完全時，最下面完全不顯示
+        if (!fullyAllocated) {
+            if (totalCountTextEl) totalCountTextEl.innerHTML = "";
             return;
         }
 
-        window.promoValid = true;
-        // 🎯 盒數已全部分配完畢，才顯示下方「訂購 + 贈送」紅字
-        if (hasInput && fullyAllocated) {
-            displayText += `<div class="total-sub" style="color: red; font-weight: bold; margin: 0;">
-                ⤷ 訂購 ${calculatedCount} 枝 + 贈送 ${bonusCount} 枝。
-            </div>`;
-        }
-        if (totalCount > 0) {
-            displayText += `<div class="total-row">總金額: ${totalPrice} 元。</div>`;
-        }
+        let displayText = `<div class="total-summary">`;
+        displayText += `<div class="total-row">已選擇 ${window.selectedBoxes} 盒，共 ${totalCount} 枝。</div><br>`;
+        displayText += `<div class="total-sub" style="color: red; font-weight: bold; margin: 0;">
+            ⤷ 訂購 ${calculatedCount} 枝 + 贈送 ${bonusCount} 枝。
+        </div>`;
+        displayText += `<div class="total-row">總金額: ${totalPrice} 元。</div>`;
         displayText += `</div>`;
-        const totalCountTextEl = document.getElementById("totalCountText");
         if (totalCountTextEl) totalCountTextEl.innerHTML = displayText;
-        updatePromoMessage();
     }
 
     calculateTotal();
@@ -889,73 +815,6 @@ document.getElementById("showInvoiceInfo")?.addEventListener("change", function 
         if (title) title.value = "";
         if (num) num.value = "";
     }
-});
-
-function updatePromoMessage() {
-    const bar = document.getElementById("promoMsg");
-    if (!bar) return;
-    const paid = Number(window.calculatedCount) || 0;
-    const valid = window.promoValid !== false;
-    if (paid === 0) {
-        bar.classList.remove("show");
-        bar.style.display = "none";
-        document.body.classList.remove("promo-fixed-padding");
-        document.body.style.removeProperty('--promoH');
-        return;
-    }
-
-    // 🎯 依當週模具剩餘量判斷:若再湊一組會超過剩餘,就完全隱藏橫幅
-    if (valid) {
-        const eventDateVal = document.getElementById("eventDate")?.value;
-        if (eventDateVal) {
-            const d = parseLocalDate(eventDateVal);
-            d.setDate(d.getDate() + (6 - d.getDay()));
-            const y = d.getFullYear();
-            const m = String(d.getMonth() + 1).padStart(2, '0');
-            const dd = String(d.getDate()).padStart(2, '0');
-            const weekKey = `${y}-${m}-${dd}`;
-
-            const moldRemaining = window.locationConfig?.weekStock?.mold?.[weekKey];
-            // 模具版沒有 164 上限;查無資料就不限制
-            const totalCount = paid + Math.floor(paid / 10);
-            const r0 = paid % 10;
-            const needed0 = 10 - r0;
-            const totalAfterUpsell = totalCount + needed0 + 1;
-
-            if (typeof moldRemaining === "number" && r0 !== 0 && totalAfterUpsell > moldRemaining) {
-                bar.classList.remove("show");
-                bar.style.display = "none";
-                document.body.classList.remove("promo-fixed-padding");
-                document.body.style.removeProperty('--promoH');
-                return;
-            }
-        }
-    }
-
-    bar.style.display = "";
-    bar.classList.add("show");
-    if (!valid) {
-        bar.textContent = "請幫我填寫「贈送 1 枝」的口味喔 😊";
-    } else {
-        const r = paid % 10;
-        bar.textContent =
-            r === 0 ? "🎉 太棒了，這是完美的買十送一組合🍡💛" :
-            r === 9 ? "再 1 枝就送 1 枝 ✨" :
-                `再 ${10 - r} 枝就送 1 枝 🎁`;
-    }
-    requestAnimationFrame(() => {
-        const h = bar.offsetHeight || 48;
-        document.body.style.setProperty('--promoH', h + 'px');
-        document.body.classList.add('promo-fixed-padding');
-    });
-}
-
-
-window.addEventListener('resize', () => {
-    const bar = document.getElementById("promoMsg");
-    if (!bar || bar.style.display === 'none') return;
-    const h = bar.offsetHeight || 48;
-    document.body.style.setProperty('--promoH', h + 'px');
 });
 
 // 🎯 各取貨地點的可取貨時間範圍
