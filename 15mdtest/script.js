@@ -73,7 +73,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // 🎯 【預計總量】下拉選單 + 右側分配結果
     const totalQtySelect = document.getElementById("totalQtySelect");
-    const moreQtyBtn = document.getElementById("moreQtyBtn");
     const totalQtyBreakdownEl = document.getElementById("totalQtyBreakdown");
 
     function appendQtyOption(select, value) {
@@ -84,18 +83,9 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     if (totalQtySelect) {
-        for (let v = 180; v <= 1800; v += 90) {
+        for (let v = 180; v <= 10080; v += 90) {
             appendQtyOption(totalQtySelect, v);
         }
-    }
-
-    if (moreQtyBtn) {
-        moreQtyBtn.addEventListener("click", function () {
-            for (let v = 1890; v <= 6000; v += 90) {
-                appendQtyOption(totalQtySelect, v);
-            }
-            moreQtyBtn.hidden = true;
-        });
     }
 
     window.selectedTotalSticks = 0;
