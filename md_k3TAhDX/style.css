@@ -313,6 +313,85 @@ input[type="submit"]:hover {
     background-color: #e65c00;
 }
 
+input[type="submit"]:disabled {
+    background-color: #ccc;
+    color: #777;
+    cursor: not-allowed;
+}
+
+input[type="submit"]:disabled:hover {
+    background-color: #ccc;
+}
+
+/* 🔹 預計總量 下拉選單 + 更多按鈕 */
+.total-qty-select-wrap {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    width: 100%;
+}
+
+.total-qty-select-wrap select {
+    flex: 1 1 auto;
+    padding: 10px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background: rgba(255, 255, 255, 0.95);
+    box-sizing: border-box;
+}
+
+.more-qty-btn {
+    flex: 0 0 auto;
+    padding: 10px 14px;
+    font-size: 14px;
+    font-weight: bold;
+    border: 1px solid #ff6600;
+    background: #fff;
+    color: #ff6600;
+    border-radius: 5px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s ease-in-out;
+}
+
+.more-qty-btn:hover {
+    background: #ff6600;
+    color: #fff;
+}
+
+.more-qty-btn[hidden] {
+    display: none;
+}
+
+/* 🔹 選擇總量後的數量分配顯示 */
+.total-qty-breakdown {
+    width: 100%;
+    padding: 10px;
+    font-size: 16px;
+    font-weight: bold;
+    color: #333;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-sizing: border-box;
+    min-height: 20px;
+}
+
+/* 🔹 口味分配提示文字（未分配完畢時提醒色） */
+#flavorInstruction {
+    font-weight: bold;
+    transition: color 0.2s ease-in-out;
+}
+
+#flavorInstruction.allocation-pending {
+    color: #ff0000;
+}
+
+#flavorInstruction.allocation-complete {
+    color: #000000;
+}
+
 /* 🔹 響應式設計（當螢幕小於 768px 時，維持單行顯示） */
 @media (max-width: 768px) {
     .booking-form-w3layouts {
@@ -494,48 +573,5 @@ input[type="submit"]:hover {
 
   .pickup-time {
     order: 3;
-  }
-}
-
-
-/* === 提示條主體（全裝置固定浮動視窗）=== */
-#promoMsg {
-  display: none;        /* 初始隱藏，由 JS 控制顯示 */
-  position: fixed;      /* 固定在畫面上 */
-  top: 0;               /* 釘在最上方 */
-  left: 0;              /* 貼齊左側 */
-  width: 100%;          /* 滿版寬度 */
-  z-index: 10000;       /* 確保蓋過所有元素，包含日期彈出視窗 */
-  background: #fff;
-  color: #ff6600;
-  font-weight: 700;
-  text-align: center;
-  padding: 12px 0;      /* 上下留一點呼吸空間 */
-  font-size: 18px;
-  border-bottom: 1px solid rgba(0,0,0,0.1);
-  box-shadow: 0 4px 10px rgba(0,0,0,0.15); /* 加深陰影產生浮動感 */
-  opacity: 0;           /* 初始透明度為 0 */
-  pointer-events: none; /* 隱藏時不可點擊 */
-  transition: opacity .25s ease, padding .25s ease, font-size .25s ease;
-  box-sizing: border-box; /* 確保 padding 不會讓寬度爆出螢幕 */
-}
-
-/* 顯示時的狀態 */
-#promoMsg.show {
-  display: block;
-  opacity: 1;
-  pointer-events: auto;
-}
-
-/* 確保橫幅顯示時，整個網頁內容往下推，不會遮擋到最上方的訂購單標題 */
-body.promo-fixed-padding {
-  padding-top: var(--promoH, 50px);
-}
-
-/* 響應式：手機版字體微調 */
-@media (max-width: 768px) {
-  #promoMsg {
-    font-size: 16px; 
-    padding: 10px 0;
   }
 }
