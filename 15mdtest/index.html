@@ -3,7 +3,7 @@
 
   <head>
     <meta charset="UTF-8">
-    <title>15元模具版修正</title>
+    <title>話拳寒天Q棒 園遊會送單網址-180枝以上模具版</title>
     <link rel="stylesheet" href="./style.css">
 
   </head>
@@ -23,8 +23,6 @@
 </head>
 
 <body>
-
-<div id="promoMsg">買十送一中 🍡 可混搭口味喔～</div>
 
 <div class="booking-form-w3layouts">
     <form id="orderForm">
@@ -152,49 +150,66 @@
             <div style="flex: 1 1 48%;"></div> <!-- 空白右半邊 -->
         </div>
 
-        <!-- 訂購內容 -->
-        <h3 class="sub-heading-agileits">訂購內容 (總量請大於165枝喔)</h3>
-        <p>請在各口味中填入包含買十送一之訂購量，e.g.買十枝多多送一枝多多，則在多多填入11。</p>
+        <!-- 預計總量 -->
+        <div class="main-flex-w3ls-sectns">
+            <div class="form-w3-agile-text1">
+                <label for="totalQtySelect">預計總量：</label>
+                <div class="total-qty-select-wrap">
+                    <select id="totalQtySelect">
+                        <option value="" selected disabled>請選擇總量</option>
+                    </select>
+                    <button type="button" id="moreQtyBtn" class="more-qty-btn">1800枝以上</button>
+                </div>
+            </div>
+            <div class="form-w3-agile-text2">
+                <label>計費明細：</label>
+                <div id="totalQtyBreakdown" class="total-qty-breakdown">請先選擇左側「預計總量」</div>
+            </div>
+        </div>
+
+        <!-- 口味選擇 -->
+        <h3 class="sub-heading-agileits">口味選擇(一盒為六枝，請在下方填入您所需要的盒數，非常感謝您😊)</h3>
+        <p id="flavorInstruction">請先選擇上方「預計總量」。</p>
 
         <div class="flavor-container">
             <div class="flavor-item">
-                <label>多多口味</label>
+                <label>多多口味（盒）</label>
                 <input type="text" id="qtyDuoDuo" pattern="[0-9]*" inputmode="numeric" tabindex="1">
             </div>
             <div class="flavor-item">
-                <label>蘋果口味</label>
+                <label>蘋果口味（盒）</label>
                 <input type="text" id="qtyApple" pattern="[0-9]*" inputmode="numeric" tabindex="6">
             </div>
             <div class="flavor-item">
-                <label>葡萄口味</label>
+                <label>葡萄口味（盒）</label>
                 <input type="text" id="qtyGrape" pattern="[0-9]*" inputmode="numeric" tabindex="2">
             </div>
             <div class="flavor-item">
-                <label>鳳梨口味</label>
+                <label>鳳梨口味（盒）</label>
                 <input type="text" id="qtyPineapple" pattern="[0-9]*" inputmode="numeric" tabindex="7">
             </div>
             <div class="flavor-item">
-                <label>荔枝口味</label>
+                <label>荔枝口味（盒）</label>
                 <input type="text" id="qtyLychee" pattern="[0-9]*" inputmode="numeric" tabindex="3">
             </div>
             <div class="flavor-item">
-                <label>柳橙口味</label>
+                <label>柳橙口味（盒）</label>
                 <input type="text" id="qtyOrange" pattern="[0-9]*" inputmode="numeric" tabindex="8">
             </div>
             <div class="flavor-item">
-                <label>百香果口味</label>
+                <label>百香果口味（盒）</label>
                 <input type="text" id="qtyPassionFruit" pattern="[0-9]*" inputmode="numeric" tabindex="4">
             </div>
             <div class="flavor-item">
-                <label>水蜜桃口味</label>
+                <label>水蜜桃口味（盒）</label>
                 <input type="text" id="qtyPeach" pattern="[0-9]*" inputmode="numeric" tabindex="9">
             </div>
             <div class="flavor-item">
-                <label>草莓口味</label>
+                <label>草莓口味（盒）</label>
                 <input type="text" id="qtyStrawberry" pattern="[0-9]*" inputmode="numeric" tabindex="5">
             </div>
             <div class="flavor-item">
-                <label>芒果口味</label>
+                <label>芒果口味（盒）</label>
                 <input type="text" id="qtyMango" pattern="[0-9]*" inputmode="numeric" tabindex="10">
             </div>
         </div>

@@ -37,7 +37,14 @@ window.handleJsonpConfig = function (onlineConfig) {
     }, 100);
 };
 
-// 🎯 收集各口味數量（英文 id 作為 key，與 GAS flavorRowMap 對應）
+// 🎯 每盒 = 6 枝：畫面上口味欄位輸入的是「盒數」，換算成後臺原本認得的「枝數」
+const BOX_TO_STICK_RATIO = 6;
+function getFlavorStickValue(id) {
+    const boxes = parseInt(document.getElementById(id)?.value, 10) || 0;
+    return boxes * BOX_TO_STICK_RATIO;
+}
+
+// 🎯 收集各口味數量（英文 id 作為 key，與 GAS flavorRowMap 對應；數值已換算成枝數）
 function getFlavorMap() {
     const ids = [
         "qtyDuoDuo", "qtyGrape", "qtyLychee", "qtyPassionFruit", "qtyStrawberry",
@@ -45,7 +52,7 @@ function getFlavorMap() {
     ];
     const flavors = {};
     ids.forEach(id => {
-        const v = parseInt(document.getElementById(id)?.value, 10) || 0;
+        const v = getFlavorStickValue(id);
         if (v > 0) flavors[id] = v;
     });
     return flavors;
@@ -59,7 +66,61 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     const initialSubmitBtn = document.querySelector("input[type='submit']");
-    if (initialSubmitBtn) initialSubmitBtn.value = "前往確認";
+    if (initialSubmitBtn) {
+        initialSubmitBtn.value = "前往確認";
+        initialSubmitBtn.disabled = true; // 盒數尚未分配完畢前先鎖住
+    }
+
+    // 🎯 【預計總量】下拉選單 + 右側分配結果
+    const totalQtySelect = document.getElementById("totalQtySelect");
+    const moreQtyBtn = document.getElementById("moreQtyBtn");
+    const totalQtyBreakdownEl = document.getElementById("totalQtyBreakdown");
+
+    function appendQtyOption(select, value) {
+        const opt = document.createElement("option");
+        opt.value = value;
+        opt.textContent = `${value} 枝`;
+        select.appendChild(opt);
+    }
+
+    if (totalQtySelect) {
+        for (let v = 180; v <= 1800; v += 90) {
+            appendQtyOption(totalQtySelect, v);
+        }
+    }
+
+    if (moreQtyBtn) {
+        moreQtyBtn.addEventListener("click", function () {
+            for (let v = 1890; v <= 6000; v += 90) {
+                appendQtyOption(totalQtySelect, v);
+            }
+            moreQtyBtn.hidden = true;
+        });
+    }
+
+    window.selectedTotalSticks = 0;
+    window.selectedTotalBoxes = 0;
+
+    function renderTotalQtyBreakdown(totalSticks) {
+        if (!totalQtyBreakdownEl) return;
+        if (!totalSticks) {
+            totalQtyBreakdownEl.textContent = "請先選擇左側「預計總量」";
+            return;
+        }
+        const calculatedCount = Math.ceil(totalSticks / 1.1);
+        const bonusCount = Math.floor(calculatedCount / 10);
+        totalQtyBreakdownEl.textContent = `總數${totalSticks}枝，實收${calculatedCount}枝、贈送${bonusCount}枝。`;
+    }
+
+    if (totalQtySelect) {
+        totalQtySelect.addEventListener("change", function () {
+            const val = parseInt(this.value, 10) || 0;
+            window.selectedTotalSticks = val;
+            window.selectedTotalBoxes = val ? val / BOX_TO_STICK_RATIO : 0;
+            renderTotalQtyBreakdown(val);
+            calculateTotal();
+        });
+    }
 
     document.querySelectorAll("input[name='pickupLocation']").forEach(radio => {
         radio.dataset.clicked = "false";
@@ -389,9 +450,10 @@ document.addEventListener("DOMContentLoaded", function () {
         let totalCount = 0;
         let totalPrice = 0;
         flavorData.forEach(flavor => {
-            let quantity = parseInt(document.getElementById(flavor.id)?.value) || 0;
+            let boxes = parseInt(document.getElementById(flavor.id)?.value, 10) || 0;
+            let quantity = boxes * BOX_TO_STICK_RATIO;
             if (quantity > 0) {
-                orderDetails += `${flavor.name}：${quantity} 枝\n`;
+                orderDetails += `${flavor.name}：${boxes}盒，共${quantity}枝\n`;
                 totalCount += quantity;
                 totalPrice += quantity * 15;
             }
@@ -401,6 +463,12 @@ document.addEventListener("DOMContentLoaded", function () {
 
     document.getElementById("orderForm").addEventListener("submit", async function (event) {
         event.preventDefault();
+
+        if (!(window.selectedTotalBoxes > 0 && window.selectedBoxes === window.selectedTotalBoxes)) {
+            alert("請先選擇「預計總量」，並將口味盒數分配完畢後再送出喔😊");
+            return;
+        }
+
         let requiredFields = [
             { id: "customerName" }, { id: "phoneNumber" }, { id: "orderSchool" },
             { id: "orderClass" }, { id: "eventDate" }, { id: "pickupDate" }, { id: "pickupTime" }
@@ -482,59 +550,6 @@ document.addEventListener("DOMContentLoaded", function () {
         if (totalCount < 165) {
             alert(`總枝數 ${totalCount} 枝未達最低訂購量 165 枝，請再增加 ${165 - totalCount} 枝喔😊`);
             return;
-        }
-
-        if ((calculatedCount + bonusCount) !== totalCount) {
-            const diff = (calculatedCount + bonusCount) - totalCount;
-            alert(`若要購買 ${calculatedCount} 枝，贈送 ${bonusCount} 枝。請再挑選 ${diff} 枝。`);
-            return;
-        }
-
-        // 換算當週週六,查該週模具版剩餘量(含贈品總數)
-        function getSaturdayOfWeek(dateStr) {
-            const d = parseLocalDate(dateStr);
-            d.setDate(d.getDate() + (6 - d.getDay()));
-            const y = d.getFullYear();
-            const m = String(d.getMonth() + 1).padStart(2, '0');
-            const dd = String(d.getDate()).padStart(2, '0');
-            return `${y}-${m}-${dd}`;
-        }
-        const weekKey = getSaturdayOfWeek(eventDate);
-        const remainingThisWeek = window.locationConfig?.weekStock?.mold?.[weekKey];
-
-        const remainder = calculatedCount % 10;
-        const needed = 10 - remainder;
-        const totalAfterUpsell = totalCount + needed + 1;   // 湊滿後的含贈品總枝數
-        const stockKnown = (typeof remainingThisWeek === "number");
-        const wouldExceed = stockKnown && (totalAfterUpsell > remainingThisWeek);
-
-        if (remainder !== 0 && !wouldExceed) {
-            const stayToBuyMore = await new Promise((resolve) => {
-                const upsellOverlay = document.createElement("div");
-                upsellOverlay.style = "position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; display: flex; align-items: center; justify-content: center;";
-
-                upsellOverlay.innerHTML = `
-                    <div style="background: white; padding: 25px; border-radius: 12px; width: 85%; max-width: 400px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
-                        <h3 style="margin-top: 0; color: #ff6600;">✨ 差一點點就多送一枝！</h3>
-                        <p style="font-size: 16px; line-height: 1.6;">再 <b style="color:red; font-size: 20px;">${needed}</b> 枝就再<b>加送 1 枝</b>喔！</p>
-                        <div style="display: flex; gap: 10px; margin-top: 20px;">
-                            <button id="goNext" style="flex: 1; padding: 12px; border: 1px solid #ccc; background: #f9f9f9; border-radius: 6px; cursor: pointer; line-height: 1.4;">不需更改<br>前往確認頁</button>
-                            <button id="backToOrder" style="flex: 1; padding: 12px; border: none; background: #ff6600; color: white; border-radius: 6px; cursor: pointer; font-weight: bold; line-height: 1.4;">馬上去選<br>${needed + 1} 枝</button>
-                        </div>
-                    </div>
-                `;
-                document.body.appendChild(upsellOverlay);
-
-                upsellOverlay.querySelector("#goNext").onclick = () => {
-                    document.body.removeChild(upsellOverlay);
-                    resolve(false);
-                };
-                upsellOverlay.querySelector("#backToOrder").onclick = () => {
-                    document.body.removeChild(upsellOverlay);
-                    resolve(true);
-                };
-            });
-            if (stayToBuyMore) return;
         }
 
         const gasUrl = "https://script.google.com/macros/s/AKfycbzE7wP4x3S5k9BOpooS7VkiYMPYdPP2Wx9KDWaOnXZ5GLtWqE1OCHnBnjIy8jQQdWjK/exec";
@@ -623,16 +638,16 @@ finalSubmitButton.onclick = async () => {
         customerName, phoneNumber, orderUnit,
         invoiceTitle, invoiceNumber, eventDate,
         pickupLocation, pickupDate, pickupTime,
-        qtyDuoDuo:       document.getElementById("qtyDuoDuo").value || "0",
-        qtyGrape:        document.getElementById("qtyGrape").value || "0",
-        qtyLychee:       document.getElementById("qtyLychee").value || "0",
-        qtyPassionFruit: document.getElementById("qtyPassionFruit").value || "0",
-        qtyStrawberry:   document.getElementById("qtyStrawberry").value || "0",
-        qtyApple:        document.getElementById("qtyApple").value || "0",
-        qtyPineapple:    document.getElementById("qtyPineapple").value || "0",
-        qtyOrange:       document.getElementById("qtyOrange").value || "0",
-        qtyPeach:        document.getElementById("qtyPeach").value || "0",
-        qtyMango:        document.getElementById("qtyMango").value || "0"
+        qtyDuoDuo:       String(getFlavorStickValue("qtyDuoDuo")),
+        qtyGrape:        String(getFlavorStickValue("qtyGrape")),
+        qtyLychee:       String(getFlavorStickValue("qtyLychee")),
+        qtyPassionFruit: String(getFlavorStickValue("qtyPassionFruit")),
+        qtyStrawberry:   String(getFlavorStickValue("qtyStrawberry")),
+        qtyApple:        String(getFlavorStickValue("qtyApple")),
+        qtyPineapple:    String(getFlavorStickValue("qtyPineapple")),
+        qtyOrange:       String(getFlavorStickValue("qtyOrange")),
+        qtyPeach:        String(getFlavorStickValue("qtyPeach")),
+        qtyMango:        String(getFlavorStickValue("qtyMango"))
     };
 
     let ok = false;
@@ -666,8 +681,12 @@ finalSubmitButton.onclick = async () => {
         radio.dataset.clicked = "false";
     });
     window.calculatedCount = 0;
-    window.promoValid = true;
-    updatePromoMessage();
+    window.selectedTotalSticks = 0;
+    window.selectedTotalBoxes = 0;
+    const totalQtySelectEl = document.getElementById("totalQtySelect");
+    if (totalQtySelectEl) totalQtySelectEl.value = "";
+    const totalQtyBreakdownResetEl = document.getElementById("totalQtyBreakdown");
+    if (totalQtyBreakdownResetEl) totalQtyBreakdownResetEl.textContent = "請先選擇左側「預計總量」";
     calculateTotal();
 
     // 成功跳轉:維持原本 DEP/NR + v 參數邏輯
@@ -696,57 +715,73 @@ finalSubmitButton.onclick = async () => {
         document.body.appendChild(confirmBox);
     });
 
+    // 🎯 更新「訂購內容」下方的盒數分配提示文字，並依是否分配完畢鎖住/開放「前往確認」按鈕
+    function updateFlavorAllocationText() {
+        const flavorIds = [
+            "qtyDuoDuo", "qtyGrape", "qtyLychee", "qtyPassionFruit", "qtyStrawberry",
+            "qtyApple", "qtyPineapple", "qtyOrange", "qtyPeach", "qtyMango"
+        ];
+        let selectedBoxes = 0;
+        flavorIds.forEach(id => {
+            const el = document.getElementById(id);
+            selectedBoxes += el ? (parseInt(el.value) || 0) : 0;
+        });
+        window.selectedBoxes = selectedBoxes;
+
+        const totalSticks = window.selectedTotalSticks || 0;
+        const totalBoxes = window.selectedTotalBoxes || 0;
+
+        const instructionEl = document.getElementById("flavorInstruction");
+        if (instructionEl) {
+            instructionEl.classList.remove("allocation-pending", "allocation-complete");
+            if (!totalSticks) {
+                instructionEl.textContent = "請先選擇上方「預計總量」。";
+            } else {
+                instructionEl.textContent = `${totalSticks}枝，共${totalBoxes}盒，已選${selectedBoxes}盒。`;
+                instructionEl.classList.add(selectedBoxes === totalBoxes ? "allocation-complete" : "allocation-pending");
+            }
+        }
+
+        const fullyAllocated = totalBoxes > 0 && selectedBoxes === totalBoxes;
+        const submitBtn = document.querySelector("input[type='submit']");
+        if (submitBtn) submitBtn.disabled = !fullyAllocated;
+
+        return fullyAllocated;
+    }
+
     function calculateTotal() {
-        let totalCount = 0;
+        let totalCount = 0; // 換算成枝數（盒數 x 6）
         const flavorIds = [
             "qtyDuoDuo", "qtyGrape", "qtyLychee", "qtyPassionFruit", "qtyStrawberry",
             "qtyApple", "qtyPineapple", "qtyOrange", "qtyPeach", "qtyMango"
         ];
         flavorIds.forEach(id => {
-            const el = document.getElementById(id);
-            let qty = el ? (parseInt(el.value) || 0) : 0;
-            totalCount += qty;
+            totalCount += getFlavorStickValue(id);
         });
 
         let calculatedCount = Math.ceil(totalCount / 1.1);
         let bonusCount = Math.floor(calculatedCount / 10);
         window.calculatedCount = calculatedCount;
 
-        let isValid = (calculatedCount + bonusCount) === totalCount;
-        let hasInput = totalCount > 0;
         let totalPrice = totalCount * 15 - bonusCount * 15;
 
-        let displayText = `<div class="total-summary">`;
-        if (totalCount > 0) {
-            displayText += `<div class="total-row">總枝數: ${totalCount} 枝。</div><br>`;
-        }
-        if (!isValid) {
-            let suggestedBuy = calculatedCount;
-            let suggestedBonus = Math.floor(suggestedBuy / 10);
-            let difference = (suggestedBuy + suggestedBonus) - totalCount;
-            displayText += `<div class="total-row error-text">
-                若要購買 ${suggestedBuy} 枝，贈送 ${suggestedBonus} 枝。請再挑選 ${difference} 枝。
-            </div>`;
-            const totalCountTextEl = document.getElementById("totalCountText");
-            if (totalCountTextEl) totalCountTextEl.innerHTML = displayText;
-            window.promoValid = false;
-            updatePromoMessage();
+        const fullyAllocated = updateFlavorAllocationText();
+        const totalCountTextEl = document.getElementById("totalCountText");
+
+        // 🎯 盒數還沒選擇完全時，最下面完全不顯示
+        if (!fullyAllocated) {
+            if (totalCountTextEl) totalCountTextEl.innerHTML = "";
             return;
         }
 
-        window.promoValid = true;
-        if (hasInput) {
-            displayText += `<div class="total-sub" style="color: red; font-weight: bold; margin: 0;">
-                ⤷ 訂購 ${calculatedCount} 枝 + 贈送 ${bonusCount} 枝。
-            </div>`;
-        }
-        if (totalCount > 0) {
-            displayText += `<div class="total-row">總金額: ${totalPrice} 元。</div>`;
-        }
+        let displayText = `<div class="total-summary">`;
+        displayText += `<div class="total-row">已選擇 ${window.selectedBoxes} 盒，共 ${totalCount} 枝。</div><br>`;
+        displayText += `<div class="total-sub" style="color: red; font-weight: bold; margin: 0;">
+            ⤷ 訂購 ${calculatedCount} 枝 + 贈送 ${bonusCount} 枝。
+        </div>`;
+        displayText += `<div class="total-row">總金額: ${totalPrice} 元。</div>`;
         displayText += `</div>`;
-        const totalCountTextEl = document.getElementById("totalCountText");
         if (totalCountTextEl) totalCountTextEl.innerHTML = displayText;
-        updatePromoMessage();
     }
 
     calculateTotal();
@@ -781,73 +816,6 @@ document.getElementById("showInvoiceInfo")?.addEventListener("change", function 
         if (title) title.value = "";
         if (num) num.value = "";
     }
-});
-
-function updatePromoMessage() {
-    const bar = document.getElementById("promoMsg");
-    if (!bar) return;
-    const paid = Number(window.calculatedCount) || 0;
-    const valid = window.promoValid !== false;
-    if (paid === 0) {
-        bar.classList.remove("show");
-        bar.style.display = "none";
-        document.body.classList.remove("promo-fixed-padding");
-        document.body.style.removeProperty('--promoH');
-        return;
-    }
-
-    // 🎯 依當週模具剩餘量判斷:若再湊一組會超過剩餘,就完全隱藏橫幅
-    if (valid) {
-        const eventDateVal = document.getElementById("eventDate")?.value;
-        if (eventDateVal) {
-            const d = parseLocalDate(eventDateVal);
-            d.setDate(d.getDate() + (6 - d.getDay()));
-            const y = d.getFullYear();
-            const m = String(d.getMonth() + 1).padStart(2, '0');
-            const dd = String(d.getDate()).padStart(2, '0');
-            const weekKey = `${y}-${m}-${dd}`;
-
-            const moldRemaining = window.locationConfig?.weekStock?.mold?.[weekKey];
-            // 模具版沒有 164 上限;查無資料就不限制
-            const totalCount = paid + Math.floor(paid / 10);
-            const r0 = paid % 10;
-            const needed0 = 10 - r0;
-            const totalAfterUpsell = totalCount + needed0 + 1;
-
-            if (typeof moldRemaining === "number" && r0 !== 0 && totalAfterUpsell > moldRemaining) {
-                bar.classList.remove("show");
-                bar.style.display = "none";
-                document.body.classList.remove("promo-fixed-padding");
-                document.body.style.removeProperty('--promoH');
-                return;
-            }
-        }
-    }
-
-    bar.style.display = "";
-    bar.classList.add("show");
-    if (!valid) {
-        bar.textContent = "請幫我填寫「贈送 1 枝」的口味喔 😊";
-    } else {
-        const r = paid % 10;
-        bar.textContent =
-            r === 0 ? "🎉 太棒了，這是完美的買十送一組合🍡💛" :
-            r === 9 ? "再 1 枝就送 1 枝 ✨" :
-                `再 ${10 - r} 枝就送 1 枝 🎁`;
-    }
-    requestAnimationFrame(() => {
-        const h = bar.offsetHeight || 48;
-        document.body.style.setProperty('--promoH', h + 'px');
-        document.body.classList.add('promo-fixed-padding');
-    });
-}
-
-
-window.addEventListener('resize', () => {
-    const bar = document.getElementById("promoMsg");
-    if (!bar || bar.style.display === 'none') return;
-    const h = bar.offsetHeight || 48;
-    document.body.style.setProperty('--promoH', h + 'px');
 });
 
 // 🎯 各取貨地點的可取貨時間範圍
