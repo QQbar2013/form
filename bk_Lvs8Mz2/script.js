@@ -484,8 +484,8 @@ document.addEventListener("DOMContentLoaded", function () {
             return;
         }
 
-        if (totalCount > 164) {
-            alert(`總枝數 ${totalCount} 枝超過上限 164 枝，請減少 ${totalCount - 164} 枝喔😊`);
+        if (totalCount > 179) {
+            alert(`總枝數 ${totalCount} 枝超過上限 179 枝，請減少 ${totalCount - 179} 枝喔😊`);
             return;
         }
 
@@ -501,10 +501,10 @@ document.addEventListener("DOMContentLoaded", function () {
         const weekKey = getSaturdayOfWeek(eventDate);
         const packRemaining = window.locationConfig?.weekStock?.pack?.[weekKey];
 
-        // 實際上限 = 打包可訂量 與 164 取小;查無剩餘資料時就用 164
+        // 實際上限 = 打包可訂量 與 179 取小;查無剩餘資料時就用 179
         const effectiveCap = (typeof packRemaining === "number")
-            ? Math.min(packRemaining, 164)
-            : 164;
+            ? Math.min(packRemaining, 179)
+            : 179;
 
         const remainder = calculatedCount % 10;
         const needed = 10 - remainder;
@@ -800,7 +800,7 @@ function updatePromoMessage() {
         return;
     }
 
-    // 🎯 依當週打包剩餘量(與 164 取小)判斷:若再湊一組會超過上限,就完全隱藏橫幅
+    // 🎯 依當週打包剩餘量(與 179 取小)判斷:若再湊一組會超過上限,就完全隱藏橫幅
     if (valid) {
         const eventDateVal = document.getElementById("eventDate")?.value;
         if (eventDateVal) {
@@ -814,8 +814,8 @@ function updatePromoMessage() {
 
             const packRemaining = window.locationConfig?.weekStock?.pack?.[weekKey];
             const effectiveCap = (typeof packRemaining === "number")
-                ? Math.min(packRemaining, 164)
-                : 164;
+                ? Math.min(packRemaining, 179)
+                : 179;
 
             // 目前總枝數(含贈品)
             const totalCount = paid + Math.floor(paid / 10);
