@@ -836,7 +836,14 @@ finalSubmitButton.onclick = async () => {
             if (!totalSticks) {
                 instructionEl.textContent = "請先選擇上方「預計總量」。";
             } else {
-                instructionEl.textContent = `${totalSticks}枝，共${totalBoxes}盒，已選${selectedBoxes}盒。`;
+                const diff = totalBoxes - selectedBoxes;
+                let extraText = "";
+                if (diff > 0) {
+                    extraText = `，還需${diff}盒`;
+                } else if (diff < 0) {
+                    extraText = `，需減${-diff}盒`;
+                }
+                instructionEl.textContent = `${totalSticks}枝，共${totalBoxes}盒，已選${selectedBoxes}盒${extraText}。`;
                 instructionEl.classList.add(selectedBoxes === totalBoxes ? "allocation-complete" : "allocation-pending");
             }
         }
