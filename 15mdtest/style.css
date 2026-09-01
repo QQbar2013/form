@@ -392,6 +392,18 @@ input[type="submit"]:disabled:hover {
     margin-bottom: 5px;
 }
 
+.pack-one-stick-note {
+    font-size: 13px;
+    font-weight: normal;
+    color: #666;
+    background: rgba(255, 102, 0, 0.08);
+    border-left: 3px solid #ff6600;
+    padding: 8px 10px;
+    border-radius: 4px;
+    margin: 0 0 10px 0;
+    line-height: 1.5;
+}
+
 .pack-one-stick-wrap select {
     width: 100%;
     padding: 10px;
