@@ -163,6 +163,25 @@
             <div class="form-w3-agile-text2">
                 <label>計費明細：</label>
                 <div id="totalQtyBreakdown" class="total-qty-breakdown">請先選擇左側「預計總量」</div>
+                <div id="packOneStickWrap" class="pack-one-stick-wrap" style="display: none;">
+                    <p id="packOneStickNote" class="pack-one-stick-note">
+                        因為此總量在「買十送一」換算時無法整除，系統會多送您 1 枝，這 1 枝是散枝、無法湊成一整盒，因此請額外指定要打包哪個口味。
+                    </p>
+                    <label for="packOneStickSelect">請選擇打包一枝的口味：</label>
+                    <select id="packOneStickSelect">
+                        <option value="" selected disabled>請選擇口味</option>
+                        <option value="qtyDuoDuo">多多</option>
+                        <option value="qtyGrape">葡萄</option>
+                        <option value="qtyLychee">荔枝</option>
+                        <option value="qtyPassionFruit">百香果</option>
+                        <option value="qtyStrawberry">草莓</option>
+                        <option value="qtyApple">蘋果</option>
+                        <option value="qtyPineapple">鳳梨</option>
+                        <option value="qtyOrange">柳橙</option>
+                        <option value="qtyPeach">水蜜桃</option>
+                        <option value="qtyMango">芒果</option>
+                    </select>
+                </div>
             </div>
         </div>
 

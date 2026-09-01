@@ -44,15 +44,44 @@ function getFlavorStickValue(id) {
     return boxes * BOX_TO_STICK_RATIO;
 }
 
+// 🎯 口味 id → 中文名稱對照表（供打包選單、確認單文字共用）
+const FLAVOR_NAME_MAP = {
+    qtyDuoDuo: "多多", qtyGrape: "葡萄", qtyLychee: "荔枝", qtyPassionFruit: "百香果",
+    qtyStrawberry: "草莓", qtyApple: "蘋果", qtyPineapple: "鳳梨", qtyOrange: "柳橙",
+    qtyPeach: "水蜜桃", qtyMango: "芒果"
+};
+
+// 🎯 買十送一換算：部分總量（例如 450、1440...）用 總量÷1.1 無條件進位、再取十分之一贈送 的公式，
+// 算出來的「實收 + 贈送」會比選單上的總量多 1 枝——這多出來的 1 枝其實是贈送裡面的其中一枝散枝，
+// 因為湊不成一整盒，需要由使用者額外指定要打包哪個口味。
+// grandTotal（實際總數）= 實收 + 贈送，需要打包時會比選單上的總量多 1 枝。
+function getStickBreakdown(nominalTotal) {
+    if (!nominalTotal) {
+        return { calculatedCount: 0, bonusCount: 0, needsPacking: false, grandTotal: 0 };
+    }
+    const calculatedCount = Math.ceil(nominalTotal / 1.1);
+    const bonusCount = Math.floor(calculatedCount / 10);
+    const grandTotal = calculatedCount + bonusCount;
+    const needsPacking = grandTotal !== nominalTotal;
+
+    return { calculatedCount, bonusCount, needsPacking, grandTotal };
+}
+
+// 🎯 供口味總量清單/送出資料共用：把「打包一枝」的那 1 枝加回指定口味的數量中
+function addPackedStickToFlavorValue(id, baseValue, packFlavorId) {
+    return baseValue + (packFlavorId && packFlavorId === id ? 1 : 0);
+}
+
 // 🎯 收集各口味數量（英文 id 作為 key，與 GAS flavorRowMap 對應；數值已換算成枝數）
-function getFlavorMap() {
+// packFlavorId 有值時，代表該口味還要多加「打包一枝」的那 1 枝
+function getFlavorMap(packFlavorId) {
     const ids = [
         "qtyDuoDuo", "qtyGrape", "qtyLychee", "qtyPassionFruit", "qtyStrawberry",
         "qtyApple", "qtyPineapple", "qtyOrange", "qtyPeach", "qtyMango"
     ];
     const flavors = {};
     ids.forEach(id => {
-        const v = getFlavorStickValue(id);
+        const v = addPackedStickToFlavorValue(id, getFlavorStickValue(id), packFlavorId);
         if (v > 0) flavors[id] = v;
     });
     return flavors;
@@ -90,6 +119,11 @@ document.addEventListener("DOMContentLoaded", function () {
 
     window.selectedTotalSticks = 0;
     window.selectedTotalBoxes = 0;
+    window.needsStickPacking = false;
+    window.packOneStickFlavorId = "";
+
+    const packOneStickWrapEl = document.getElementById("packOneStickWrap");
+    const packOneStickSelectEl = document.getElementById("packOneStickSelect");
 
     function renderTotalQtyBreakdown(totalSticks) {
         if (!totalQtyBreakdownEl) return;
@@ -97,9 +131,57 @@ document.addEventListener("DOMContentLoaded", function () {
             totalQtyBreakdownEl.textContent = "請先選擇左側「預計總量」";
             return;
         }
-        const calculatedCount = Math.ceil(totalSticks / 1.1);
-        const bonusCount = Math.floor(calculatedCount / 10);
-        totalQtyBreakdownEl.textContent = `總數${totalSticks}枝，實收${calculatedCount}枝、贈送${bonusCount}枝。`;
+        const { calculatedCount, bonusCount, needsPacking, grandTotal } = getStickBreakdown(totalSticks);
+        window.needsStickPacking = needsPacking;
+
+        if (needsPacking) {
+            totalQtyBreakdownEl.textContent = `總數${grandTotal}枝，實收${calculatedCount}枝、贈送${bonusCount}枝（其中1枝打包）。`;
+        } else {
+            totalQtyBreakdownEl.textContent = `總數${grandTotal}枝，實收${calculatedCount}枝、贈送${bonusCount}枝。`;
+        }
+
+        if (packOneStickWrapEl) {
+            packOneStickWrapEl.style.display = needsPacking ? "block" : "none";
+        }
+        if (!needsPacking && packOneStickSelectEl) {
+            packOneStickSelectEl.value = "";
+            packOneStickSelectEl.classList.remove("pack-select-error");
+            window.packOneStickFlavorId = "";
+        }
+    }
+
+    // 🎯 依「口味上下架管理」名單，同步鎖住打包選單中對應的口味選項
+    function updatePackSelectFlavorAvailability() {
+        if (!packOneStickSelectEl) return;
+        const disabledFlavors = window.myGlobalDisabledFlavors || [];
+        let selectedNowDisabled = false;
+
+        Array.from(packOneStickSelectEl.options).forEach(opt => {
+            if (!opt.value) return; // 保留「請選擇口味」提示選項
+            const isDisabled = disabledFlavors.includes(opt.value);
+            opt.disabled = isDisabled;
+            if (isDisabled && packOneStickSelectEl.value === opt.value) {
+                selectedNowDisabled = true;
+            }
+        });
+
+        if (selectedNowDisabled) {
+            packOneStickSelectEl.value = "";
+            window.packOneStickFlavorId = "";
+            calculateTotal();
+        }
+    }
+    window.updatePackSelectFlavorAvailability = updatePackSelectFlavorAvailability;
+    updatePackSelectFlavorAvailability();
+    // 口味開放/關閉名單可能由外部設定檔非同步載入，定時同步一次確保選單狀態正確
+    setInterval(updatePackSelectFlavorAvailability, 1500);
+
+    if (packOneStickSelectEl) {
+        packOneStickSelectEl.addEventListener("change", function () {
+            window.packOneStickFlavorId = this.value || "";
+            this.classList.remove("pack-select-error");
+            calculateTotal();
+        });
     }
 
     if (totalQtySelect) {
@@ -108,6 +190,7 @@ document.addEventListener("DOMContentLoaded", function () {
             window.selectedTotalSticks = val;
             window.selectedTotalBoxes = val ? val / BOX_TO_STICK_RATIO : 0;
             renderTotalQtyBreakdown(val);
+            updatePackSelectFlavorAvailability();
             calculateTotal();
         });
     }
@@ -527,9 +610,8 @@ document.addEventListener("DOMContentLoaded", function () {
         }
 
         const { orderDetails, totalCount, totalPrice } = getOrderDetails();
-        const calculatedCount = Math.ceil(totalCount / 1.1);
-        const bonusCount = Math.floor(calculatedCount / 10);
-        const adjustedPrice = totalPrice - bonusCount * 15;
+        const { calculatedCount, bonusCount, needsPacking, grandTotal } = getStickBreakdown(totalCount);
+        const adjustedPrice = calculatedCount * 15;
 
         if (totalCount === 0) {
             alert(`請填寫欲訂購的口味及數量喔😊`);
@@ -541,6 +623,19 @@ document.addEventListener("DOMContentLoaded", function () {
             alert(`總枝數 ${totalCount} 枝未達最低訂購量 165 枝，請再增加 ${165 - totalCount} 枝喔😊`);
             return;
         }
+
+        // 🎯 遇到需要「打包一枝」的總量時，須先選擇打包口味才能送出
+        const packOneStickSelectEl = document.getElementById("packOneStickSelect");
+        if (needsPacking && !window.packOneStickFlavorId) {
+            alert("此總量需再選擇「打包一枝」的口味，請確認後再送出喔😊");
+            if (packOneStickSelectEl) {
+                packOneStickSelectEl.classList.add("pack-select-error");
+                packOneStickSelectEl.focus();
+                packOneStickSelectEl.scrollIntoView({ behavior: "smooth", block: "center" });
+            }
+            return;
+        }
+        const packFlavorName = needsPacking ? (FLAVOR_NAME_MAP[window.packOneStickFlavorId] || "") : "";
 
         const gasUrl = "https://script.google.com/macros/s/AKfycbzE7wP4x3S5k9BOpooS7VkiYMPYdPP2Wx9KDWaOnXZ5GLtWqE1OCHnBnjIy8jQQdWjK/exec";
         const submitBtn = event.submitter || document.querySelector("input[type='submit']");
@@ -555,7 +650,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     eventDate: eventDate,
                     totalCount: totalCount,
                     orderType: "mold",
-                    flavors: getFlavorMap(),
+                    flavors: getFlavorMap(needsPacking ? window.packOneStickFlavorId : ""),
                     pickupLocation: pickupLocation
 
                 })
@@ -589,8 +684,11 @@ document.addEventListener("DOMContentLoaded", function () {
         confirmationMessage += `⏰ 取貨時間：${pickupTime}\n\n`;
         confirmationMessage += `--\n`;
         confirmationMessage += `🛒 訂購內容：\n${orderDetails}\n\n`;
-        confirmationMessage += `🛒 總枝數：${totalCount} 枝，共 ${adjustedPrice} 元。\n\n`;
-        confirmationMessage += ` ⤷ 訂購 ${calculatedCount} 枝 + 贈送 ${bonusCount} 枝。\n`;
+        if (needsPacking) {
+            confirmationMessage += `📦 打包：${packFlavorName}口味1枝。\n\n`;
+        }
+        confirmationMessage += `🛒 總枝數：${grandTotal} 枝，共 ${adjustedPrice} 元。\n\n`;
+        confirmationMessage += ` ⤷ 訂購 ${calculatedCount} 枝 + 贈送 ${bonusCount} 枝${needsPacking ? `（其中1枝打包）` : ""}。\n`;
 
         let confirmBox = document.createElement("div");
         confirmBox.style = `
@@ -624,20 +722,22 @@ finalSubmitButton.onclick = async () => {
     finalSubmitButton.style.cursor = "not-allowed";
     cancelButton.disabled = true;
 
+    const submitPackFlavorId = needsPacking ? window.packOneStickFlavorId : "";
     const payload = {
         customerName, phoneNumber, orderUnit,
         invoiceTitle, invoiceNumber, eventDate,
         pickupLocation, pickupDate, pickupTime,
-        qtyDuoDuo:       String(getFlavorStickValue("qtyDuoDuo")),
-        qtyGrape:        String(getFlavorStickValue("qtyGrape")),
-        qtyLychee:       String(getFlavorStickValue("qtyLychee")),
-        qtyPassionFruit: String(getFlavorStickValue("qtyPassionFruit")),
-        qtyStrawberry:   String(getFlavorStickValue("qtyStrawberry")),
-        qtyApple:        String(getFlavorStickValue("qtyApple")),
-        qtyPineapple:    String(getFlavorStickValue("qtyPineapple")),
-        qtyOrange:       String(getFlavorStickValue("qtyOrange")),
-        qtyPeach:        String(getFlavorStickValue("qtyPeach")),
-        qtyMango:        String(getFlavorStickValue("qtyMango"))
+        packOneStickFlavor: packFlavorName || "",
+        qtyDuoDuo:       String(addPackedStickToFlavorValue("qtyDuoDuo", getFlavorStickValue("qtyDuoDuo"), submitPackFlavorId)),
+        qtyGrape:        String(addPackedStickToFlavorValue("qtyGrape", getFlavorStickValue("qtyGrape"), submitPackFlavorId)),
+        qtyLychee:       String(addPackedStickToFlavorValue("qtyLychee", getFlavorStickValue("qtyLychee"), submitPackFlavorId)),
+        qtyPassionFruit: String(addPackedStickToFlavorValue("qtyPassionFruit", getFlavorStickValue("qtyPassionFruit"), submitPackFlavorId)),
+        qtyStrawberry:   String(addPackedStickToFlavorValue("qtyStrawberry", getFlavorStickValue("qtyStrawberry"), submitPackFlavorId)),
+        qtyApple:        String(addPackedStickToFlavorValue("qtyApple", getFlavorStickValue("qtyApple"), submitPackFlavorId)),
+        qtyPineapple:    String(addPackedStickToFlavorValue("qtyPineapple", getFlavorStickValue("qtyPineapple"), submitPackFlavorId)),
+        qtyOrange:       String(addPackedStickToFlavorValue("qtyOrange", getFlavorStickValue("qtyOrange"), submitPackFlavorId)),
+        qtyPeach:        String(addPackedStickToFlavorValue("qtyPeach", getFlavorStickValue("qtyPeach"), submitPackFlavorId)),
+        qtyMango:        String(addPackedStickToFlavorValue("qtyMango", getFlavorStickValue("qtyMango"), submitPackFlavorId))
     };
 
     let ok = false;
@@ -677,6 +777,15 @@ finalSubmitButton.onclick = async () => {
     if (totalQtySelectEl) totalQtySelectEl.value = "";
     const totalQtyBreakdownResetEl = document.getElementById("totalQtyBreakdown");
     if (totalQtyBreakdownResetEl) totalQtyBreakdownResetEl.textContent = "請先選擇左側「預計總量」";
+    const packOneStickWrapResetEl = document.getElementById("packOneStickWrap");
+    const packOneStickSelectResetEl = document.getElementById("packOneStickSelect");
+    if (packOneStickWrapResetEl) packOneStickWrapResetEl.style.display = "none";
+    if (packOneStickSelectResetEl) {
+        packOneStickSelectResetEl.value = "";
+        packOneStickSelectResetEl.classList.remove("pack-select-error");
+    }
+    window.needsStickPacking = false;
+    window.packOneStickFlavorId = "";
     calculateTotal();
 
     // 成功跳轉:維持原本 DEP/NR + v 參數邏輯
@@ -727,14 +836,22 @@ finalSubmitButton.onclick = async () => {
             if (!totalSticks) {
                 instructionEl.textContent = "請先選擇上方「預計總量」。";
             } else {
-                instructionEl.textContent = `${totalSticks}枝，共${totalBoxes}盒，已選${selectedBoxes}盒。`;
+                const diff = totalBoxes - selectedBoxes;
+                let extraText = "";
+                if (diff > 0) {
+                    extraText = `，還需${diff}盒`;
+                } else if (diff < 0) {
+                    extraText = `，需減${-diff}盒`;
+                }
+                instructionEl.textContent = `${totalSticks}枝，共${totalBoxes}盒，已選${selectedBoxes}盒${extraText}。`;
                 instructionEl.classList.add(selectedBoxes === totalBoxes ? "allocation-complete" : "allocation-pending");
             }
         }
 
         const fullyAllocated = totalBoxes > 0 && selectedBoxes === totalBoxes;
+        const packSelectionOk = !window.needsStickPacking || !!window.packOneStickFlavorId;
         const submitBtn = document.querySelector("input[type='submit']");
-        if (submitBtn) submitBtn.disabled = !fullyAllocated;
+        if (submitBtn) submitBtn.disabled = !(fullyAllocated && packSelectionOk);
 
         return fullyAllocated;
     }
@@ -749,11 +866,11 @@ finalSubmitButton.onclick = async () => {
             totalCount += getFlavorStickValue(id);
         });
 
-        let calculatedCount = Math.ceil(totalCount / 1.1);
-        let bonusCount = Math.floor(calculatedCount / 10);
+        const { calculatedCount, bonusCount, needsPacking, grandTotal } = getStickBreakdown(totalCount);
         window.calculatedCount = calculatedCount;
+        window.needsStickPacking = needsPacking;
 
-        let totalPrice = totalCount * 15 - bonusCount * 15;
+        let totalPrice = calculatedCount * 15;
 
         const fullyAllocated = updateFlavorAllocationText();
         const totalCountTextEl = document.getElementById("totalCountText");
@@ -764,10 +881,15 @@ finalSubmitButton.onclick = async () => {
             return;
         }
 
+        const packFlavorName = FLAVOR_NAME_MAP[window.packOneStickFlavorId] || "";
+
         let displayText = `<div class="total-summary">`;
-        displayText += `<div class="total-row">已選擇 ${window.selectedBoxes} 盒，共 ${totalCount} 枝。</div><br>`;
+        if (needsPacking) {
+            displayText += `<div class="total-row" style="font-size: 18px;">打包：${packFlavorName || "尚未選擇"}口味1枝。</div>`;
+        }
+        displayText += `<div class="total-row">已選擇 ${window.selectedBoxes} 盒，共 ${grandTotal} 枝。</div><br>`;
         displayText += `<div class="total-sub" style="color: red; font-weight: bold; margin: 0;">
-            ⤷ 訂購 ${calculatedCount} 枝 + 贈送 ${bonusCount} 枝。
+            ⤷ 訂購 ${calculatedCount} 枝 + 贈送 ${bonusCount} 枝${needsPacking ? `（其中1枝打包）` : ""}。
         </div>`;
         displayText += `<div class="total-row">總金額: ${totalPrice} 元。</div>`;
         displayText += `</div>`;
