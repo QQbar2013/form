@@ -498,17 +498,33 @@ document.addEventListener("DOMContentLoaded", function () {
         this.value = this.value.replace(/\D/g, "");
     });
 
+    // 🎯 更新單一口味輸入框旁（手機版：下方／桌面版：同列）的「共X枝」提示
+    function updateSingleFlavorStickTotal(id) {
+        const totalEl = document.getElementById(`stickTotal_${id}`);
+        if (totalEl) totalEl.textContent = `共${getFlavorStickValue(id)}枝`;
+    }
+
+    function updateAllFlavorStickTotals() {
+        [
+            "qtyDuoDuo", "qtyGrape", "qtyLychee", "qtyPassionFruit", "qtyStrawberry",
+            "qtyApple", "qtyPineapple", "qtyOrange", "qtyPeach", "qtyMango"
+        ].forEach(updateSingleFlavorStickTotal);
+    }
+    window.updateAllFlavorStickTotals = updateAllFlavorStickTotals;
+
     document.querySelectorAll(".flavor-item input[type='text']").forEach(input => {
         input.addEventListener("input", function () {
             this.value = this.value.replace(/\D/g, "");
             document.querySelectorAll(".flavor-item .reminder-text").forEach(r => r.remove());
             this.style.border = "";
+            updateSingleFlavorStickTotal(this.id);
             calculateTotal();
         });
         input.addEventListener("blur", function () {
             this.value = this.value.replace(/\D/g, "");
             document.querySelectorAll(".flavor-item .reminder-text").forEach(r => r.remove());
             this.style.border = "";
+            updateSingleFlavorStickTotal(this.id);
             calculateTotal();
         });
     });
@@ -786,6 +802,7 @@ finalSubmitButton.onclick = async () => {
     }
     window.needsStickPacking = false;
     window.packOneStickFlavorId = "";
+    if (typeof window.updateAllFlavorStickTotals === "function") window.updateAllFlavorStickTotals();
     calculateTotal();
 
     // 成功跳轉:維持原本 DEP/NR + v 參數邏輯
@@ -814,6 +831,32 @@ finalSubmitButton.onclick = async () => {
         document.body.appendChild(confirmBox);
     });
 
+    // 🎯 讓「口味分配提示」變成固定在畫面最上方的浮動視窗（選擇「預計總量」後才出現）
+    //     並自動在 body 上方留出對應高度的空間，避免蓋住原本的內容
+    function setFlavorInstructionFloating(shouldFloat) {
+        const instructionEl = document.getElementById("flavorInstruction");
+        if (!instructionEl) return;
+
+        if (shouldFloat) {
+            instructionEl.classList.add("flavor-instruction-floating");
+            requestAnimationFrame(() => {
+                document.body.style.paddingTop = instructionEl.offsetHeight + "px";
+            });
+        } else {
+            instructionEl.classList.remove("flavor-instruction-floating");
+            document.body.style.paddingTop = "";
+        }
+    }
+    window.setFlavorInstructionFloating = setFlavorInstructionFloating;
+
+    // 視窗大小改變時（例如手機轉橫向、桌面縮放視窗），重新計算浮動視窗高度，避免內容被蓋住
+    window.addEventListener("resize", function () {
+        const instructionEl = document.getElementById("flavorInstruction");
+        if (instructionEl && instructionEl.classList.contains("flavor-instruction-floating")) {
+            document.body.style.paddingTop = instructionEl.offsetHeight + "px";
+        }
+    });
+
     // 🎯 更新「訂購內容」下方的盒數分配提示文字，並依是否分配完畢鎖住/開放「前往確認」按鈕
     function updateFlavorAllocationText() {
         const flavorIds = [
@@ -834,7 +877,9 @@ finalSubmitButton.onclick = async () => {
         if (instructionEl) {
             instructionEl.classList.remove("allocation-pending", "allocation-complete");
             if (!totalSticks) {
+                // 尚未選擇「預計總量」：浮動視窗先不出現
                 instructionEl.textContent = "請先選擇上方「預計總量」。";
+                setFlavorInstructionFloating(false);
             } else {
                 const diff = totalBoxes - selectedBoxes;
                 let extraText = "";
@@ -845,6 +890,8 @@ finalSubmitButton.onclick = async () => {
                 }
                 instructionEl.textContent = `${totalSticks}枝，共${totalBoxes}盒，已選${selectedBoxes}盒${extraText}。`;
                 instructionEl.classList.add(selectedBoxes === totalBoxes ? "allocation-complete" : "allocation-pending");
+                // 已選擇「預計總量」：改為浮動視窗，固定在畫面最上方
+                setFlavorInstructionFloating(true);
             }
         }
 

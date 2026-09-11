@@ -257,6 +257,14 @@ body {
     margin-right: 10px;
 }
 
+/* 🔹 輸入框 + 「共X枝」的容器：預設（手機版）上下排列 */
+.flavor-input-wrap {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    min-width: 0;
+}
+
 /* 🔹 讓輸入框填滿剩餘空間 */
 .flavor-item input {
     flex-grow: 1;
@@ -267,6 +275,16 @@ body {
     background: rgba(255, 255, 255, 0.95);
     width: 100%;
     min-width: 50px;
+    box-sizing: border-box;
+}
+
+/* 🔹 「共X枝」提示文字：手機版顯示在輸入框下方 */
+.flavor-stick-total {
+    margin-top: 4px;
+    font-size: 12px;
+    color: #ff6600;
+    font-weight: bold;
+    text-align: left;
 }
 
 /* 🔹 讓桌機版變成雙欄 */
@@ -275,6 +293,25 @@ body {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
         gap: 20px;
+    }
+
+    /* 🔹 桌面版：縮小輸入框、把「共X枝」放在同一列右側 */
+    .flavor-input-wrap {
+        flex-direction: row;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .flavor-input-wrap input {
+        flex: 1 1 65%;
+        width: auto;
+    }
+
+    .flavor-stick-total {
+        flex: 0 0 auto;
+        margin-top: 0;
+        white-space: nowrap;
+        text-align: right;
     }
 }
 
@@ -423,6 +460,7 @@ input[type="submit"]:disabled:hover {
 #flavorInstruction {
     font-weight: bold;
     transition: color 0.2s ease-in-out;
+    display: none; /* 尚未選擇「預計總量」前不顯示 */
 }
 
 #flavorInstruction.allocation-pending {
@@ -431,6 +469,32 @@ input[type="submit"]:disabled:hover {
 
 #flavorInstruction.allocation-complete {
     color: #000000;
+}
+
+/* 🔹 選擇「預計總量」後，變成浮動視窗，固定在畫面最上方（桌面版/手機版皆適用） */
+#flavorInstruction.flavor-instruction-floating {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    z-index: 3000;
+    margin: 0;
+    padding: 10px 15px;
+    background: #fff3e0;
+    border-bottom: 2px solid #ff8c00;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+    text-align: center;
+    font-size: 15px;
+    box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+    #flavorInstruction.flavor-instruction-floating {
+        font-size: 14px;
+        padding: 8px 10px;
+    }
 }
 
 /* 🔹 響應式設計（當螢幕小於 768px 時，維持單行顯示） */
