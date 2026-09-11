@@ -499,9 +499,18 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 
     // 🎯 更新單一口味輸入框旁（手機版：下方／桌面版：同列）的「共X枝」提示
+    //     輸入框空白或 0 時，不顯示「共X枝」
     function updateSingleFlavorStickTotal(id) {
         const totalEl = document.getElementById(`stickTotal_${id}`);
-        if (totalEl) totalEl.textContent = `共${getFlavorStickValue(id)}枝`;
+        if (!totalEl) return;
+        const sticks = getFlavorStickValue(id);
+        if (sticks > 0) {
+            totalEl.textContent = `共${sticks}枝`;
+            totalEl.style.display = "";
+        } else {
+            totalEl.textContent = "";
+            totalEl.style.display = "none";
+        }
     }
 
     function updateAllFlavorStickTotals() {
@@ -943,6 +952,7 @@ finalSubmitButton.onclick = async () => {
         if (totalCountTextEl) totalCountTextEl.innerHTML = displayText;
     }
 
+    updateAllFlavorStickTotals();
     calculateTotal();
 });
 

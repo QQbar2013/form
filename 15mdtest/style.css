@@ -278,8 +278,9 @@ body {
     box-sizing: border-box;
 }
 
-/* 🔹 「共X枝」提示文字：手機版顯示在輸入框下方 */
+/* 🔹 「共X枝」提示文字：手機版顯示在輸入框下方（空白/0 時預設隱藏，由 JS 控制顯示） */
 .flavor-stick-total {
+    display: none;
     margin-top: 4px;
     font-size: 12px;
     color: #ff6600;
