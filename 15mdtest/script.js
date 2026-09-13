@@ -851,19 +851,54 @@ finalSubmitButton.onclick = async () => {
             instructionEl.classList.add("flavor-instruction-floating");
             requestAnimationFrame(() => {
                 document.body.style.paddingBottom = instructionEl.offsetHeight + "px";
+                positionFlavorInstructionAboveKeyboard();
             });
         } else {
             instructionEl.classList.remove("flavor-instruction-floating");
+            instructionEl.style.transform = "";
             document.body.style.paddingBottom = "";
         }
     }
     window.setFlavorInstructionFloating = setFlavorInstructionFloating;
+
+    // 🎯 手機叫出鍵盤時，視覺可視區（visualViewport）會變矮，但一般 position:fixed
+    //     仍是相對「版面視窗」定位，導致浮動視窗被鍵盤蓋住或推到畫面外。
+    //     這裡用 visualViewport API 即時算出鍵盤高度，把浮動視窗往上移動對應距離，
+    //     讓它永遠貼在鍵盤上方、保持在畫面可視範圍內。
+    function positionFlavorInstructionAboveKeyboard() {
+        const instructionEl = document.getElementById("flavorInstruction");
+        if (!instructionEl || !instructionEl.classList.contains("flavor-instruction-floating")) return;
+
+        const vv = window.visualViewport;
+        if (vv) {
+            const keyboardOverlap = window.innerHeight - (vv.height + vv.offsetTop);
+            instructionEl.style.transform = `translateY(-${Math.max(keyboardOverlap, 0)}px)`;
+        } else {
+            instructionEl.style.transform = "";
+        }
+    }
+    window.positionFlavorInstructionAboveKeyboard = positionFlavorInstructionAboveKeyboard;
+
+    if (window.visualViewport) {
+        window.visualViewport.addEventListener("resize", positionFlavorInstructionAboveKeyboard);
+        window.visualViewport.addEventListener("scroll", positionFlavorInstructionAboveKeyboard);
+    }
+
+    // 部分手機瀏覽器 visualViewport 事件觸發較慢，額外在任何輸入框取得/失去焦點時
+    // （代表鍵盤正在打開/收合）多補一次延遲校正，確保浮動視窗一定會跟著移動
+    document.addEventListener("focusin", function () {
+        setTimeout(positionFlavorInstructionAboveKeyboard, 300);
+    });
+    document.addEventListener("focusout", function () {
+        setTimeout(positionFlavorInstructionAboveKeyboard, 300);
+    });
 
     // 視窗大小改變時（例如手機轉橫向、桌面縮放視窗），重新計算浮動視窗高度，避免內容被蓋住
     window.addEventListener("resize", function () {
         const instructionEl = document.getElementById("flavorInstruction");
         if (instructionEl && instructionEl.classList.contains("flavor-instruction-floating")) {
             document.body.style.paddingBottom = instructionEl.offsetHeight + "px";
+            positionFlavorInstructionAboveKeyboard();
         }
     });
 
