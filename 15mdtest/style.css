@@ -296,23 +296,25 @@ body {
         gap: 20px;
     }
 
-    /* 🔹 桌面版：縮小輸入框、把「共X枝」放在同一列右側 */
+    /* 🔹 桌面版：輸入框維持原本大小，「共X枝」以浮貼文字疊在輸入框內部右側，
+           完全不佔額外版面空間，不會把旁邊的口味擠開 */
     .flavor-input-wrap {
-        flex-direction: row;
-        align-items: center;
-        gap: 8px;
+        position: relative;
     }
 
     .flavor-input-wrap input {
-        flex: 1 1 65%;
-        width: auto;
+        padding-right: 68px; /* 預留右側空間給「共X枝」文字，避免蓋住輸入的數字 */
     }
 
     .flavor-stick-total {
-        flex: 0 0 auto;
+        position: absolute;
+        top: 50%;
+        right: 12px;
+        transform: translateY(-50%);
         margin-top: 0;
         white-space: nowrap;
         text-align: right;
+        pointer-events: none; /* 不影響點擊/輸入 */
     }
 }
 
