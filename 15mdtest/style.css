@@ -474,31 +474,42 @@ input[type="submit"]:disabled:hover {
     color: #000000;
 }
 
-/* 🔹 選擇「預計總量」後，變成浮動視窗，固定在畫面最下方（桌面版/手機版皆適用，避免手機鍵盤跳出時被推走） */
-#flavorInstruction.flavor-instruction-floating {
-    display: block;
-    position: fixed;
-    top: auto;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    width: 100%;
-    z-index: 3000;
-    margin: 0;
-    padding: 10px 15px;
-    background: #fff3e0;
-    border-bottom: none;
-    border-top: 2px solid #ff8c00;
-    box-shadow: 0 -3px 8px rgba(0, 0, 0, 0.2);
-    text-align: center;
-    font-size: 15px;
-    box-sizing: border-box;
+/* 🔹 桌面版：選擇「預計總量」後，維持在原本位置（口味選擇標題下方），不做浮動視窗 */
+@media (min-width: 769px) {
+    #flavorInstruction.flavor-instruction-floating {
+        display: block;
+        position: static;
+        margin: 10px 0 15px;
+        padding: 0;
+        background: none;
+        border: none;
+        box-shadow: none;
+        text-align: left;
+        font-size: 16px;
+    }
 }
 
+/* 🔹 手機版：選擇「預計總量」後，變成浮動視窗，固定在畫面最下方
+       （放在下方是為了避免手機叫出鍵盤時，畫面上推導致浮動視窗被擠出視窗外） */
 @media (max-width: 768px) {
     #flavorInstruction.flavor-instruction-floating {
-        font-size: 14px;
+        display: block;
+        position: fixed;
+        top: auto;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        width: 100%;
+        z-index: 3000;
+        margin: 0;
         padding: 8px 10px;
+        background: #fff3e0;
+        border-bottom: none;
+        border-top: 2px solid #ff8c00;
+        box-shadow: 0 -3px 8px rgba(0, 0, 0, 0.2);
+        text-align: center;
+        font-size: 14px;
+        box-sizing: border-box;
     }
 }
 

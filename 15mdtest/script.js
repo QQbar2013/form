@@ -840,19 +840,30 @@ finalSubmitButton.onclick = async () => {
         document.body.appendChild(confirmBox);
     });
 
-    // 🎯 讓「口味分配提示」變成固定在畫面最下方的浮動視窗（選擇「預計總量」後才出現）
+    // 🎯 只有手機版（<=768px）才需要浮動視窗＋鍵盤校正；桌面版維持原本靜態位置
+    function isMobileFloatingActive() {
+        return window.matchMedia && window.matchMedia("(max-width: 768px)").matches;
+    }
+
+    // 🎯 讓「口味分配提示」變成固定在畫面最下方的浮動視窗（選擇「預計總量」後才出現，僅手機版）
     //     並自動在 body 下方留出對應高度的空間，避免蓋住原本的內容／送出按鈕
     //     （放在下方是為了避免手機叫出鍵盤時，畫面上推導致浮動視窗被擠出視窗外）
+    //     桌面版則維持在「口味選擇」標題下方的原本位置，不做浮動視窗。
     function setFlavorInstructionFloating(shouldFloat) {
         const instructionEl = document.getElementById("flavorInstruction");
         if (!instructionEl) return;
 
         if (shouldFloat) {
             instructionEl.classList.add("flavor-instruction-floating");
-            requestAnimationFrame(() => {
-                document.body.style.paddingBottom = instructionEl.offsetHeight + "px";
-                positionFlavorInstructionAboveKeyboard();
-            });
+            if (isMobileFloatingActive()) {
+                requestAnimationFrame(() => {
+                    document.body.style.paddingBottom = instructionEl.offsetHeight + "px";
+                    positionFlavorInstructionAboveKeyboard();
+                });
+            } else {
+                instructionEl.style.transform = "";
+                document.body.style.paddingBottom = "";
+            }
         } else {
             instructionEl.classList.remove("flavor-instruction-floating");
             instructionEl.style.transform = "";
@@ -864,10 +875,14 @@ finalSubmitButton.onclick = async () => {
     // 🎯 手機叫出鍵盤時，視覺可視區（visualViewport）會變矮，但一般 position:fixed
     //     仍是相對「版面視窗」定位，導致浮動視窗被鍵盤蓋住或推到畫面外。
     //     這裡用 visualViewport API 即時算出鍵盤高度，把浮動視窗往上移動對應距離，
-    //     讓它永遠貼在鍵盤上方、保持在畫面可視範圍內。
+    //     讓它永遠貼在鍵盤正上方、保持在畫面可視範圍內。（僅手機版套用）
     function positionFlavorInstructionAboveKeyboard() {
         const instructionEl = document.getElementById("flavorInstruction");
         if (!instructionEl || !instructionEl.classList.contains("flavor-instruction-floating")) return;
+        if (!isMobileFloatingActive()) {
+            instructionEl.style.transform = "";
+            return;
+        }
 
         const vv = window.visualViewport;
         if (vv) {
@@ -893,12 +908,17 @@ finalSubmitButton.onclick = async () => {
         setTimeout(positionFlavorInstructionAboveKeyboard, 300);
     });
 
-    // 視窗大小改變時（例如手機轉橫向、桌面縮放視窗），重新計算浮動視窗高度，避免內容被蓋住
+    // 視窗大小改變時（例如手機轉橫向、桌面縮放視窗、或跨越手機/桌面版斷點），
+    // 重新計算浮動視窗的狀態，避免內容被蓋住，或桌面版誤留浮動樣式
     window.addEventListener("resize", function () {
         const instructionEl = document.getElementById("flavorInstruction");
-        if (instructionEl && instructionEl.classList.contains("flavor-instruction-floating")) {
+        if (!instructionEl || !instructionEl.classList.contains("flavor-instruction-floating")) return;
+        if (isMobileFloatingActive()) {
             document.body.style.paddingBottom = instructionEl.offsetHeight + "px";
             positionFlavorInstructionAboveKeyboard();
+        } else {
+            document.body.style.paddingBottom = "";
+            instructionEl.style.transform = "";
         }
     });
 
