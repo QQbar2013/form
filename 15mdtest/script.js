@@ -845,9 +845,8 @@ finalSubmitButton.onclick = async () => {
         return window.matchMedia && window.matchMedia("(max-width: 768px)").matches;
     }
 
-    // 🎯 讓「口味分配提示」變成固定在畫面最下方的浮動視窗（選擇「預計總量」後才出現，僅手機版）
-    //     並自動在 body 下方留出對應高度的空間，避免蓋住原本的內容／送出按鈕
-    //     （放在下方是為了避免手機叫出鍵盤時，畫面上推導致浮動視窗被擠出視窗外）
+    // 🎯 讓「口味分配提示」變成固定在畫面最上方的浮動視窗（選擇「預計總量」後才出現，僅手機版）
+    //     並自動在 body 上方留出對應高度的空間，避免蓋住原本的內容。
     //     桌面版則維持在「口味選擇」標題下方的原本位置，不做浮動視窗。
     function setFlavorInstructionFloating(shouldFloat) {
         const instructionEl = document.getElementById("flavorInstruction");
@@ -857,26 +856,26 @@ finalSubmitButton.onclick = async () => {
             instructionEl.classList.add("flavor-instruction-floating");
             if (isMobileFloatingActive()) {
                 requestAnimationFrame(() => {
-                    document.body.style.paddingBottom = instructionEl.offsetHeight + "px";
-                    positionFlavorInstructionAboveKeyboard();
+                    document.body.style.paddingTop = instructionEl.offsetHeight + "px";
+                    positionFlavorInstructionInView();
                 });
             } else {
                 instructionEl.style.transform = "";
-                document.body.style.paddingBottom = "";
+                document.body.style.paddingTop = "";
             }
         } else {
             instructionEl.classList.remove("flavor-instruction-floating");
             instructionEl.style.transform = "";
-            document.body.style.paddingBottom = "";
+            document.body.style.paddingTop = "";
         }
     }
     window.setFlavorInstructionFloating = setFlavorInstructionFloating;
 
-    // 🎯 手機叫出鍵盤時，視覺可視區（visualViewport）會變矮，但一般 position:fixed
-    //     仍是相對「版面視窗」定位，導致浮動視窗被鍵盤蓋住或推到畫面外。
-    //     這裡用 visualViewport API 即時算出鍵盤高度，把浮動視窗往上移動對應距離，
-    //     讓它永遠貼在鍵盤正上方、保持在畫面可視範圍內。（僅手機版套用）
-    function positionFlavorInstructionAboveKeyboard() {
+    // 🎯 手機叫出鍵盤時，部分瀏覽器（尤其 iOS Safari）會把整個版面視窗往上捲動一段距離，
+    //     導致原本貼在頂端的 position:fixed 元素被捲出畫面看不見。
+    //     這裡用 visualViewport API 算出版面被捲動的距離（offsetTop），把浮動視窗往下位移相同距離，
+    //     讓它永遠貼在畫面「目前可視範圍」的最上方，鍵盤彈出時也不會消失。（僅手機版套用）
+    function positionFlavorInstructionInView() {
         const instructionEl = document.getElementById("flavorInstruction");
         if (!instructionEl || !instructionEl.classList.contains("flavor-instruction-floating")) return;
         if (!isMobileFloatingActive()) {
@@ -886,26 +885,25 @@ finalSubmitButton.onclick = async () => {
 
         const vv = window.visualViewport;
         if (vv) {
-            const keyboardOverlap = window.innerHeight - (vv.height + vv.offsetTop);
-            instructionEl.style.transform = `translateY(-${Math.max(keyboardOverlap, 0)}px)`;
+            instructionEl.style.transform = `translateY(${Math.max(vv.offsetTop, 0)}px)`;
         } else {
             instructionEl.style.transform = "";
         }
     }
-    window.positionFlavorInstructionAboveKeyboard = positionFlavorInstructionAboveKeyboard;
+    window.positionFlavorInstructionInView = positionFlavorInstructionInView;
 
     if (window.visualViewport) {
-        window.visualViewport.addEventListener("resize", positionFlavorInstructionAboveKeyboard);
-        window.visualViewport.addEventListener("scroll", positionFlavorInstructionAboveKeyboard);
+        window.visualViewport.addEventListener("resize", positionFlavorInstructionInView);
+        window.visualViewport.addEventListener("scroll", positionFlavorInstructionInView);
     }
 
     // 部分手機瀏覽器 visualViewport 事件觸發較慢，額外在任何輸入框取得/失去焦點時
     // （代表鍵盤正在打開/收合）多補一次延遲校正，確保浮動視窗一定會跟著移動
     document.addEventListener("focusin", function () {
-        setTimeout(positionFlavorInstructionAboveKeyboard, 300);
+        setTimeout(positionFlavorInstructionInView, 300);
     });
     document.addEventListener("focusout", function () {
-        setTimeout(positionFlavorInstructionAboveKeyboard, 300);
+        setTimeout(positionFlavorInstructionInView, 300);
     });
 
     // 視窗大小改變時（例如手機轉橫向、桌面縮放視窗、或跨越手機/桌面版斷點），
@@ -914,10 +912,10 @@ finalSubmitButton.onclick = async () => {
         const instructionEl = document.getElementById("flavorInstruction");
         if (!instructionEl || !instructionEl.classList.contains("flavor-instruction-floating")) return;
         if (isMobileFloatingActive()) {
-            document.body.style.paddingBottom = instructionEl.offsetHeight + "px";
-            positionFlavorInstructionAboveKeyboard();
+            document.body.style.paddingTop = instructionEl.offsetHeight + "px";
+            positionFlavorInstructionInView();
         } else {
-            document.body.style.paddingBottom = "";
+            document.body.style.paddingTop = "";
             instructionEl.style.transform = "";
         }
     });

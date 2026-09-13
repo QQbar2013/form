@@ -257,18 +257,18 @@ body {
     margin-right: 10px;
 }
 
-/* 🔹 輸入框 + 「共X枝」的容器：預設（手機版）上下排列 */
+/* 🔹 輸入框 + 「共X枝」的容器：手機版與桌面版都一樣，「共X枝」以浮貼文字疊在輸入框內部右側 */
 .flavor-input-wrap {
-    display: flex;
-    flex-direction: column;
+    position: relative;
     flex-grow: 1;
     min-width: 0;
 }
 
-/* 🔹 讓輸入框填滿剩餘空間 */
+/* 🔹 讓輸入框填滿剩餘空間，並預留右側空間給「共X枝」文字 */
 .flavor-item input {
     flex-grow: 1;
     padding: 10px;
+    padding-right: 60px;
     font-size: 16px;
     border: 1px solid #ccc;
     border-radius: 5px;
@@ -278,14 +278,18 @@ body {
     box-sizing: border-box;
 }
 
-/* 🔹 「共X枝」提示文字：手機版顯示在輸入框下方（空白/0 時預設隱藏，由 JS 控制顯示） */
+/* 🔹 「共X枝」提示文字：浮貼在輸入框內部右側，不佔額外版面空間（空白/0 時預設隱藏，由 JS 控制顯示） */
 .flavor-stick-total {
     display: none;
-    margin-top: 4px;
+    position: absolute;
+    top: 50%;
+    right: 12px;
+    transform: translateY(-50%);
     font-size: 12px;
     color: #ff6600;
     font-weight: bold;
-    text-align: left;
+    white-space: nowrap;
+    pointer-events: none; /* 不影響點擊/輸入 */
 }
 
 /* 🔹 讓桌機版變成雙欄 */
@@ -296,25 +300,8 @@ body {
         gap: 20px;
     }
 
-    /* 🔹 桌面版：輸入框維持原本大小，「共X枝」以浮貼文字疊在輸入框內部右側，
-           完全不佔額外版面空間，不會把旁邊的口味擠開 */
-    .flavor-input-wrap {
-        position: relative;
-    }
-
-    .flavor-input-wrap input {
-        padding-right: 68px; /* 預留右側空間給「共X枝」文字，避免蓋住輸入的數字 */
-    }
-
-    .flavor-stick-total {
-        position: absolute;
-        top: 50%;
-        right: 12px;
-        transform: translateY(-50%);
-        margin-top: 0;
-        white-space: nowrap;
-        text-align: right;
-        pointer-events: none; /* 不影響點擊/輸入 */
+    .flavor-item input {
+        padding-right: 68px; /* 桌面版字級較大，多留一點空間 */
     }
 }
 
@@ -489,14 +476,14 @@ input[type="submit"]:disabled:hover {
     }
 }
 
-/* 🔹 手機版：選擇「預計總量」後，變成浮動視窗，固定在畫面最下方
-       （放在下方是為了避免手機叫出鍵盤時，畫面上推導致浮動視窗被擠出視窗外） */
+/* 🔹 手機版：選擇「預計總量」後，變成浮動視窗，固定在畫面最上方
+       （用 JS 搭配 visualViewport 校正位置，確保鍵盤彈出時視窗仍留在畫面可視範圍內） */
 @media (max-width: 768px) {
     #flavorInstruction.flavor-instruction-floating {
         display: block;
         position: fixed;
-        top: auto;
-        bottom: 0;
+        top: 0;
+        bottom: auto;
         left: 0;
         right: 0;
         width: 100%;
@@ -504,9 +491,9 @@ input[type="submit"]:disabled:hover {
         margin: 0;
         padding: 8px 10px;
         background: #fff3e0;
-        border-bottom: none;
-        border-top: 2px solid #ff8c00;
-        box-shadow: 0 -3px 8px rgba(0, 0, 0, 0.2);
+        border-top: none;
+        border-bottom: 2px solid #ff8c00;
+        box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
         text-align: center;
         font-size: 14px;
         box-sizing: border-box;
