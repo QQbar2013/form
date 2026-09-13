@@ -506,7 +506,7 @@ document.addEventListener("DOMContentLoaded", function () {
         const sticks = getFlavorStickValue(id);
         if (sticks > 0) {
             totalEl.textContent = `共${sticks}枝`;
-            totalEl.style.display = "";
+            totalEl.style.display = "block";
         } else {
             totalEl.textContent = "";
             totalEl.style.display = "none";
@@ -840,8 +840,9 @@ finalSubmitButton.onclick = async () => {
         document.body.appendChild(confirmBox);
     });
 
-    // 🎯 讓「口味分配提示」變成固定在畫面最上方的浮動視窗（選擇「預計總量」後才出現）
-    //     並自動在 body 上方留出對應高度的空間，避免蓋住原本的內容
+    // 🎯 讓「口味分配提示」變成固定在畫面最下方的浮動視窗（選擇「預計總量」後才出現）
+    //     並自動在 body 下方留出對應高度的空間，避免蓋住原本的內容／送出按鈕
+    //     （放在下方是為了避免手機叫出鍵盤時，畫面上推導致浮動視窗被擠出視窗外）
     function setFlavorInstructionFloating(shouldFloat) {
         const instructionEl = document.getElementById("flavorInstruction");
         if (!instructionEl) return;
@@ -849,11 +850,11 @@ finalSubmitButton.onclick = async () => {
         if (shouldFloat) {
             instructionEl.classList.add("flavor-instruction-floating");
             requestAnimationFrame(() => {
-                document.body.style.paddingTop = instructionEl.offsetHeight + "px";
+                document.body.style.paddingBottom = instructionEl.offsetHeight + "px";
             });
         } else {
             instructionEl.classList.remove("flavor-instruction-floating");
-            document.body.style.paddingTop = "";
+            document.body.style.paddingBottom = "";
         }
     }
     window.setFlavorInstructionFloating = setFlavorInstructionFloating;
@@ -862,7 +863,7 @@ finalSubmitButton.onclick = async () => {
     window.addEventListener("resize", function () {
         const instructionEl = document.getElementById("flavorInstruction");
         if (instructionEl && instructionEl.classList.contains("flavor-instruction-floating")) {
-            document.body.style.paddingTop = instructionEl.offsetHeight + "px";
+            document.body.style.paddingBottom = instructionEl.offsetHeight + "px";
         }
     });
 

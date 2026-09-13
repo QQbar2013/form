@@ -472,11 +472,12 @@ input[type="submit"]:disabled:hover {
     color: #000000;
 }
 
-/* 🔹 選擇「預計總量」後，變成浮動視窗，固定在畫面最上方（桌面版/手機版皆適用） */
+/* 🔹 選擇「預計總量」後，變成浮動視窗，固定在畫面最下方（桌面版/手機版皆適用，避免手機鍵盤跳出時被推走） */
 #flavorInstruction.flavor-instruction-floating {
     display: block;
     position: fixed;
-    top: 0;
+    top: auto;
+    bottom: 0;
     left: 0;
     right: 0;
     width: 100%;
@@ -484,8 +485,9 @@ input[type="submit"]:disabled:hover {
     margin: 0;
     padding: 10px 15px;
     background: #fff3e0;
-    border-bottom: 2px solid #ff8c00;
-    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+    border-bottom: none;
+    border-top: 2px solid #ff8c00;
+    box-shadow: 0 -3px 8px rgba(0, 0, 0, 0.2);
     text-align: center;
     font-size: 15px;
     box-sizing: border-box;
