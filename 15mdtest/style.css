@@ -257,18 +257,18 @@ body {
     margin-right: 10px;
 }
 
-/* 🔹 輸入框 + 「共X枝」的容器：手機版與桌面版都一樣，「共X枝」以浮貼文字疊在輸入框內部右側 */
+/* 🔹 輸入框 + 「共X枝」的容器：手機版預設上下排列（避免輸入框太窄蓋住數字），桌面版改成疊在輸入框內 */
 .flavor-input-wrap {
-    position: relative;
+    display: flex;
+    flex-direction: column;
     flex-grow: 1;
     min-width: 0;
 }
 
-/* 🔹 讓輸入框填滿剩餘空間，並預留右側空間給「共X枝」文字 */
+/* 🔹 讓輸入框填滿剩餘空間 */
 .flavor-item input {
     flex-grow: 1;
     padding: 10px;
-    padding-right: 60px;
     font-size: 16px;
     border: 1px solid #ccc;
     border-radius: 5px;
@@ -278,18 +278,22 @@ body {
     box-sizing: border-box;
 }
 
-/* 🔹 「共X枝」提示文字：浮貼在輸入框內部右側，不佔額外版面空間（空白/0 時預設隱藏，由 JS 控制顯示） */
+/* 🔹 尚未選擇「預計總量」前，鎖住的口味輸入框樣式 */
+.flavor-item input.flavor-input-locked,
+.flavor-item input:disabled {
+    background: rgba(0, 0, 0, 0.05);
+    color: #999;
+    cursor: not-allowed;
+}
+
+/* 🔹 「共X枝」提示文字：手機版顯示在輸入框下方，避免輸入框太窄擋住數字（空白/0 時預設隱藏，由 JS 控制顯示） */
 .flavor-stick-total {
     display: none;
-    position: absolute;
-    top: 50%;
-    right: 12px;
-    transform: translateY(-50%);
+    margin-top: 4px;
     font-size: 12px;
     color: #ff6600;
     font-weight: bold;
-    white-space: nowrap;
-    pointer-events: none; /* 不影響點擊/輸入 */
+    text-align: left;
 }
 
 /* 🔹 讓桌機版變成雙欄 */
@@ -300,8 +304,24 @@ body {
         gap: 20px;
     }
 
-    .flavor-item input {
-        padding-right: 68px; /* 桌面版字級較大，多留一點空間 */
+    /* 🔹 桌面版：輸入框空間足夠，「共X枝」以浮貼文字疊在輸入框內部右側，不佔額外版面空間 */
+    .flavor-input-wrap {
+        position: relative;
+    }
+
+    .flavor-input-wrap input {
+        padding-right: 68px; /* 預留右側空間給「共X枝」文字，避免蓋住輸入的數字 */
+    }
+
+    .flavor-stick-total {
+        position: absolute;
+        top: 50%;
+        right: 12px;
+        transform: translateY(-50%);
+        margin-top: 0;
+        white-space: nowrap;
+        text-align: right;
+        pointer-events: none; /* 不影響點擊/輸入 */
     }
 }
 

@@ -191,6 +191,7 @@ document.addEventListener("DOMContentLoaded", function () {
             window.selectedTotalBoxes = val ? val / BOX_TO_STICK_RATIO : 0;
             renderTotalQtyBreakdown(val);
             updatePackSelectFlavorAvailability();
+            updateFlavorInputsAvailability();
             calculateTotal();
         });
     }
@@ -521,6 +522,18 @@ document.addEventListener("DOMContentLoaded", function () {
     }
     window.updateAllFlavorStickTotals = updateAllFlavorStickTotals;
 
+    // 🎯 未選擇左側「預計總量」前，鎖住所有口味盒數輸入框，避免使用者在還沒選總量時就先填寫
+    function updateFlavorInputsAvailability() {
+        const enabled = !!window.selectedTotalSticks;
+        document.querySelectorAll(".flavor-item input[type='text']").forEach(input => {
+            input.disabled = !enabled;
+            input.classList.toggle("flavor-input-locked", !enabled);
+            input.placeholder = enabled ? "" : "請先選擇總量";
+        });
+    }
+    window.updateFlavorInputsAvailability = updateFlavorInputsAvailability;
+    updateFlavorInputsAvailability(); // 初始狀態：尚未選擇總量，先鎖住輸入框
+
     document.querySelectorAll(".flavor-item input[type='text']").forEach(input => {
         input.addEventListener("input", function () {
             this.value = this.value.replace(/\D/g, "");
@@ -812,6 +825,7 @@ finalSubmitButton.onclick = async () => {
     window.needsStickPacking = false;
     window.packOneStickFlavorId = "";
     if (typeof window.updateAllFlavorStickTotals === "function") window.updateAllFlavorStickTotals();
+    if (typeof window.updateFlavorInputsAvailability === "function") window.updateFlavorInputsAvailability();
     calculateTotal();
 
     // 成功跳轉:維持原本 DEP/NR + v 參數邏輯
