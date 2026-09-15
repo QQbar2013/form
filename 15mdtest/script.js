@@ -128,7 +128,7 @@ document.addEventListener("DOMContentLoaded", function () {
     function renderTotalQtyBreakdown(totalSticks) {
         if (!totalQtyBreakdownEl) return;
         if (!totalSticks) {
-            totalQtyBreakdownEl.textContent = "請先選擇左側「預計總量」";
+            totalQtyBreakdownEl.textContent = "請先選擇預計總量";
             return;
         }
         const { calculatedCount, bonusCount, needsPacking, grandTotal } = getStickBreakdown(totalSticks);
@@ -500,17 +500,18 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 
     // 🎯 更新單一口味輸入框旁（手機版：下方／桌面版：同列）的「共X枝」提示
-    //     輸入框空白或 0 時，不顯示「共X枝」
+    //     輸入框空白或 0 時不顯示文字內容，但仍保留原本高度／版面空間，
+    //     避免填寫或清空時，整排口味的欄位跟著上下移動
     function updateSingleFlavorStickTotal(id) {
         const totalEl = document.getElementById(`stickTotal_${id}`);
         if (!totalEl) return;
         const sticks = getFlavorStickValue(id);
         if (sticks > 0) {
             totalEl.textContent = `共${sticks}枝`;
-            totalEl.style.display = "block";
+            totalEl.classList.add("is-visible");
         } else {
             totalEl.textContent = "";
-            totalEl.style.display = "none";
+            totalEl.classList.remove("is-visible");
         }
     }
 
@@ -814,7 +815,7 @@ finalSubmitButton.onclick = async () => {
     const totalQtySelectEl = document.getElementById("totalQtySelect");
     if (totalQtySelectEl) totalQtySelectEl.value = "";
     const totalQtyBreakdownResetEl = document.getElementById("totalQtyBreakdown");
-    if (totalQtyBreakdownResetEl) totalQtyBreakdownResetEl.textContent = "請先選擇左側「預計總量」";
+    if (totalQtyBreakdownResetEl) totalQtyBreakdownResetEl.textContent = "請先選擇預計總量";
     const packOneStickWrapResetEl = document.getElementById("packOneStickWrap");
     const packOneStickSelectResetEl = document.getElementById("packOneStickSelect");
     if (packOneStickWrapResetEl) packOneStickWrapResetEl.style.display = "none";

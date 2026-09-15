@@ -286,14 +286,21 @@ body {
     cursor: not-allowed;
 }
 
-/* 🔹 「共X枝」提示文字：手機版顯示在輸入框下方，避免輸入框太窄擋住數字（空白/0 時預設隱藏，由 JS 控制顯示） */
+/* 🔹 「共X枝」提示文字：手機版顯示在輸入框下方。
+       固定保留高度（不論有沒有值都佔位），避免填寫/清空時整排口味格子上下移動 */
 .flavor-stick-total {
-    display: none;
+    display: block;
+    visibility: hidden;
+    min-height: 16px;
     margin-top: 4px;
     font-size: 12px;
     color: #ff6600;
     font-weight: bold;
     text-align: left;
+}
+
+.flavor-stick-total.is-visible {
+    visibility: visible;
 }
 
 /* 🔹 讓桌機版變成雙欄 */
