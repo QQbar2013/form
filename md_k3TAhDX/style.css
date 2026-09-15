@@ -257,6 +257,14 @@ body {
     margin-right: 10px;
 }
 
+/* 🔹 輸入框 + 「共X枝」的容器：手機版預設上下排列（避免輸入框太窄蓋住數字），桌面版改成疊在輸入框內 */
+.flavor-input-wrap {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    min-width: 0;
+}
+
 /* 🔹 讓輸入框填滿剩餘空間 */
 .flavor-item input {
     flex-grow: 1;
@@ -267,6 +275,32 @@ body {
     background: rgba(255, 255, 255, 0.95);
     width: 100%;
     min-width: 50px;
+    box-sizing: border-box;
+}
+
+/* 🔹 尚未選擇「預計總量」前，鎖住的口味輸入框樣式 */
+.flavor-item input.flavor-input-locked,
+.flavor-item input:disabled {
+    background: rgba(0, 0, 0, 0.05);
+    color: #999;
+    cursor: not-allowed;
+}
+
+/* 🔹 「共X枝」提示文字：手機版顯示在輸入框下方。
+       固定保留高度（不論有沒有值都佔位），避免填寫/清空時整排口味格子上下移動 */
+.flavor-stick-total {
+    display: block;
+    visibility: hidden;
+    min-height: 16px;
+    margin-top: 4px;
+    font-size: 12px;
+    color: #ff6600;
+    font-weight: bold;
+    text-align: left;
+}
+
+.flavor-stick-total.is-visible {
+    visibility: visible;
 }
 
 /* 🔹 讓桌機版變成雙欄 */
@@ -275,6 +309,26 @@ body {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
         gap: 20px;
+    }
+
+    /* 🔹 桌面版：輸入框空間足夠，「共X枝」以浮貼文字疊在輸入框內部右側，不佔額外版面空間 */
+    .flavor-input-wrap {
+        position: relative;
+    }
+
+    .flavor-input-wrap input {
+        padding-right: 68px; /* 預留右側空間給「共X枝」文字，避免蓋住輸入的數字 */
+    }
+
+    .flavor-stick-total {
+        position: absolute;
+        top: 50%;
+        right: 12px;
+        transform: translateY(-50%);
+        margin-top: 0;
+        white-space: nowrap;
+        text-align: right;
+        pointer-events: none; /* 不影響點擊/輸入 */
     }
 }
 
@@ -423,6 +477,7 @@ input[type="submit"]:disabled:hover {
 #flavorInstruction {
     font-weight: bold;
     transition: color 0.2s ease-in-out;
+    display: none; /* 尚未選擇「預計總量」前不顯示 */
 }
 
 #flavorInstruction.allocation-pending {
@@ -431,6 +486,45 @@ input[type="submit"]:disabled:hover {
 
 #flavorInstruction.allocation-complete {
     color: #000000;
+}
+
+/* 🔹 桌面版：選擇「預計總量」後，維持在原本位置（口味選擇標題下方），不做浮動視窗 */
+@media (min-width: 769px) {
+    #flavorInstruction.flavor-instruction-floating {
+        display: block;
+        position: static;
+        margin: 10px 0 15px;
+        padding: 0;
+        background: none;
+        border: none;
+        box-shadow: none;
+        text-align: left;
+        font-size: 16px;
+    }
+}
+
+/* 🔹 手機版：選擇「預計總量」後，變成浮動視窗，固定在畫面最上方
+       （用 JS 搭配 visualViewport 校正位置，確保鍵盤彈出時視窗仍留在畫面可視範圍內） */
+@media (max-width: 768px) {
+    #flavorInstruction.flavor-instruction-floating {
+        display: block;
+        position: fixed;
+        top: 0;
+        bottom: auto;
+        left: 0;
+        right: 0;
+        width: 100%;
+        z-index: 3000;
+        margin: 0;
+        padding: 8px 10px;
+        background: #fff3e0;
+        border-top: none;
+        border-bottom: 2px solid #ff8c00;
+        box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+        text-align: center;
+        font-size: 14px;
+        box-sizing: border-box;
+    }
 }
 
 /* 🔹 響應式設計（當螢幕小於 768px 時，維持單行顯示） */

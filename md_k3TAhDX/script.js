@@ -128,7 +128,7 @@ document.addEventListener("DOMContentLoaded", function () {
     function renderTotalQtyBreakdown(totalSticks) {
         if (!totalQtyBreakdownEl) return;
         if (!totalSticks) {
-            totalQtyBreakdownEl.textContent = "請先選擇左側「預計總量」";
+            totalQtyBreakdownEl.textContent = "請先選擇預計總量";
             return;
         }
         const { calculatedCount, bonusCount, needsPacking, grandTotal } = getStickBreakdown(totalSticks);
@@ -191,6 +191,7 @@ document.addEventListener("DOMContentLoaded", function () {
             window.selectedTotalBoxes = val ? val / BOX_TO_STICK_RATIO : 0;
             renderTotalQtyBreakdown(val);
             updatePackSelectFlavorAvailability();
+            updateFlavorInputsAvailability();
             calculateTotal();
         });
     }
@@ -498,17 +499,55 @@ document.addEventListener("DOMContentLoaded", function () {
         this.value = this.value.replace(/\D/g, "");
     });
 
+    // 🎯 更新單一口味輸入框旁（手機版：下方／桌面版：同列）的「共X枝」提示
+    //     輸入框空白或 0 時不顯示文字內容，但仍保留原本高度／版面空間，
+    //     避免填寫或清空時，整排口味的欄位跟著上下移動
+    function updateSingleFlavorStickTotal(id) {
+        const totalEl = document.getElementById(`stickTotal_${id}`);
+        if (!totalEl) return;
+        const sticks = getFlavorStickValue(id);
+        if (sticks > 0) {
+            totalEl.textContent = `共${sticks}枝`;
+            totalEl.classList.add("is-visible");
+        } else {
+            totalEl.textContent = "";
+            totalEl.classList.remove("is-visible");
+        }
+    }
+
+    function updateAllFlavorStickTotals() {
+        [
+            "qtyDuoDuo", "qtyGrape", "qtyLychee", "qtyPassionFruit", "qtyStrawberry",
+            "qtyApple", "qtyPineapple", "qtyOrange", "qtyPeach", "qtyMango"
+        ].forEach(updateSingleFlavorStickTotal);
+    }
+    window.updateAllFlavorStickTotals = updateAllFlavorStickTotals;
+
+    // 🎯 未選擇左側「預計總量」前，鎖住所有口味盒數輸入框，避免使用者在還沒選總量時就先填寫
+    function updateFlavorInputsAvailability() {
+        const enabled = !!window.selectedTotalSticks;
+        document.querySelectorAll(".flavor-item input[type='text']").forEach(input => {
+            input.disabled = !enabled;
+            input.classList.toggle("flavor-input-locked", !enabled);
+            input.placeholder = enabled ? "" : "請先選擇總量";
+        });
+    }
+    window.updateFlavorInputsAvailability = updateFlavorInputsAvailability;
+    updateFlavorInputsAvailability(); // 初始狀態：尚未選擇總量，先鎖住輸入框
+
     document.querySelectorAll(".flavor-item input[type='text']").forEach(input => {
         input.addEventListener("input", function () {
             this.value = this.value.replace(/\D/g, "");
             document.querySelectorAll(".flavor-item .reminder-text").forEach(r => r.remove());
             this.style.border = "";
+            updateSingleFlavorStickTotal(this.id);
             calculateTotal();
         });
         input.addEventListener("blur", function () {
             this.value = this.value.replace(/\D/g, "");
             document.querySelectorAll(".flavor-item .reminder-text").forEach(r => r.remove());
             this.style.border = "";
+            updateSingleFlavorStickTotal(this.id);
             calculateTotal();
         });
     });
@@ -776,7 +815,7 @@ finalSubmitButton.onclick = async () => {
     const totalQtySelectEl = document.getElementById("totalQtySelect");
     if (totalQtySelectEl) totalQtySelectEl.value = "";
     const totalQtyBreakdownResetEl = document.getElementById("totalQtyBreakdown");
-    if (totalQtyBreakdownResetEl) totalQtyBreakdownResetEl.textContent = "請先選擇左側「預計總量」";
+    if (totalQtyBreakdownResetEl) totalQtyBreakdownResetEl.textContent = "請先選擇預計總量";
     const packOneStickWrapResetEl = document.getElementById("packOneStickWrap");
     const packOneStickSelectResetEl = document.getElementById("packOneStickSelect");
     if (packOneStickWrapResetEl) packOneStickWrapResetEl.style.display = "none";
@@ -786,6 +825,8 @@ finalSubmitButton.onclick = async () => {
     }
     window.needsStickPacking = false;
     window.packOneStickFlavorId = "";
+    if (typeof window.updateAllFlavorStickTotals === "function") window.updateAllFlavorStickTotals();
+    if (typeof window.updateFlavorInputsAvailability === "function") window.updateFlavorInputsAvailability();
     calculateTotal();
 
     // 成功跳轉:維持原本 DEP/NR + v 參數邏輯
@@ -814,6 +855,86 @@ finalSubmitButton.onclick = async () => {
         document.body.appendChild(confirmBox);
     });
 
+    // 🎯 只有手機版（<=768px）才需要浮動視窗＋鍵盤校正；桌面版維持原本靜態位置
+    function isMobileFloatingActive() {
+        return window.matchMedia && window.matchMedia("(max-width: 768px)").matches;
+    }
+
+    // 🎯 讓「口味分配提示」變成固定在畫面最上方的浮動視窗（選擇「預計總量」後才出現，僅手機版）
+    //     並自動在 body 上方留出對應高度的空間，避免蓋住原本的內容。
+    //     桌面版則維持在「口味選擇」標題下方的原本位置，不做浮動視窗。
+    function setFlavorInstructionFloating(shouldFloat) {
+        const instructionEl = document.getElementById("flavorInstruction");
+        if (!instructionEl) return;
+
+        if (shouldFloat) {
+            instructionEl.classList.add("flavor-instruction-floating");
+            if (isMobileFloatingActive()) {
+                requestAnimationFrame(() => {
+                    document.body.style.paddingTop = instructionEl.offsetHeight + "px";
+                    positionFlavorInstructionInView();
+                });
+            } else {
+                instructionEl.style.transform = "";
+                document.body.style.paddingTop = "";
+            }
+        } else {
+            instructionEl.classList.remove("flavor-instruction-floating");
+            instructionEl.style.transform = "";
+            document.body.style.paddingTop = "";
+        }
+    }
+    window.setFlavorInstructionFloating = setFlavorInstructionFloating;
+
+    // 🎯 手機叫出鍵盤時，部分瀏覽器（尤其 iOS Safari）會把整個版面視窗往上捲動一段距離，
+    //     導致原本貼在頂端的 position:fixed 元素被捲出畫面看不見。
+    //     這裡用 visualViewport API 算出版面被捲動的距離（offsetTop），把浮動視窗往下位移相同距離，
+    //     讓它永遠貼在畫面「目前可視範圍」的最上方，鍵盤彈出時也不會消失。（僅手機版套用）
+    function positionFlavorInstructionInView() {
+        const instructionEl = document.getElementById("flavorInstruction");
+        if (!instructionEl || !instructionEl.classList.contains("flavor-instruction-floating")) return;
+        if (!isMobileFloatingActive()) {
+            instructionEl.style.transform = "";
+            return;
+        }
+
+        const vv = window.visualViewport;
+        if (vv) {
+            instructionEl.style.transform = `translateY(${Math.max(vv.offsetTop, 0)}px)`;
+        } else {
+            instructionEl.style.transform = "";
+        }
+    }
+    window.positionFlavorInstructionInView = positionFlavorInstructionInView;
+
+    if (window.visualViewport) {
+        window.visualViewport.addEventListener("resize", positionFlavorInstructionInView);
+        window.visualViewport.addEventListener("scroll", positionFlavorInstructionInView);
+    }
+
+    // 部分手機瀏覽器 visualViewport 事件觸發較慢，額外在任何輸入框取得/失去焦點時
+    // （代表鍵盤正在打開/收合）多補一次延遲校正，確保浮動視窗一定會跟著移動
+    document.addEventListener("focusin", function () {
+        setTimeout(positionFlavorInstructionInView, 300);
+    });
+    document.addEventListener("focusout", function () {
+        setTimeout(positionFlavorInstructionInView, 300);
+    });
+
+    // 視窗大小改變時（例如手機轉橫向、桌面縮放視窗、或跨越手機/桌面版斷點），
+    // 重新計算浮動視窗的狀態，避免內容被蓋住，或桌面版誤留浮動樣式
+    window.addEventListener("resize", function () {
+        const instructionEl = document.getElementById("flavorInstruction");
+        if (!instructionEl || !instructionEl.classList.contains("flavor-instruction-floating")) return;
+        if (isMobileFloatingActive()) {
+            document.body.style.paddingTop = instructionEl.offsetHeight + "px";
+            positionFlavorInstructionInView();
+        } else {
+            document.body.style.paddingTop = "";
+            instructionEl.style.transform = "";
+        }
+    });
+
     // 🎯 更新「訂購內容」下方的盒數分配提示文字，並依是否分配完畢鎖住/開放「前往確認」按鈕
     function updateFlavorAllocationText() {
         const flavorIds = [
@@ -834,7 +955,9 @@ finalSubmitButton.onclick = async () => {
         if (instructionEl) {
             instructionEl.classList.remove("allocation-pending", "allocation-complete");
             if (!totalSticks) {
+                // 尚未選擇「預計總量」：浮動視窗先不出現
                 instructionEl.textContent = "請先選擇上方「預計總量」。";
+                setFlavorInstructionFloating(false);
             } else {
                 const diff = totalBoxes - selectedBoxes;
                 let extraText = "";
@@ -845,6 +968,8 @@ finalSubmitButton.onclick = async () => {
                 }
                 instructionEl.textContent = `${totalSticks}枝，共${totalBoxes}盒，已選${selectedBoxes}盒${extraText}。`;
                 instructionEl.classList.add(selectedBoxes === totalBoxes ? "allocation-complete" : "allocation-pending");
+                // 已選擇「預計總量」：改為浮動視窗，固定在畫面最上方
+                setFlavorInstructionFloating(true);
             }
         }
 
@@ -896,6 +1021,7 @@ finalSubmitButton.onclick = async () => {
         if (totalCountTextEl) totalCountTextEl.innerHTML = displayText;
     }
 
+    updateAllFlavorStickTotals();
     calculateTotal();
 });
 

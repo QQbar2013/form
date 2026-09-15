@@ -162,10 +162,10 @@
             </div>
             <div class="form-w3-agile-text2">
                 <label>計費明細：</label>
-                <div id="totalQtyBreakdown" class="total-qty-breakdown">請先選擇左側「預計總量」</div>
+                <div id="totalQtyBreakdown" class="total-qty-breakdown">請先選擇預計總量</div>
                 <div id="packOneStickWrap" class="pack-one-stick-wrap" style="display: none;">
                     <p id="packOneStickNote" class="pack-one-stick-note">
-                        因為此總量在「買十送一」換算時無法整除，系統會多送您 1 枝，這 1 枝是散枝、無法湊成一整盒，因此請額外指定要打包哪個口味。
+                        因為此總量在「買十送一」換算時無法整除，您可多選擇 1 枝。贈送的這 1 枝是散枝、無法湊成一整盒，因此請額外指定要打包哪個口味。
                     </p>
                     <label for="packOneStickSelect">請選擇打包一枝的口味：</label>
                     <select id="packOneStickSelect">
@@ -192,43 +192,73 @@
         <div class="flavor-container">
             <div class="flavor-item">
                 <label>多多口味（盒）</label>
-                <input type="text" id="qtyDuoDuo" pattern="[0-9]*" inputmode="numeric" tabindex="1">
+                <div class="flavor-input-wrap">
+                    <input type="text" id="qtyDuoDuo" pattern="[0-9]*" inputmode="numeric" tabindex="1">
+                    <span class="flavor-stick-total" id="stickTotal_qtyDuoDuo"></span>
+                </div>
             </div>
             <div class="flavor-item">
                 <label>蘋果口味（盒）</label>
-                <input type="text" id="qtyApple" pattern="[0-9]*" inputmode="numeric" tabindex="6">
+                <div class="flavor-input-wrap">
+                    <input type="text" id="qtyApple" pattern="[0-9]*" inputmode="numeric" tabindex="6">
+                    <span class="flavor-stick-total" id="stickTotal_qtyApple"></span>
+                </div>
             </div>
             <div class="flavor-item">
                 <label>葡萄口味（盒）</label>
-                <input type="text" id="qtyGrape" pattern="[0-9]*" inputmode="numeric" tabindex="2">
+                <div class="flavor-input-wrap">
+                    <input type="text" id="qtyGrape" pattern="[0-9]*" inputmode="numeric" tabindex="2">
+                    <span class="flavor-stick-total" id="stickTotal_qtyGrape"></span>
+                </div>
             </div>
             <div class="flavor-item">
                 <label>鳳梨口味（盒）</label>
-                <input type="text" id="qtyPineapple" pattern="[0-9]*" inputmode="numeric" tabindex="7">
+                <div class="flavor-input-wrap">
+                    <input type="text" id="qtyPineapple" pattern="[0-9]*" inputmode="numeric" tabindex="7">
+                    <span class="flavor-stick-total" id="stickTotal_qtyPineapple"></span>
+                </div>
             </div>
             <div class="flavor-item">
                 <label>荔枝口味（盒）</label>
-                <input type="text" id="qtyLychee" pattern="[0-9]*" inputmode="numeric" tabindex="3">
+                <div class="flavor-input-wrap">
+                    <input type="text" id="qtyLychee" pattern="[0-9]*" inputmode="numeric" tabindex="3">
+                    <span class="flavor-stick-total" id="stickTotal_qtyLychee"></span>
+                </div>
             </div>
             <div class="flavor-item">
                 <label>柳橙口味（盒）</label>
-                <input type="text" id="qtyOrange" pattern="[0-9]*" inputmode="numeric" tabindex="8">
+                <div class="flavor-input-wrap">
+                    <input type="text" id="qtyOrange" pattern="[0-9]*" inputmode="numeric" tabindex="8">
+                    <span class="flavor-stick-total" id="stickTotal_qtyOrange"></span>
+                </div>
             </div>
             <div class="flavor-item">
                 <label>百香果口味（盒）</label>
-                <input type="text" id="qtyPassionFruit" pattern="[0-9]*" inputmode="numeric" tabindex="4">
+                <div class="flavor-input-wrap">
+                    <input type="text" id="qtyPassionFruit" pattern="[0-9]*" inputmode="numeric" tabindex="4">
+                    <span class="flavor-stick-total" id="stickTotal_qtyPassionFruit"></span>
+                </div>
             </div>
             <div class="flavor-item">
                 <label>水蜜桃口味（盒）</label>
-                <input type="text" id="qtyPeach" pattern="[0-9]*" inputmode="numeric" tabindex="9">
+                <div class="flavor-input-wrap">
+                    <input type="text" id="qtyPeach" pattern="[0-9]*" inputmode="numeric" tabindex="9">
+                    <span class="flavor-stick-total" id="stickTotal_qtyPeach"></span>
+                </div>
             </div>
             <div class="flavor-item">
                 <label>草莓口味（盒）</label>
-                <input type="text" id="qtyStrawberry" pattern="[0-9]*" inputmode="numeric" tabindex="5">
+                <div class="flavor-input-wrap">
+                    <input type="text" id="qtyStrawberry" pattern="[0-9]*" inputmode="numeric" tabindex="5">
+                    <span class="flavor-stick-total" id="stickTotal_qtyStrawberry"></span>
+                </div>
             </div>
             <div class="flavor-item">
                 <label>芒果口味（盒）</label>
-                <input type="text" id="qtyMango" pattern="[0-9]*" inputmode="numeric" tabindex="10">
+                <div class="flavor-input-wrap">
+                    <input type="text" id="qtyMango" pattern="[0-9]*" inputmode="numeric" tabindex="10">
+                    <span class="flavor-stick-total" id="stickTotal_qtyMango"></span>
+                </div>
             </div>
         </div>
 
