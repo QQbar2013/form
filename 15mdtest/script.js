@@ -236,21 +236,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
     fetchOnlineLocationConfigViaJsonp();
 
-    // 🔥 【GAS 暖機】頁面一載入就先偷偷 ping 兩支 Apps Script，
-    //     利用使用者填表單的時間讓 GAS 完成冷啟動，減少真正送出時的等待感。
-    //     用 no-cors 模式送出、不管回應內容也不管成不成功，純粹只是「叫醒」對方。
-    function warmUpGasEndpoints() {
-        const endpoints = [
-            "https://script.google.com/macros/s/AKfycbzE7wP4x3S5k9BOpooS7VkiYMPYdPP2Wx9KDWaOnXZ5GLtWqE1OCHnBnjIy8jQQdWjK/exec",
-            "https://script.google.com/macros/s/AKfycbwR1x_5btF3cd8rrZIDW-aD9_nFSRWPLFJC8yQS9IiCQP5KkxW2w2_WODkF1NI-u2kbPA/exec"
-        ];
-        endpoints.forEach(url => {
-            fetch(url, { method: "POST", mode: "no-cors", body: JSON.stringify({ warmUp: true }) })
-                .catch(() => {}); // 暖機失敗也沒關係，忽略即可
-        });
-    }
-    warmUpGasEndpoints();
-
     // 🎯 【全部隱藏取貨地點】小工具：把每張卡片都藏起來，並取消已勾選的
     function hideAllPickupLocations() {
         document.querySelectorAll("input[name='pickupLocation']").forEach(radio => {
@@ -697,7 +682,6 @@ document.addEventListener("DOMContentLoaded", function () {
         const originalBtnText = submitBtn.value;
         submitBtn.value = "正在核對產能中...";
 
-        showLoadingOverlay("正在核對產能，請稍候...");
         try {
             const checkResponse = await fetch(gasUrl, {
                 method: "POST",
@@ -715,19 +699,16 @@ document.addEventListener("DOMContentLoaded", function () {
                 alert(checkResult.message);
                 submitBtn.disabled = false;
                 submitBtn.value = originalBtnText;
-                hideLoadingOverlay();
                 return;
             }
         } catch (error) {
             alert("系統連線異常，請稍後再試。");
             submitBtn.disabled = false;
             submitBtn.value = originalBtnText;
-            hideLoadingOverlay();
             return;
         }
         submitBtn.disabled = false;
         submitBtn.value = originalBtnText;
-        hideLoadingOverlay();
 
         let confirmationMessage = `請確認您的訂單資訊，若正確無誤請點選右下方"送出"：\n\n\n`;
         confirmationMessage += `📌 訂購人姓名：${customerName}\n\n`;
@@ -779,6 +760,7 @@ finalSubmitButton.onclick = async () => {
     finalSubmitButton.style.background = "#ccc";
     finalSubmitButton.style.cursor = "not-allowed";
     cancelButton.disabled = true;
+    showSubmitLoadingOverlay("訂單送出中，請稍候...");
 
     const submitPackFlavorId = needsPacking ? window.packOneStickFlavorId : "";
     const payload = {
@@ -798,8 +780,6 @@ finalSubmitButton.onclick = async () => {
         qtyMango:        String(addPackedStickToFlavorValue("qtyMango", getFlavorStickValue("qtyMango"), submitPackFlavorId))
     };
 
-    showLoadingOverlay("訂單送出中，請稍候，成功後將自動跳轉...");
-
     let ok = false;
     try {
         const res = await fetch(submitGasUrl, {
@@ -815,19 +795,15 @@ finalSubmitButton.onclick = async () => {
 
     if (!ok) {
         // 送單失敗 → 跳失敗頁,帶當下網址
-        hideLoadingOverlay();
+        hideSubmitLoadingOverlay();
         const backUrl = encodeURIComponent(window.location.href);
         window.location.href =
             "https://qqbar2013.github.io/form/SubmitFailed/failed.html?back=" + backUrl;
         return;
     }
 
-    // 注意：成功時遮罩故意不在這裡關閉，讓畫面保持「送出中」狀態
-    // 直到下方 window.location.href 觸發實際跳轉到成功頁，避免使用者在
-    // 跳轉前的瞬間看到表單清空、遮罩消失又立刻跳走的閃爍感。
-    // 若跳轉條件不成立（沒有合法的 v 參數），則在最後補上關閉遮罩。
-
     // 送單成功 → 關閉視窗 → 清空表單
+    hideSubmitLoadingOverlay();
     document.body.removeChild(confirmBox);
     document.body.removeChild(overlay);
 
@@ -867,7 +843,6 @@ finalSubmitButton.onclick = async () => {
         const prefix = isHighAmount ? "DEP" : "NR";
         window.location.href = `${baseSuccessUrl}${prefix}${source}.html`;
     } else {
-        hideLoadingOverlay();
         window.scrollTo(0, 0);
     }
 };
@@ -1066,15 +1041,15 @@ document.querySelectorAll(".flavor-item input[type='text']").forEach(input => {
     });
 });
 
-// 🎯 【全螢幕遮罩】等待 GAS 回應時顯示，避免使用者以為畫面卡住
-function showLoadingOverlay(message) {
-    let overlay = document.getElementById("gasLoadingOverlay");
-    if (!overlay) {
-        overlay = document.createElement("div");
-        overlay.id = "gasLoadingOverlay";
-        overlay.style = `
+// 🎯 【送出等候遮罩】訂單送出、等待伺服器回應時顯示，避免看起來像卡住
+function showSubmitLoadingOverlay(message) {
+    let el = document.getElementById("submitLoadingOverlay");
+    if (!el) {
+        el = document.createElement("div");
+        el.id = "submitLoadingOverlay";
+        el.style = `
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.55); z-index: 2000;
+            background: rgba(0,0,0,0.55); z-index: 3000;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             color: #fff; font-size: 16px; text-align: center; padding: 20px; box-sizing: border-box;
         `;
@@ -1082,26 +1057,28 @@ function showLoadingOverlay(message) {
         spinner.style = `
             width: 42px; height: 42px; border-radius: 50%;
             border: 4px solid rgba(255,255,255,0.3); border-top-color: #fff;
-            animation: gasOverlaySpin 0.8s linear infinite; margin-bottom: 16px;
+            animation: submitOverlaySpin 0.8s linear infinite; margin-bottom: 16px;
         `;
-        const styleTag = document.createElement("style");
-        styleTag.textContent = `@keyframes gasOverlaySpin { to { transform: rotate(360deg); } }`;
-        document.head.appendChild(styleTag);
-
+        if (!document.getElementById("submitOverlaySpinStyle")) {
+            const styleTag = document.createElement("style");
+            styleTag.id = "submitOverlaySpinStyle";
+            styleTag.textContent = `@keyframes submitOverlaySpin { to { transform: rotate(360deg); } }`;
+            document.head.appendChild(styleTag);
+        }
         const textEl = document.createElement("div");
-        textEl.id = "gasLoadingOverlayText";
+        textEl.id = "submitLoadingOverlayText";
 
-        overlay.appendChild(spinner);
-        overlay.appendChild(textEl);
-        document.body.appendChild(overlay);
+        el.appendChild(spinner);
+        el.appendChild(textEl);
+        document.body.appendChild(el);
     }
-    document.getElementById("gasLoadingOverlayText").textContent = message || "處理中，請稍候...";
-    overlay.style.display = "flex";
+    document.getElementById("submitLoadingOverlayText").textContent = message || "處理中，請稍候...";
+    el.style.display = "flex";
 }
 
-function hideLoadingOverlay() {
-    const overlay = document.getElementById("gasLoadingOverlay");
-    if (overlay) overlay.style.display = "none";
+function hideSubmitLoadingOverlay() {
+    const el = document.getElementById("submitLoadingOverlay");
+    if (el) el.style.display = "none";
 }
 
 function parseLocalDate(dateStr) {
