@@ -751,6 +751,45 @@ document.addEventListener("DOMContentLoaded", function () {
         finalSubmitButton.textContent = "送出";
         finalSubmitButton.style = "background: #ff6600; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;";
 
+// 🎯 產生本次送出用的唯一識別碼，讓 GAS 那邊能判斷「這筆是不是同一次送出」，
+//    避免自動重試時在後台造成重複訂單。
+function generateSubmissionId() {
+    return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
+// 🎯 帶自動重試的 fetch。只有在「連 fetch 都丟例外」（網路真的斷線/逾時）時才重試；
+//    只要伺服器有回應（就算內容是 status:"error"），都算「有拿到回應」，不重試。
+async function fetchWithRetry(url, options, maxRetries = 2, delayMs = 2000) {
+    let lastError = null;
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+        try {
+            return await fetch(url, options);
+        } catch (err) {
+            lastError = err;
+            if (attempt < maxRetries) {
+                await new Promise(resolve => setTimeout(resolve, delayMs));
+            }
+        }
+    }
+    throw lastError;
+}
+
+// 🎯 自動重試都失敗後的最後手段：問 GAS「這個 submissionId 到底有沒有被記錄下來」，
+//    用來分辨「真的沒送到後台」還是「送到了、只是回應在路上遺失」。
+//    需要 GAS 那邊支援 { action: "checkStatus", submissionId } 這種請求（見說明文件）。
+async function checkSubmissionStatus(url, submissionId) {
+    try {
+        const res = await fetch(url, {
+            method: "POST",
+            body: JSON.stringify({ action: "checkStatus", submissionId })
+        });
+        const result = await res.json();
+        return result.found === true;
+    } catch (err) {
+        return false; // 連查詢都失敗，保守起見當作沒收到
+    }
+}
+
 finalSubmitButton.onclick = async () => {
     const submitGasUrl = "https://script.google.com/macros/s/AKfycbwR1x_5btF3cd8rrZIDW-aD9_nFSRWPLFJC8yQS9IiCQP5KkxW2w2_WODkF1NI-u2kbPA/exec";
 
@@ -763,7 +802,9 @@ finalSubmitButton.onclick = async () => {
     showSubmitLoadingOverlay("訂單送出中，請稍候...");
 
     const submitPackFlavorId = needsPacking ? window.packOneStickFlavorId : "";
+    const submissionId = generateSubmissionId();
     const payload = {
+        submissionId,
         customerName, phoneNumber, orderUnit,
         invoiceTitle, invoiceNumber, eventDate,
         pickupLocation, pickupDate, pickupTime,
@@ -782,15 +823,18 @@ finalSubmitButton.onclick = async () => {
 
     let ok = false;
     try {
-        const res = await fetch(submitGasUrl, {
+        // 🎯 自動重試：網路真的斷線才會走到 catch，最多再重試 2 次（間隔 2 秒）
+        const res = await fetchWithRetry(submitGasUrl, {
             method: "POST",
             body: JSON.stringify(payload)
-        });
+        }, 2, 2000);
         const result = await res.json();
         ok = (result.status === "ok");
     } catch (err) {
-        console.error("Submit failed:", err);
-        ok = false;
+        console.error("Submit failed after retries, checking status:", err);
+        // 🎯 重試都連不上時，先別急著判定失敗，問一下後台這筆到底有沒有收到
+        showSubmitLoadingOverlay("網路不穩，正在確認訂單是否已送達...");
+        ok = await checkSubmissionStatus(submitGasUrl, submissionId);
     }
 
     if (!ok) {
