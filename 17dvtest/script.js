@@ -1,8 +1,8 @@
 // 📦 每盒枝數（以後只要改這裡）
 const PER_BOX = 11;
 
-// 💰 每枝單價
-const UNIT_PRICE = 17;
+// 💰 每盒價格
+const BOX_PRICE = 170;
 
 // 🚚 運費依「盒數」計算
 function getShippingFee(totalCount) {
@@ -154,7 +154,7 @@ document.addEventListener("DOMContentLoaded", function () {
         displayText += `<div class="total-row">總枝數: <strong>${totalCount}</strong> 枝，共 <strong>${boxesText}</strong> 盒。</div>`;
 
         if (totalCount > 0) {
-            let qStickPrice = totalCount * UNIT_PRICE;
+            let qStickPrice = (totalCount / PER_BOX) * BOX_PRICE;
             let shippingFee = getShippingFee(totalCount);
             let totalPrice = qStickPrice + shippingFee;
 
@@ -194,9 +194,11 @@ document.addEventListener("DOMContentLoaded", function () {
                 // 🚀 名字在陣列裡手動對齊好了，這裡直接串接「口味：」就完美直線排列！
                 orderDetails += `    ▫️ ${flavor.name}口味：${quantity} 枝\n`;
                 totalCount += quantity;
-                qStickPrice += quantity * UNIT_PRICE;
             }
         });
+
+        // 💰 Q棒價格依盒數計算
+        qStickPrice = (totalCount / PER_BOX) * BOX_PRICE;
 
         let shippingFee = getShippingFee(totalCount);
         let totalPrice = qStickPrice + shippingFee;
