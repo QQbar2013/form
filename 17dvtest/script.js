@@ -1,3 +1,18 @@
+// 📦 每盒枝數（以後只要改這裡）
+const PER_BOX = 11;
+
+// 💰 每枝單價
+const UNIT_PRICE = 17;
+
+// 🚚 運費依「盒數」計算
+function getShippingFee(totalCount) {
+    const boxes = totalCount / PER_BOX;
+    if (boxes >= 1 && boxes <= 3) return 160;
+    if (boxes >= 4 && boxes <= 12) return 225;
+    if (boxes >= 13 && boxes <= 24) return 290;
+    return 0; // 25 盒以上免運
+}
+
 // 🎯 收集各口味數量（英文 id 作為 key，與 GAS flavorRowMap 對應）
 function getFlavorMap() {
     const ids = [
@@ -132,24 +147,15 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         });
 
-        let isValid = totalCount % 10 === 0 && totalCount > 0;
+        let isValid = totalCount % PER_BOX === 0 && totalCount > 0;
         let displayText = `<div class="total-summary" id="totalSummaryBox">`;
-        const boxes = totalCount / 10;
+        const boxes = totalCount / PER_BOX;
         const boxesText = Number.isInteger(boxes) ? boxes : boxes.toFixed(1);
         displayText += `<div class="total-row">總枝數: <strong>${totalCount}</strong> 枝，共 <strong>${boxesText}</strong> 盒。</div>`;
 
         if (totalCount > 0) {
-            let qStickPrice = totalCount * 17; // 單價 17 元
-            let shippingFee = 0;
-            if (totalCount >= 10 && totalCount <= 30) {
-                shippingFee = 160;
-            } else if (totalCount >= 40 && totalCount <= 120) {
-                shippingFee = 225;
-            } else if (totalCount >= 130 && totalCount <= 240) {
-                shippingFee = 290;
-            } else if (totalCount >= 250) {
-                shippingFee = 0;
-            }
+            let qStickPrice = totalCount * UNIT_PRICE;
+            let shippingFee = getShippingFee(totalCount);
             let totalPrice = qStickPrice + shippingFee;
 
             if (isValid) {
@@ -157,7 +163,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 displayText += `<div class="total-sub">⤷ 運費價格為 <strong>${shippingFee}</strong> 元。</div>`;
                 displayText += `<div class="total-row">總金額: <strong>${totalPrice}</strong> 元。</div>`;
             } else {
-                displayText += `<div class="total-row error-text">總數量須為10的倍數喔，再麻煩您調整數量喔😊</div>`;
+                displayText += `<div class="total-row error-text">總數量須為${PER_BOX}的倍數喔，再麻煩您調整數量喔😊</div>`;
             }
         }
         displayText += `</div>`;
@@ -188,20 +194,11 @@ document.addEventListener("DOMContentLoaded", function () {
                 // 🚀 名字在陣列裡手動對齊好了，這裡直接串接「口味：」就完美直線排列！
                 orderDetails += `    ▫️ ${flavor.name}口味：${quantity} 枝\n`;
                 totalCount += quantity;
-                qStickPrice += quantity * 17;
+                qStickPrice += quantity * UNIT_PRICE;
             }
         });
 
-        let shippingFee = 0;
-        if (totalCount >= 10 && totalCount <= 30) {
-            shippingFee = 160;
-        } else if (totalCount >= 40 && totalCount <= 120) {
-            shippingFee = 225;
-        } else if (totalCount >= 130 && totalCount <= 240) {
-            shippingFee = 290;
-        } else if (totalCount >= 250) {
-            shippingFee = 0;
-        }
+        let shippingFee = getShippingFee(totalCount);
         let totalPrice = qStickPrice + shippingFee;
 
         return { orderDetails, totalCount, qStickPrice, shippingFee, totalPrice };
@@ -290,11 +287,11 @@ document.addEventListener("DOMContentLoaded", function () {
             return;
         }
 
-        // 🎯 3. 數量與 10 的倍數驗證
+        // 🎯 3. 數量與每盒枝數倍數驗證
         const { orderDetails, totalCount, qStickPrice, shippingFee, totalPrice } = getOrderDetails();
 
         // 🎯 4. 如果必填都填了，但純粹是數量不對：精準攔截拒絕送出，但是「完全不往上捲動」！
-        if (totalCount % 10 !== 0 || totalCount === 0) {
+        if (totalCount % PER_BOX !== 0 || totalCount === 0) {
             resetSubmitBtn();
             return;
         }
@@ -367,7 +364,7 @@ document.addEventListener("DOMContentLoaded", function () {
         if (invoiceNumber) confirmationMessage += `💳 統一編號：${invoiceNumber}\n\n`;
         confirmationMessage += `✮✯✮✯✮✯✮\n\n`;
         confirmationMessage += `🛒 訂購內容：\n${orderDetails}\n\n`;
-        const boxesConfirm = Number.isInteger(totalCount / 10) ? (totalCount / 10) : (totalCount / 10).toFixed(1);
+        const boxesConfirm = Number.isInteger(totalCount / PER_BOX) ? (totalCount / PER_BOX) : (totalCount / PER_BOX).toFixed(1);
         confirmationMessage += `🔢 總枝數：${totalCount} 枝，共 ${boxesConfirm} 盒\n\n`;
         confirmationMessage += `⤷ Q棒價格為 ${qStickPrice} 元\n`;
         confirmationMessage += `⤷ 運費價格為 ${shippingFee} 元\n\n`;
@@ -401,119 +398,76 @@ document.addEventListener("DOMContentLoaded", function () {
         submitButton.textContent = "送出";
         submitButton.style = "background: #ff6600; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;";
 
-submitButton.onclick = async () => {
+        submitButton.onclick = async () => {
 
-    const submitGasUrl = "https://script.google.com/macros/s/AKfycbwyuQJ1wmUCsSvnVZZO9420jgeGLAhPUWk9vgdx2yafx_GYneCXhqP8Pqe7xw7ROSM4vQ/exec";  // ← 換成步驟二複製的網址
+            const submitGasUrl = "https://script.google.com/macros/s/AKfycbwyuQJ1wmUCsSvnVZZO9420jgeGLAhPUWk9vgdx2yafx_GYneCXhqP8Pqe7xw7ROSM4vQ/exec";
 
-    submitButton.disabled = true;
-    submitButton.textContent = "送出中...";
-    submitButton.style.background = "#ccc";      // 反灰
-    submitButton.style.cursor = "not-allowed";
-    cancelButton.disabled = true;                // 順便鎖住「返回」避免誤觸
+            submitButton.disabled = true;
+            submitButton.textContent = "送出中...";
+            submitButton.style.background = "#ccc";      // 反灰
+            submitButton.style.cursor = "not-allowed";
+            cancelButton.disabled = true;                // 順便鎖住「返回」避免誤觸
 
+            const payload = {
+                customerName, phoneNumber, orderUnit,
+                invoiceTitle, invoiceNumber, eventDate,
+                deliveryTime, packingMethod,
+                qtyDuoDuo:       document.getElementById("qtyDuoDuo").value || "0",
+                qtyGrape:        document.getElementById("qtyGrape").value || "0",
+                qtyLychee:       document.getElementById("qtyLychee").value || "0",
+                qtyPassionFruit: document.getElementById("qtyPassionFruit").value || "0",
+                qtyStrawberry:   document.getElementById("qtyStrawberry").value || "0",
+                qtyApple:        document.getElementById("qtyApple").value || "0",
+                qtyPineapple:    document.getElementById("qtyPineapple").value || "0",
+                qtyOrange:       document.getElementById("qtyOrange").value || "0",
+                qtyPeach:        document.getElementById("qtyPeach").value || "0",
+                qtyMango:        document.getElementById("qtyMango").value || "0",
+                totalCount, qStickPrice, shippingFee, totalPrice
+            };
 
-    const payload = {
+            let ok = false;
 
-        customerName, phoneNumber, orderUnit,
+            try {
+                const res = await fetch(submitGasUrl, {
+                    method: "POST",
+                    body: JSON.stringify(payload)
+                });
+                const result = await res.json();
+                ok = (result.status === "ok");
+            } catch (err) {
+                console.error("Submit failed:", err);
+                ok = false;
+            }
 
-        invoiceTitle, invoiceNumber, eventDate,
+            if (!ok) {
+                // 送單失敗 → 跳失敗頁，並把當下填單頁網址帶過去（對應九種組合）
+                const backUrl = encodeURIComponent(window.location.href);
+                window.location.href =
+                    "https://qqbar2013.github.io/form/SubmitFailed/failed.html?back=" + backUrl;
+                return;
+            }
 
-        deliveryTime, packingMethod,
+            // 送單成功 → 重置 → 進成功頁
+            document.body.removeChild(confirmBox);
+            document.body.removeChild(overlay);
+            orderForm.reset();
+            calculateTotal();
 
-        qtyDuoDuo:       document.getElementById("qtyDuoDuo").value || "0",
+            const urlParams = new URLSearchParams(window.location.search);
+            const source = urlParams.get('v');
 
-        qtyGrape:        document.getElementById("qtyGrape").value || "0",
+            const lineLinks = {
+                "lH4m8Q5v": "https://qqbar2013.github.io/form/success/dvlH4m8Q5v.html",
+                "sL9x7P2k": "https://qqbar2013.github.io/form/success/dvsL9x7P2k.html",
+                "mL3w6R9j": "https://qqbar2013.github.io/form/success/dvmL3w6R9j.html"
+            };
 
-        qtyLychee:       document.getElementById("qtyLychee").value || "0",
-
-        qtyPassionFruit: document.getElementById("qtyPassionFruit").value || "0",
-
-        qtyStrawberry:   document.getElementById("qtyStrawberry").value || "0",
-
-        qtyApple:        document.getElementById("qtyApple").value || "0",
-
-        qtyPineapple:    document.getElementById("qtyPineapple").value || "0",
-
-        qtyOrange:       document.getElementById("qtyOrange").value || "0",
-
-        qtyPeach:        document.getElementById("qtyPeach").value || "0",
-
-        qtyMango:        document.getElementById("qtyMango").value || "0",
-
-        totalCount, qStickPrice, shippingFee, totalPrice
-
-    };
-
-    let ok = false;
-
-    try {
-
-        const res = await fetch(submitGasUrl, {
-
-            method: "POST",
-
-            body: JSON.stringify(payload)
-
-        });
-
-        const result = await res.json();
-
-        ok = (result.status === "ok");
-
-    } catch (err) {
-
-        console.error("Submit failed:", err);
-
-        ok = false;
-
-    }
-
-    if (!ok) {
-
-        // 送單失敗 → 跳失敗頁,並把當下填單頁網址帶過去(對應九種組合)
-
-        const backUrl = encodeURIComponent(window.location.href);
-
-        window.location.href =
-
-            "https://qqbar2013.github.io/form/SubmitFailed/failed.html?back=" + backUrl;
-
-        return;
-
-    }
-
-    // 送單成功 → 重置 → 進成功頁
-    document.body.removeChild(confirmBox);
-    document.body.removeChild(overlay);
-    orderForm.reset();
-
-    calculateTotal();
-
-    const urlParams = new URLSearchParams(window.location.search);
-
-    const source = urlParams.get('v');
-
-    const lineLinks = {
-
-        "lH4m8Q5v": "https://qqbar2013.github.io/form/success/dvlH4m8Q5v.html",
-
-        "sL9x7P2k": "https://qqbar2013.github.io/form/success/dvsL9x7P2k.html",
-
-        "mL3w6R9j": "https://qqbar2013.github.io/form/success/dvmL3w6R9j.html"
-
-    };
-
-    if (source && lineLinks[source]) {
-
-        window.location.href = lineLinks[source];
-
-    } else {
-
-        window.requestAnimationFrame(() => showThankYouModal());
-
-    }
-
-};
+            if (source && lineLinks[source]) {
+                window.location.href = lineLinks[source];
+            } else {
+                window.requestAnimationFrame(() => showThankYouModal());
+            }
+        };
 
         buttonContainer.appendChild(cancelButton);
         buttonContainer.appendChild(submitButton);
